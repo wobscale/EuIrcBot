@@ -1,0 +1,18 @@
+{
+  "nick": "suebot",
+  "userName": "seubot",
+  "realName": "seubot",
+  "server": "irc.freenode.net",
+  "owner": "owner",
+  "commandPrefix": "!",
+  "ssl": false,
+  "port": 6667,
+  "debug": false,
+  "mainChannel": "#seubot",
+  "channels": "#seubot",
+  "autoRejoin": true,
+  "showErrors": false,
+  "channelPrefixes": "&#",
+  "messageSplit": 512,
+  "moduleFolders": ["modules"]
+}
