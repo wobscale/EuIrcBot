@@ -12,17 +12,14 @@ var REEscape = function(s) {
 };
 
 var mathKeys = Object.getOwnPropertyNames(Math);
-mathKeys.push('TAU');
+mathKeys['TAU'] = Math.PI * 2;
 
 var mathSymbols = "\s.,*+-/()";
 
 function MathScopeEval(str) {
-
-  for(var i=0;i<mathKeys.length;i++) {
-    this[mathKeys[i]] = Math[mathKeys[i]];
+  with(mathKeys) {
+    return eval(str);
   }
-  this['TAU'] = Math.PI * 2;
-  return eval(str);
 }
 
 function constructMathRe() {
@@ -41,10 +38,6 @@ var ignoreRe = onlySymbols.or(onlyNumbers).or(funnyFractions);
 module.exports.msg = function(text, from, reply, raw) {
   if(ignoreRe.test(text)) return;
   if(mathRe.test(text)) {
-    try {
-      reply(MathScopeEval(text));
-    } catch(ex) {
-      console.log(ex);
-    }
+    reply(MathScopeEval(text));
   }
 }
