@@ -1,0 +1,11 @@
+{
+  "name": "sirc-youtube",
+  "version": "0.0.0",
+  "description": "",
+  "dependencies": {
+    "youtube-feeds": "latest"
+  },
+  "main": "index.js",
+  "author": "",
+  "license": "MIT"
+}
