@@ -8,13 +8,13 @@
 var RC = require('regex-chain');
 
 var REEscape = function(s) {
-    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    return s.replace(/[\-\/\\^\$\*\+\?\.\(\)\|\[\]{}]/g, '\\$&');
 };
 
 var mathKeys = Object.getOwnPropertyNames(Math);
 mathKeys['TAU'] = Math.PI * 2;
 
-var mathSymbols = "\s.,*+-/()";
+var mathSymbols = ".,*+-/()";
 
 function MathScopeEval(str) {
   with(mathKeys) {
@@ -23,15 +23,15 @@ function MathScopeEval(str) {
 }
 
 function constructMathRe() {
-  var re = new RegExp("^([\\d" + REEscape(mathSymbols) + "]|(" + mathKeys.join(")|(") + "))+$");
+  var re = new RegExp("^([\\d\\s" + REEscape(mathSymbols) + "]|(" + mathKeys.join(")|(") + "))+$");
   return re;
 }
 
 var mathRe = constructMathRe();
 
-var onlySymbols = new RC("^[" + REEscape(mathSymbols) + "]*$");
-var onlyNumbers = new RC(/^\d*$/);
-var funnyFractions = new RC(/^([0-9][0]?\/(10|5|100))$/);
+var onlySymbols = new RC("^[\s" + REEscape(mathSymbols) + "]*$");
+var onlyNumbers = new RC(/^[\s\d]*$/);
+var funnyFractions = new RC(/^\s*([0-9][0]?\s*\/\s*(10|5|100))\s*$/);
 
 var ignoreRe = onlySymbols.or(onlyNumbers).or(funnyFractions);
 
