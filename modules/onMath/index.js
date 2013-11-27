@@ -21,16 +21,8 @@ var mathKeys = Object.keys(mathItems);
 
 var mathSymbols = ".,*+-/()";
 
-function MathScopeEval() {
-  this.getResult = function(str) {
-    for(var i=0;i<mathKeys.length;i++) {
-      this[mathKeys[i]] = mathItems[mathKeys[i]];
-    }
-    for(var x in this) {
-      if(mathKeys.indexOf(x) == -1) delete this[x];
-    }
-    return (new Function("with(this) { return "+str+"; }")).call(mathItems);
-  }
+function MathScopeEval(str) {
+  return (new Function("with(this) { return "+str+"; }")).call(mathItems);
 }
 
 function constructMathRe() {
@@ -49,6 +41,6 @@ var ignoreRe = onlySymbols.or(onlyNumbers).or(funnyFractions);
 module.exports.msg = function(text, from, reply, raw) {
   if(ignoreRe.test(text)) return;
   if(mathRe.test(text)) {
-    reply((new MathScopeEval()).getResult(text));
+    reply(MathScopeEval(text));
   }
 }
