@@ -11,14 +11,25 @@ var REEscape = function(s) {
     return s.replace(/[\-\/\\^\$\*\+\?\.\(\)\|\[\]{}]/g, '\\$&');
 };
 
-var mathKeys = Object.getOwnPropertyNames(Math);
-mathKeys['TAU'] = Math.PI * 2;
+var mathKeysToGet = Object.getOwnPropertyNames(Math);
+var mathItems = {};
+for(var i=0;i<mathKeysToGet.length;i++) {
+  mathItems[mathKeysToGet[i]] = Math[mathKeysToGet[i]];
+}
+mathItems['TAU'] = Math.PI * 2;
+var mathKeys = Object.keys(mathItems);
 
 var mathSymbols = ".,*+-/()";
 
-function MathScopeEval(str) {
-  with(mathKeys) {
-    return eval(str);
+function MathScopeEval() {
+  this.getResult = function(str) {
+    for(var i=0;i<mathKeys.length;i++) {
+      this[mathKeys[i]] = mathItems[mathKeys[i]];
+    }
+    for(var x in this) {
+      if(mathKeys.indexOf(x) == -1) delete this[x];
+    }
+    return (new Function("with(this) { return "+str+"; }")).call(mathItems);
   }
 }
 
@@ -38,6 +49,6 @@ var ignoreRe = onlySymbols.or(onlyNumbers).or(funnyFractions);
 module.exports.msg = function(text, from, reply, raw) {
   if(ignoreRe.test(text)) return;
   if(mathRe.test(text)) {
-    reply(MathScopeEval(text));
+    reply((new MathScopeEval()).getResult(text));
   }
 }
