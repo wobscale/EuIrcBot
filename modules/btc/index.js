@@ -1,14 +1,16 @@
-var btc = require('btc');
+var BTCE = require('btce');
+var btce = new BTCE();
 
 module.exports.command = "btc";
 
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
-  btc.price('mtgox', function(err, prices) {
-    if(err || prices === undefined || prices.data === undefined) return reply("Error occured getting BTC prices");
-    if(prices.data[remainder]) {
-      reply(remainder + ":", prices.data[remainder].display);
+  btce.ticker({pair: "btc_usd"}, function(err, data) {
+    if(err || !data || !data.ticker) return reply("Error occured getting BTC prices");
+    data = data.ticker;
+    if(data[remainder.toLowerCase()]) {
+      reply(remainder + ":", data[remainder.toLowerCase()]);
     } else {
-      reply("Last:", prices.data.last.display, "| Avg:", prices.data.avg.display);
+      reply("Last:", data.last, "| Avg:", data.avg);
     }
   });
-}
+};
