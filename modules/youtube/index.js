@@ -22,7 +22,7 @@ function sayInfo(vid, cb) {
 
 module.exports.url = function(url, reply) {
   var m;
-  if(m = ytRegex.exec(url)) {
+  if((m = ytRegex.exec(url))) {
     var id = m[1];
     yt.video(id).details(function(err, res) {
       if(err) reply("Invalid video:", err);
@@ -30,7 +30,7 @@ module.exports.url = function(url, reply) {
     });
 
   }
-}
+};
 
 module.exports.commands = ['yt', 'youtube'];
 
@@ -40,4 +40,4 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     var vid = res.items[0];
     sayInfo(vid, reply);
   });
-}
+};
