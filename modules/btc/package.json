@@ -4,7 +4,7 @@
   "description": "Bitcoin module",
   "main": "index.js",
   "dependencies": {
-    "btc": "latest"
+    "btce": "latest"
   },
   "author": "EuanK",
   "license": "MIT"
