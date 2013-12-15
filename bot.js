@@ -19,6 +19,8 @@ bot.loadModuleFolder = function(folder, cb) {
       console.log(err);
       return cb(err);
     }
+    //Exclude hidden files and folders
+    moduleNames = moduleNames.filter(function(i){return i[0] !== '.';});
     for(var i=0;i<moduleNames.length;i++) {
       if(modules[moduleNames[i]]) continue;
       try {
@@ -32,7 +34,7 @@ bot.loadModuleFolder = function(folder, cb) {
     }
     cb(false, modules);
   });
-}
+};
 
 bot.loadModules = function() {
   modules = {};
@@ -40,7 +42,7 @@ bot.loadModules = function() {
   async.mapSeries(bot.config.moduleFolders, bot.loadModuleFolder, function(err, results) {
     if(err) console.log(err);
   });
-}
+};
 
 bot.reloadModules = function() {
   var numToUnload = _.keys(modules).length;
@@ -50,13 +52,13 @@ bot.reloadModules = function() {
         var nam = require.resolve(bot.modulePaths[name]);
         delete require.cache[nam];
         numToUnload--;
-        if(numToUnload == 0) return bot.loadModules();
+        if(numToUnload === 0) return bot.loadModules();
       });
     } else {
       var nam = require.resolve(bot.modulePaths[name]);
       delete require.cache[nam];
       numToUnload--;
-      if(numToUnload == 0) return bot.loadModules();
+      if(numToUnload === 0) return bot.loadModules();
     }
   });
 }
@@ -179,8 +181,8 @@ bot.getReply = function(chan) {
     var tosay = [];
     for(var i=0;i<arguments.length;i++) tosay.push(arguments[i]);
     bot.client.say(chan, tosay.join(' '));
-  }
-}
+  };
+};
 
 bot.client.on('message', function(from, to, text, raw) {
   var primaryFrom = (to == bot.client.nick) ? from : to;
