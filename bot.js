@@ -1,10 +1,12 @@
+(function () {
 'use strict';
+
 var irc = require('irc'),
     fs = require('fs'),
     _ = require('underscore'),
     async = require('async');
 
-var REEscape = function(s) {
+var reEscape = function(s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
 
@@ -32,7 +34,7 @@ bot.loadModuleFolder = function(folder, cb) {
     }
     cb(false, modules);
   });
-}
+};
 
 bot.loadModules = function() {
   modules = {};
@@ -40,7 +42,7 @@ bot.loadModules = function() {
   async.mapSeries(bot.config.moduleFolders, bot.loadModuleFolder, function(err, results) {
     if(err) console.log(err);
   });
-}
+};
 
 bot.reloadModules = function() {
   var numToUnload = _.keys(modules).length;
@@ -50,16 +52,16 @@ bot.reloadModules = function() {
         var nam = require.resolve(bot.modulePaths[name]);
         delete require.cache[nam];
         numToUnload--;
-        if(numToUnload == 0) return bot.loadModules();
+        if(numToUnload === 0) return bot.loadModules();
       });
     } else {
       var nam = require.resolve(bot.modulePaths[name]);
       delete require.cache[nam];
       numToUnload--;
-      if(numToUnload == 0) return bot.loadModules();
+      if(numToUnload === 0) return bot.loadModules();
     }
   });
-}
+};
 
 bot.callModuleFn = function(fname, args) {
   _.values(modules).forEach(function(m) {
@@ -69,7 +71,7 @@ bot.callModuleFn = function(fname, args) {
       } catch(ex) { console.log(ex); }
     }
   });
-}
+};
 
 bot.callCommandFn = function(command, args) {
   _.values(modules).forEach(function(m) {
@@ -96,7 +98,7 @@ bot.callCommandFn = function(command, args) {
       }
     } catch(ex) { console.log(ex); }
   });
-}
+};
 
 bot.loadConfig = function() { //sync
   var conf;
@@ -132,7 +134,7 @@ bot.loadConfig = function() { //sync
     conf = default_config;
   }
   return conf;
-}
+};
 
 var conf = bot.loadConfig();
 bot.config = conf;
@@ -153,7 +155,7 @@ bot.client = new irc.Client(conf.server, conf.nick, {
   messageSplit: conf.messageSplit
 });
 
-bot.client.on('error', function(err) { console.log(err)});
+bot.client.on('error', function(err) { console.log(err);});
 bot.conf = conf;
 
 /* say("one", "two") => "one two" */
@@ -163,13 +165,11 @@ bot.say = function(args) {
     tosay.push(arguments[i]);
   }
   bot.client.say(bot.config.mainChannel, tosay.join(' '));
-}
+};
 
 bot.client.connect(function() {
   console.log("Connected!");
-  var channels = Array.isArray(bot.conf.channels)
-    ? bot.conf.channels
-    : bot.conf.channels.split(',');
+  var channels = Array.isArray(bot.conf.channels) ? bot.conf.channels : bot.conf.channels.split(',');
   for(var i=0;i<channels.length;i++) bot.client.join(channels[i], console.log);
   bot.loadModules();
 });
@@ -179,8 +179,8 @@ bot.getReply = function(chan) {
     var tosay = [];
     for(var i=0;i<arguments.length;i++) tosay.push(arguments[i]);
     bot.client.say(chan, tosay.join(' '));
-  }
-}
+  };
+};
 
 bot.client.on('message', function(from, to, text, raw) {
   var primaryFrom = (to == bot.client.nick) ? from : to;
@@ -194,7 +194,7 @@ bot.client.on('message', function(from, to, text, raw) {
     bot.callModuleFn('chanmsg', [text, to, from, bot.getReply(to), raw]);
   }
   if(text.substring(0, bot.config.commandPrefix.length) == bot.config.commandPrefix) {
-    var re = new RegExp('^' + REEscape(bot.config.commandPrefix) + '(\\S*)\\s*(.*)$', 'g');
+    var re = new RegExp('^' + reEscape(bot.config.commandPrefix) + '(\\S*)\\s*(.*)$', 'g');
     var rem = re.exec(text);
     var command = rem[1];
     var remainder = rem.length == 3 ? rem[2] : "";
@@ -213,3 +213,4 @@ bot.client.on('ctcp', function(from, to, text, type, raw) {
   }
 });
 
+}());

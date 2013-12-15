@@ -11,4 +11,4 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
       reply("Last:", prices.data.last.display, "| Avg:", prices.data.avg.display);
     }
   });
-}
+};
