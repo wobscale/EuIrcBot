@@ -15,7 +15,7 @@ function rollDice(str, cb) {
   }
   var s = res.result;
   if(res.rolled.length > 1) {
-    s += " - " + res.rolled.join(", ");
+    s += ": Rolled " + res.rolled.join(", ");
   }
   cb(s);
 }
