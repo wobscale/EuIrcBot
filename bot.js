@@ -68,7 +68,10 @@ bot.callModuleFn = function(fname, args) {
     if(typeof m[fname] == 'function') {
       try {
         m[fname].apply(bot, args);
-      } catch(ex) { console.log(ex); }
+      } catch(ex) {
+        console.log(ex.stack);
+        console.log(ex);
+      }
     }
   });
 };
