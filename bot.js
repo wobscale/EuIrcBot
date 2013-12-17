@@ -21,6 +21,8 @@ bot.loadModuleFolder = function(folder, cb) {
       console.log(err);
       return cb(err);
     }
+    //Exclude hidden files and folders
+    moduleNames = moduleNames.filter(function(i){return i[0] !== '.';});
     for(var i=0;i<moduleNames.length;i++) {
       if(modules[moduleNames[i]]) continue;
       try {
