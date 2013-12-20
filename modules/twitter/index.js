@@ -1,4 +1,5 @@
 var Twit = require('twit');
+var ent = require('ent');
 var conf = require("./config");
 
 var t = new Twit(conf);
@@ -12,14 +13,14 @@ module.exports.url = function(url, reply) {
       // User page
       t.get("/users/show", {screen_name: m[3]}, function(err, res) {
         if(err) reply("Error getting user " + m[3]);
-        else reply(res.name + ": " + res.description);
+        else reply(ent.decode(res.name) + ": " + ent.decode(res.description));
       });
     } else {
       var uname = m[3];
       var id = m[5];
       t.get("/statuses/show/:id", {id: id}, function(err, res) {
         if(err) reply("Error getting tweet");
-        else reply(res.user.name + ": " + res.text);
+        else reply(ent.decode(res.user.name) + ": " + ent.decode(res.text));
       });
     }
   }
