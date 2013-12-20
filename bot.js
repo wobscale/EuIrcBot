@@ -31,6 +31,7 @@ bot.loadModuleFolder = function(folder, cb) {
         bot.modulePaths[moduleNames[i]] = "./"+folder+"/"+moduleNames[i];
         if(typeof mod.init == "function") mod.init(bot);
       } catch(ex) { 
+        console.error(ex.stack); 
         console.error(ex); 
       }
     }
