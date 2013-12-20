@@ -31,7 +31,7 @@ function getDogecoinData(callback) {
 
 function getTickerData(coin, metric, callback) {
   if(coin === 'dgc') {
-    getDogecoinData(callback);
+    return getDogecoinData(callback);
   }
   btce.ticker({pair: coin+"_usd"}, function(err, data) {
     if(err || !data || !data.ticker) return callback("Error occured getting BTC prices");
