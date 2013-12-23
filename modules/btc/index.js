@@ -8,7 +8,7 @@ function capitalize(str) {
 }
 
 function getDogecoinData(callback) {
-  http.get('http://pubapi.cryptsy.com/api.php?method=singlemarketdata&marketid=26', function(res) {
+  http.get('http://pubapi.cryptsy.com/api.php?method=singlemarketdata&marketid=132', function(res) {
     var j = '';
     res.on('data', function(c) { j += c; });
     res.on('end', function() {
