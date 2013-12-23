@@ -14,8 +14,8 @@ function getDogecoinData(callback) {
     res.on('end', function() {
       try {
         j = JSON.parse(j.toString());
-        var dgc_to_btc_last = j.return.markets.DGC.lasttradeprice;
-        var dgc_to_btc_avg = j.return.markets.DGC.recenttrades.map(function(l) { return parseFloat(l.price); });
+        var dgc_to_btc_last = j.return.markets.DOGE.lasttradeprice;
+        var dgc_to_btc_avg = j.return.markets.DOGE.recenttrades.map(function(l) { return parseFloat(l.price); });
         dgc_to_btc_avg = dgc_to_btc_avg.reduce(function(l,r){return l+r;}) / dgc_to_btc_avg.length;
         btce.ticker({pair: "btc_usd"}, function(err, data) {
           if(err || !data || !data.ticker) return callback("Error occured getting BTC prices");
