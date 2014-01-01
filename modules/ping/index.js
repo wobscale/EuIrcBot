@@ -1,6 +1,5 @@
-var ping = require('ping-wrapper2');
-//TODO, find a better wrapper or make it.
-//This one seems to report bad results
+var ping = require('pinger');
+var async = require('async');
 
 module.exports.command = 'ping';
 
@@ -12,18 +11,44 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     } catch(e){}
   }
   times = times < 1 ? 1 : times > 15 ? 15 : times;
-  var thisPing = ping(parts[0], {count: times});
+  var url = parts[0];
+
   var results = [];
-  thisPing.on('data', function(aresult) {
-    results.push(aresult);
-  });
-  thisPing.on('exit', function(summary) {
-    reply(parts[0] + " - " + summary.sent + " sent, " + summary.recieved + ". " + 
-          Math.round(100 * (summary.sent - summary.recieved) / (summary.sent + summary.recieved)) + "% loss, time " + summary.time + "ms - " + 
-          " min/avg/max " + results.reduce(function(l,r) { return l.time < r.time ? l : r;}).time + "/" +
-          (Math.round(1000 * results.reduce(function(l,r){return {time: l.time + r.time};}).time / results.length)/1000) + "/" +
-          results.reduce(function(l,r){return l.time < r.time ? r : l;}).time);
-  });
+  var pingQueue = async.queue(function(task, cb) {
+    ping(url, function(err, ms) {
+      if(err) results.push({timeout: true});
+      else results.push({timeout: false, time: ms});
+      cb();
+    });
+  },1);
+
+  var startTime = new Date().getTime();
+  pingQueue.drain = function() {
+    var sent = results.length;
+    var timeouts = results.map(function(i){return i.timeout ? 1 : 0;}).reduce(function(l,r){return l+r;});
+    var success = results.map(function(i){return i.timeout ? 0 : 1;}).reduce(function(l,r){return l+r;});
+    var percentLoss = Math.round(100 * 100 * (timeouts / sent)) * 100;
+    var timeTaken = (new Date().getTime()) - startTime;
+    var successes = results.filter(function(i) { return !i.timeout;});
+    var min,max,avg;
+    if(successes.length === 0) {
+      min = max = avg = '-';
+    } else {
+      min = successes.reduce(function(l,r){return l.time < r.time ? l : r;}).time;
+      avg = successes.reduce(function(l,r){return {time: l.time + r.time};}).time / successes.length;
+      avg = Math.round(1000 * avg) / 1000;
+      max = successes.reduce(function(l,r){return l.time > r.time ? l : r;}).time;
+    }
+
+    reply(url + " - " + sent + " sent, " + success + ". " + 
+          percentLoss + "% loss, time " + timeTaken + "ms - " + 
+          " min/avg/max " + min + "/" + avg + "/" + max);
+  };
+  for(var i=0;i<times;i++) {
+    pingQueue.push({});
+  }
+
+
 };
 
 

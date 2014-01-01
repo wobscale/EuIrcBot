@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "description": "",
   "dependencies": {
-    "ping-wrapper2": "latest"
+    "pinger": "0.0.5",
+    "async": "~0.2.9"
   },
   "main": "index.js",
   "author": "Euank",
