@@ -1,0 +1,12 @@
+{
+  "name": "sirc-ping",
+  "version": "0.0.1",
+  "description": "",
+  "dependencies": {
+    "pinger": "0.0.5",
+    "async": "~0.2.9"
+  },
+  "main": "index.js",
+  "author": "Euank",
+  "license": "MIT"
+}
