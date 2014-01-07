@@ -11,3 +11,6 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 module.exports.runTest4 = function(r, p, reply) {
   reply("I was called with test4");
 };
+module.exports.runTest5 = function(r, p, reply) {
+  reply("My parts are:", p.join(', '));
+};

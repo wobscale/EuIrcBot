@@ -15,6 +15,41 @@ var modules = {};
 bot.modules = modules;
 bot.modulePaths = {};
 
+bot.util = {}; //Util functions
+
+/* splits a string into parts respecting
+ * quote marks and escaped quotes
+ *
+ * Example:
+ *   quotedSplit('"arg 1" arg\ 2 "arg\\"3\\""') -> ['arg 1', 'arg 2', 'arg"3"']
+ */
+bot.util.quotedSplit = function(str) {
+  var res = [];
+  var currentStr = '';
+  var inQuotes = false;
+  for(var i=0;i<str.length;i++) {
+    if(inQuotes && str[i] === '"') {
+      res.push(currentStr);
+      inQuotes = false;
+      currentStr = '';
+    } else if(str[i] === '"' && !inQuotes) {
+      inQuotes = true;
+      if(currentStr !== '') res.push(currentStr);
+      currentStr = '';
+    } else if(str[i] === ' ' && !inQuotes) {
+      if(currentStr !== '') res.push(currentStr);
+      currentStr = '';
+    } else if(str[i] === "\\") {
+      i++;
+      currentStr += str[i];
+    } else {
+      currentStr += str[i];
+    }
+  }
+  if(currentStr !== '') res.push(currentStr);
+  return res;
+};
+
 bot.loadModuleFolder = function(folder, cb) {
   fs.readdir('./'+folder, function(err, moduleNames) {
     if(err) {
@@ -98,8 +133,8 @@ bot.callCommandFn = function(command, args) {
         m["run_"+command].apply(bot, args);
         return;
       }
-      if(typeof m["run" + command[0].toUpperCase + command.substring(1)] == 'function') {
-        m["run" + command[0].toUpperCase + command.substring(1)].apply(bot, args);
+      if(typeof (m["run" + command[0].toUpperCase() + command.substring(1)]) === 'function') {
+        m["run" + command[0].toUpperCase() + command.substring(1)].apply(bot, args);
         return;
       }
     } catch(ex) { console.log(ex); }
@@ -181,10 +216,20 @@ bot.client.connect(function() {
 });
 
 bot.getReply = function(chan) {
+  var stringifyArgs = function(args) {
+    var strParts = [];
+    for(var i=0;i<arguments.length;i++) {
+      if(typeof arguments[i] === 'string') {
+        strParts.push(arguments[i]);
+      } else if(Array.isArray(arguments[i])) {
+        strParts.push(stringifyArgs.apply(this, arguments[i]));
+      }
+    }
+    return strParts.join(' ');
+  };
+
   return function(args) {
-    var tosay = [];
-    for(var i=0;i<arguments.length;i++) tosay.push(arguments[i]);
-    bot.client.say(chan, tosay.join(' '));
+    bot.client.say(chan, stringifyArgs.apply(this, arguments));
   };
 };
 
@@ -205,7 +250,7 @@ bot.client.on('message', function(from, to, text, raw) {
     var command = rem[1];
     var remainder = rem.length == 3 ? rem[2] : "";
     var respTo = (bot.client.nick == to) ? from : to;
-    bot.callCommandFn(command, [remainder, remainder.split(/\s+/), bot.getReply(respTo), command, from, to, text, raw]);
+    bot.callCommandFn(command, [remainder, bot.util.quotedSplit(remainder), bot.getReply(respTo), command, from, to, text, raw]);
   }
 });
 

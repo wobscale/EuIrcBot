@@ -16,21 +16,22 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
   var out = '';
   var err = '';
 
-  cp.stdout.on('data', function(c) { 
+  cp.stdout.on('data', function(c) {
     out += c.toString();
   });
 
-  cp.stderr.on('data', function(c) { 
+  cp.stderr.on('data', function(c) {
     err += c.toString();
   });
 
-  cp.on('close', function(code) { 
+  cp.on('close', function(code) {
     if(err.length > 0) {
       return reply(err.map(function(i){return i.trim();}).join(' - '));
     }
     lines = out.split("\n").filter(function(x) { return x.trim().length > 0; });
     lines = lines.map(function(l) { return l.replace(/\-*/g, '').trim(); });
-    reply(lines.slice(lines.length-3).join(' - ')); 
+    console.log(lines);
+    reply(lines.slice(lines.length-3).join(' - '));
   });
 
 };
