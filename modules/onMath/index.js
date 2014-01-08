@@ -1,4 +1,4 @@
-/* This module is inteded to detect lines
+/* This module is intended to detect lines
  * that contain only math and then evaluate
  * it and return the result.
  * It is possibly insecure, but I have yet to find a way
@@ -39,7 +39,9 @@ var funnyFractions = new RC(/^\s*([0-9][0]?\s*\/\s*(10|5|100))\s*$/);
 var ignoreRe = onlySymbols.or(onlyNumbers).or(funnyFractions);
 
 module.exports.msg = function(text, from, reply, raw) {
-  if(ignoreRe.test(text)) return;
+  if(ignoreRe.test(text)) {
+    return;
+  }
   if(mathRe.test(text)) {
     reply(MathScopeEval(text));
   }

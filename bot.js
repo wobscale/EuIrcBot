@@ -223,6 +223,8 @@ bot.getReply = function(chan) {
         strParts.push(arguments[i]);
       } else if(Array.isArray(arguments[i])) {
         strParts.push(stringifyArgs.apply(this, arguments[i]));
+      } else {
+        strParts.push(arguments[i].toString());
       }
     }
     return strParts.join(' ');
