@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "",
   "dependencies": {
-    "youtube-feeds": "latest"
+    "youtube-feeds": "git+https://github.com/fvdm/nodejs-youtube.git"
   },
   "main": "index.js",
   "author": "",
