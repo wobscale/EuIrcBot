@@ -65,9 +65,9 @@ bot.loadModuleFolder = function(folder, cb) {
         modules[moduleNames[i]] = mod;
         bot.modulePaths[moduleNames[i]] = "./"+folder+"/"+moduleNames[i];
         if(typeof mod.init == "function") mod.init(bot);
-      } catch(ex) { 
-        console.error(ex.stack); 
-        console.error(ex); 
+      } catch(ex) {
+        console.error(ex.stack);
+        console.error(ex);
       }
     }
     cb(false, modules);
@@ -136,6 +136,18 @@ bot.callCommandFn = function(command, args) {
       if(typeof (m["run" + command[0].toUpperCase() + command.substring(1)]) === 'function') {
         m["run" + command[0].toUpperCase() + command.substring(1)].apply(bot, args);
         return;
+      }
+      if(typeof m.commands === 'object' && typeof m.commands[command] === 'object') {
+        var parts = args[1].slice();
+        var fnObj = m.commands[command];
+        while(typeof fnObj === 'object') {
+          fnObj = fnObj[parts.shift()];
+        }
+        args[1] = parts;
+        if(typeof(fnObj) === 'function') {
+          fnObj.apply(bot, args);
+          return;
+        }
       }
     } catch(ex) { console.log(ex); }
   });
