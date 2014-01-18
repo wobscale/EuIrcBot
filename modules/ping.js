@@ -26,12 +26,12 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 
   cp.on('close', function(code) {
     if(err.length > 0) {
-      return reply(err.map(function(i){return i.trim();}).join(' - '));
+      err = err.split("\n").map(function(x){return x.trim();}).filter(function(x){return x !== "";});
+      return reply(err.join(" - "));
     }
     lines = out.split("\n").filter(function(x) { return x.trim().length > 0; });
     lines = lines.map(function(l) { return l.replace(/\-*/g, '').trim(); });
     console.log(lines);
     reply(lines.slice(lines.length-3).join(' - '));
   });
-
 };
