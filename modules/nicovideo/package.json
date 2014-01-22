@@ -1,0 +1,11 @@
+{
+  "name": "sirc-nicovido",
+  "version": "0.0.0",
+  "description": "",
+  "dependencies": {
+    "xml2js": "~0.4.1"
+  },
+  "main": "index.js",
+  "author": "",
+  "license": "MIT"
+}
