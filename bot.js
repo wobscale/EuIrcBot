@@ -58,8 +58,8 @@ bot.init = function(cb) {
   bot.tmpfolder = bot.config.tmpfolder;
   bot.datafolder = bot.config.datafolder;
   _.each(['configfolder', 'tmpfolder', 'datafolder'],function(i) {
-    if(!fs.existsSync(bot[i])) {
-      fs.mkdirSync(bot[i]);
+    if(!fs.existsSync("./"+bot[i])) {
+      fs.mkdirSync("./"+bot[i]);
     }
   });
   cb(null);
