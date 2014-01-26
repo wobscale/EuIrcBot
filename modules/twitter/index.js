@@ -2,11 +2,19 @@ var Twit = require('twit');
 var ent = require('ent');
 var conf = require("./config");
 
-var t = new Twit(conf);
+var t = null; 
 
 var twitRegex = /^(https?\:\/\/)?(www\.)?twitter\.com\/([a-zA-Z0-9_]+)(\/status\/(\d+))?/;
 
+module.init = function(bot) {
+  bot.getConfig("twitter.js", function(err, conf) {
+    if(err) bot.say("Unable to load twitter module: " + err);
+    t = new Twit(conf);
+  });
+};
+
 module.exports.url = function(url, reply) {
+  if(t === null) return;
   var m;
   if((m = twitRegex.exec(url))) {
     if(m[3] && !m[5]) {

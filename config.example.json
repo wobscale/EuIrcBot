@@ -14,5 +14,8 @@
   "showErrors": false,
   "channelPrefixes": "&#",
   "messageSplit": 512,
-  "moduleFolders": ["modules"]
+  "moduleFolders": ["modules"],
+  "datafolder": "data",
+  "tmpfolder": "tmp",
+  "configfolder": "conf"
 }

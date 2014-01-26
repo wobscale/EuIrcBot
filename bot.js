@@ -4,7 +4,10 @@
 var irc = require('irc'),
     fs = require('fs'),
     _ = require('underscore'),
-    async = require('async');
+    async = require('async'),
+    path = require('path');
+
+var default_config = fs.readFileSync("./config.example.json");
 
 var reEscape = function(s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -48,6 +51,29 @@ bot.util.quotedSplit = function(str) {
   }
   if(currentStr !== '') res.push(currentStr);
   return res;
+};
+
+bot.init = function(cb) {
+  bot.configfolder = bot.config.configfolder;
+  bot.tmpfolder = bot.config.tmpfolder;
+  bot.datafolder = bot.config.datafolder;
+  _.each(['configfolder', 'tmpfolder', 'datafolder'],function(i) {
+    if(!fs.existsSync(bot[i])) {
+      fs.mkdirSync(bot[i]);
+    }
+  });
+  cb(null);
+};
+
+bot.getConfig = function(name, cb) {
+  fs.readFile(path.join(bot.configfolder, name),{encoding: 'utf8'}, function(err, res) {
+    if(err) cb(err);
+    try {
+      cb(null, JSON.parse(res));
+    } catch(ex) {
+      cb(null, res);
+    }
+  });
 };
 
 bot.loadModuleFolder = function(folder, cb) {
@@ -155,24 +181,6 @@ bot.callCommandFn = function(command, args) {
 
 bot.loadConfig = function() { //sync
   var conf;
-  var default_config = {
-    nick: 'suebot',
-    userName: 'seubot',
-    realName: 'seubot',
-    server: 'irc.freenode.net',
-    owner: 'ek',
-    commandPrefix: '!',
-    ssl: false,
-    port: 6667,
-    debug: false,
-    mainChannel: '#seubot',
-    channels: '#seubot',
-    autoRejoin: true,
-    showErrors: false,
-    channelPrefixes: "&#",
-    messageSplit: 512,
-    moduleFolders: ["modules"]
-  };
   try {
     conf = JSON.parse(fs.readFileSync('./config.json'));
     var def_keys = Object.keys(default_config);
@@ -191,6 +199,8 @@ bot.loadConfig = function() { //sync
 
 var conf = bot.loadConfig();
 bot.config = conf;
+
+
 
 bot.client = new irc.Client(conf.server, conf.nick, {
   userName: conf.userName,
@@ -220,12 +230,11 @@ bot.say = function(args) {
   bot.client.say(bot.config.mainChannel, tosay.join(' '));
 };
 
-bot.client.connect(function() {
-  console.log("Connected!");
+bot.joinChannels = function() {
   var channels = Array.isArray(bot.conf.channels) ? bot.conf.channels : bot.conf.channels.split(',');
   for(var i=0;i<channels.length;i++) bot.client.join(channels[i], console.log);
-  bot.loadModules();
-});
+};
+
 
 bot.getReply = function(chan) {
   var stringifyArgs = function(args) {
@@ -276,6 +285,16 @@ bot.client.on('ctcp', function(from, to, text, type, raw) {
   } else {
     bot.callModuleFn('ctcp', [text, type, from, to, raw]);
   }
+});
+
+
+bot.init(function(err) {
+  if(err) return console.log(err);
+  bot.client.connect(function() {
+    console.log("Connected!");
+    bot.joinChannels();
+    bot.loadModules();
+  });
 });
 
 }());
