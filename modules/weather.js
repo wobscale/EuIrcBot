@@ -16,7 +16,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
       }
 
       if ( weatherData.cod == 200 ){
-        reply(weatherData.name + ' | ' + weatherData.main.temp + 'F , '  + weatherData.weather[0].description + ' | LO: ' + weatherData.main.temp_min + "F HI: " + weatherData.main.temp_max + 'F');
+        reply(weatherData.name + ' | ' + weatherData.main.temp + '°F, '  + weatherData.weather[0].description + ' | Lo: ' + weatherData.main.temp_min + "°F, Hi: " + weatherData.main.temp_max + '°F');
       }else{
         reply("Could not locate: " + remainder);
       }
