@@ -1,5 +1,5 @@
 var http = require('http');
-module.exports.command = "w";
+module.exports.commands = ["w", "weather"];
 
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
   http.get('http://api.openweathermap.org/data/2.5/weather?q=' + remainder + '&units=imperial', function(res) {
@@ -14,7 +14,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
       } catch(e) {
         return reply("Error handling response");
       }
-      console.log(weatherData);
+
       if ( weatherData.cod == 200 ){
         reply(weatherData.name + ' | ' + weatherData.main.temp + 'F , '  + weatherData.weather[0].description + ' | LO: ' + weatherData.main.temp_min + "F HI: " + weatherData.main.temp_max + 'F');
       }else{
