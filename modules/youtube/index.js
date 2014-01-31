@@ -16,7 +16,7 @@ function formatSecs(secs) {
 
 function sayInfo(vid, cb) {
   var url = 'http://youtu.be/' + vid.id;
-  cb(url, vid.title, '-', formatSecs(vid.duration), '-', vid.viewCount, 'views');
+  cb(url, vid.title, '-', formatSecs(vid.duration), (vid.viewCount ? '- ' + vid.viewCount + ' views' : ''));
 }
 
 
