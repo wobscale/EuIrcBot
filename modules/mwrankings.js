@@ -2,7 +2,7 @@ var http = require('http');
 module.exports.command = "mwrankings";
 
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
-  http.get('http://marketwatch-rankings.euank.com/rankings/the-golden-dong', function(res) {
+  http.get('http://marketwatch-rankings.euank.com/rankings/the-goldener-dong', function(res) {
     var data = '';
     res.on('data', function(chunk) {
       data += chunk;
