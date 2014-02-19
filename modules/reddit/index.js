@@ -14,7 +14,7 @@ module.exports.url = function(url, reply) {
 				var comment = S(comment_json).stripTags().decodeHTMLEntities().s //For some reason functions are applied right-to-left
 				
 				console.log(comment);
-				reply(comment);
+				reply(comment.substring(0,500));
 			} catch(e) {
 				return reply("Error handling response");
 			}
