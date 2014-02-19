@@ -1,12 +1,11 @@
 {
-	"name": "sirc-reddit",
-	"version": "0.0.0",
-	"description": "",
-	"dependencies": {
-		"string": "latest",
-		"http": "latest",
-	},
-	"main": "index.js",
-	"author": "",
-	"license": "MIT"
+  "name": "sirc-reddit",
+  "version": "0.0.0",
+  "description": "",
+  "dependencies": {
+    "string": "~1.8.0"
+  },
+  "main": "index.js",
+  "author": "",
+  "license": "MIT"
 }
