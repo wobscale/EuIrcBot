@@ -1,0 +1,12 @@
+{
+	"name": "sirc-reddit",
+	"version": "0.0.0",
+	"description": "",
+	"dependencies": {
+		"string": "latest",
+		"http": "latest",
+	},
+	"main": "index.js",
+	"author": "",
+	"license": "MIT"
+}
