@@ -13,6 +13,7 @@ function getDogecoinData(callback) {
     res.on('data', function(c) { j += c; });
     res.on('end', function() {
       try {
+        console.log(j.toString());
         j = JSON.parse(j.toString());
         var dgc_to_btc_last = j.return.markets.DOGE.lasttradeprice;
         var dgc_to_btc_avg = j.return.markets.DOGE.recenttrades.map(function(l) { return parseFloat(l.price); });
@@ -23,6 +24,7 @@ function getDogecoinData(callback) {
           callback("Last: $" + data.last * dgc_to_btc_last + " | Avg: $" + data.avg * dgc_to_btc_avg);
         });
       } catch(ex) {
+        callback(ex);
         callback("Could not get doge");
       }
     });
@@ -48,3 +50,5 @@ module.exports.commands = ['btc', 'ltc', 'dgc'];
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
   getTickerData(command, remainder, reply);
 };
+
+module.exports.run('', [], console.log, 'dgc');

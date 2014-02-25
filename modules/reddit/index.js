@@ -13,7 +13,7 @@ module.exports.url = function(url, reply) {
 		res.on('end', function() {
 			try {
 				var json = JSON.parse(data);
-				var comment = json[1].data.children[0].data.body;
+				var comment = json[1].data.children[0].data.body.replace(/\n/g, '\t');
 				
 				reply(comment.substring(0,500));
 			} catch(e) {
