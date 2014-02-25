@@ -2,6 +2,8 @@ var http = require('http');
 
 var redditRE = /reddit\.com\/[^\s]+|redd\.it\//;
 
+module.exports.disabled = true;
+
 // TODO, handle more htan just comments. E.g. subreddit descriptions
 module.exports.url = function(url, reply) {
   if(!redditRE.test(url)) return;

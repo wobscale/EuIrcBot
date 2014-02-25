@@ -88,6 +88,7 @@ bot.loadModuleFolder = function(folder, cb) {
       if(modules[moduleNames[i]]) continue;
       try {
         var mod = require("./"+folder+"/"+moduleNames[i]);
+        if(mod.disabled) continue;
         modules[moduleNames[i]] = mod;
         bot.modulePaths[moduleNames[i]] = "./"+folder+"/"+moduleNames[i];
         if(typeof mod.init == "function") mod.init(bot);
