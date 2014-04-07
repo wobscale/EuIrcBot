@@ -17,6 +17,15 @@ for(var i=0;i<mathKeysToGet.length;i++) {
   mathItems[mathKeysToGet[i]] = Math[mathKeysToGet[i]];
 }
 mathItems.TAU = Math.PI * 2;
+mathItems.fact = function(num) {
+    var rval=1;
+    for (var i = 2; i <= num; i++) {
+        rval = rval * i;
+    }
+    return rval;
+};
+
+
 var mathKeys = Object.keys(mathItems);
 
 var mathSymbols = ".,*+-/()%";

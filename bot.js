@@ -66,7 +66,7 @@ bot.init = function(cb) {
 };
 
 bot.getConfig = function(name, cb) {
-  fs.readFile(path.join(bot.configfolder, name),{encoding: 'utf8'}, function(err, res) {
+  fs.readFile(path.join(bot.config.configfolder, name),{encoding: 'utf8'}, function(err, res) {
     if(err) cb(err);
     try {
       cb(null, JSON.parse(res));
