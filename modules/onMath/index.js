@@ -28,7 +28,7 @@ mathItems.fact = function(num) {
 
 var mathKeys = Object.keys(mathItems);
 
-var mathSymbols = ".,*+-/()%";
+var mathSymbols = ".,*+-/()%=";
 
 function MathScopeEval(str) {
   return (new Function("with(this) { return "+str+"; }")).call(mathItems);
