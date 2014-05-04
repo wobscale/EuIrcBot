@@ -25,7 +25,7 @@ module.exports.url = function(url, reply) {
       // User page
       t.get("/users/show", {screen_name: m[3]}, function(err, res) {
         if(err) reply("Error getting user " + m[3]);
-        else reply(ent.decode(res.name) + " (@" + ent.decode(res.screen_name) + "): " + ent.decode(res.description));
+        else reply(ent.decode(res.name) + " (@" + ent.decode(res.screen_name) + "): " + ent.decode(res.description).replace(/\n/g, "\t"));
       });
     } else {
       var uname = m[3];
@@ -33,7 +33,7 @@ module.exports.url = function(url, reply) {
       t.get("/statuses/show/:id", {id: id}, function(err, res) {
         console.log(res.user);
         if(err) reply("Error getting tweet");
-        else reply(ent.decode(res.user.name) + " (@" + ent.decode(res.user.screen_name) + "): " + ent.decode(res.text));
+        else reply(ent.decode(res.user.name) + " (@" + ent.decode(res.user.screen_name) + "): " + ent.decode(res.text).replace(/\n/g, "\t\t"));
       });
     }
   }
