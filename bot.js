@@ -141,6 +141,60 @@ bot.callModuleFn = function(fname, args) {
   });
 };
 
+bot.getAllCommandFns = function() {
+  return _.reduce(_.values(modules).map(function(m) {
+    return bot.getModuleCommandFns(m);
+  }), function(left, right) {
+    return _.extend(left,right);
+  });
+};
+
+/* Returns a key/value map of command to function */
+bot.getModuleCommandFns = function(m) {
+  var commandFns = {};
+  // exports.command = 'test'; exports.run = function(){}
+  if(typeof m.command == 'string' && m.command.length > 0 && typeof m.run == 'function') {
+    commandFns[m.command] = m.run;
+  }
+  // exports.commands = ['test', 'test2']; exports.run = function(){}
+  if(Array.isArray(m.commands) && typeof m.run == 'function') {
+    m.commands.forEach(function(c) {
+      commandFns[c] = m.run;
+    });
+  }
+  // export.commands = { test: function() {} }
+  if(!Array.isArray(m.commands) && typeof m.commands == 'object') {
+    Object.keys(m.commands).forEach(function(command) {
+      if(typeof m.commands[command] == 'function') {
+        commandFns[command] = m.commands[command];
+      } else if(typeof m.commands[command] == 'object') {
+        // exports.commands = {test: {hirarchy: function(){}}}
+        // This one's kinda icky. We're just going to assume only
+        // the top level ones matter; the specific help of the command
+        // can mention other ones.
+        commandFns[command] = function(args) {
+          bot.traverseCommandHirarchy(m.commands[command], Array.prototype.slice(arguments));
+        };
+      }
+    });
+  }
+  // exports.run_test; exports.runTest
+  Object.keys(m).forEach(function(key) {
+    if(typeof m[key] != 'function') return; //continue
+
+    if(key.indexOf('run') === 0 && key.length > 3) {
+      if(key[3] == '_' && key.length > 4) {
+        commandFns[key.substr(4)] = m[key];
+      } else {
+        var c = key.substr(3);
+        c = c[0].toLowerCase() + c.substr(1);
+        commandFns[c] = m[key];
+      }
+    }
+  });
+  return commandFns;
+};
+
 bot.callCommandFn = function(command, args) {
   _.values(modules).forEach(function(m) {
     try {
@@ -178,6 +232,15 @@ bot.callCommandFn = function(command, args) {
       }
     } catch(ex) { console.log(ex); }
   });
+};
+
+bot.traverseCommandHirarchy = function(fnObj, args) {
+  var parts = args[1].slice();
+  while(typeof fnObj == 'object') {
+    fnObj = fnObj[parts.shift()];
+  }
+  args[1] = parts;
+  return fnObj;
 };
 
 bot.loadConfig = function() { //sync
