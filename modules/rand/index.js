@@ -1,4 +1,3 @@
-
 module.exports.command = "rand";
 
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
