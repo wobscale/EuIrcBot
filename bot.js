@@ -173,7 +173,7 @@ bot.getModuleCommandFns = function(m) {
         // the top level ones matter; the specific help of the command
         // can mention other ones.
         commandFns[command] = function(args) {
-          bot.traverseCommandHirarchy(m.commands[command], Array.prototype.slice(arguments));
+          bot.traverseCommandHirarchy(m.commands[command], Array.prototype.slice.apply(arguments));
         };
       }
     });
@@ -196,42 +196,12 @@ bot.getModuleCommandFns = function(m) {
 };
 
 bot.callCommandFn = function(command, args) {
-  _.values(modules).forEach(function(m) {
+  var fns = bot.getAllCommandFns();
+  if(typeof fns[command] === 'function') {
     try {
-      if(typeof m.command == 'string' && m.command == command && typeof m.run == 'function') {
-        m.run.apply(bot, args);
-        return;
-      }
-      if(Array.isArray(m.commands) && m.commands.indexOf(command) !== -1 && typeof m.run == 'function') {
-        m.run.apply(bot, args);
-        return;
-      }
-      if(!Array.isArray(m.commands) && typeof m.commands == 'object' && typeof m.commands[command] == 'function') {
-        m.commands[command].apply(bot, args);
-        return;
-      }
-      if(typeof m["run_"+command] == 'function') {
-        m["run_"+command].apply(bot, args);
-        return;
-      }
-      if(typeof (m["run" + command[0].toUpperCase() + command.substring(1)]) === 'function') {
-        m["run" + command[0].toUpperCase() + command.substring(1)].apply(bot, args);
-        return;
-      }
-      if(typeof m.commands === 'object' && typeof m.commands[command] === 'object') {
-        var parts = args[1].slice();
-        var fnObj = m.commands[command];
-        while(typeof fnObj === 'object') {
-          fnObj = fnObj[parts.shift()];
-        }
-        args[1] = parts;
-        if(typeof(fnObj) === 'function') {
-          fnObj.apply(bot, args);
-          return;
-        }
-      }
+      fns[command].apply(bot, args);
     } catch(ex) { console.log(ex); }
-  });
+  }
 };
 
 bot.traverseCommandHirarchy = function(fnObj, args) {
@@ -240,7 +210,10 @@ bot.traverseCommandHirarchy = function(fnObj, args) {
     fnObj = fnObj[parts.shift()];
   }
   args[1] = parts;
-  return fnObj;
+
+  if(typeof fnObj !== 'function') return;
+
+  return fnObj.apply(bot, args);
 };
 
 bot.loadConfig = function() { //sync
