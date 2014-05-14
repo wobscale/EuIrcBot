@@ -76,6 +76,16 @@ bot.getConfig = function(name, cb) {
   });
 };
 
+bot.getDataFolder = function(name) {
+  return bot.datafolders[name];
+};
+
+bot.initDataFolders = function(cb) {
+  bot.datafolders = {};
+  //TODO
+  cb(null);
+};
+
 bot.loadModuleFolder = function(folder, cb) {
   fs.readdir('./'+folder, function(err, moduleNames) {
     if(err) {
@@ -101,11 +111,12 @@ bot.loadModuleFolder = function(folder, cb) {
   });
 };
 
-bot.loadModules = function() {
+bot.loadModules = function(cb) {
   modules = {};
   bot.modules = modules;
   async.mapSeries(bot.config.moduleFolders, bot.loadModuleFolder, function(err, results) {
     if(err) console.log(err);
+    if(cb) cb(null);
   });
 };
 
@@ -149,10 +160,17 @@ bot.getAllCommandFns = function() {
   });
 };
 
-/* Returns a key/value map of command to function */
+/* Returns a key/value map of commands:
+ * {
+ *   command: {
+ *     module: m,
+ *     fn: f
+ *   }
+ * }
+ */
 bot.getModuleCommandFns = function(m) {
   var commandFns = {};
-  // exports.command = 'test'; exports.run = function(){}
+  /* exports.command = 'test'; exports.run = function(){} */
   if(typeof m.command == 'string' && m.command.length > 0 && typeof m.run == 'function') {
     commandFns[m.command] = m.run;
   }
@@ -173,7 +191,7 @@ bot.getModuleCommandFns = function(m) {
         // the top level ones matter; the specific help of the command
         // can mention other ones.
         commandFns[command] = function(args) {
-          bot.traverseCommandHirarchy(m.commands[command], Array.prototype.slice.apply(arguments));
+          bot.traverseCommandHirarchy(bot, m.commands[command], Array.prototype.slice.apply(arguments));
         };
       }
     });
@@ -192,28 +210,40 @@ bot.getModuleCommandFns = function(m) {
       }
     }
   });
-  return commandFns;
+  var commandFnsWithModules = _.object(_.map(commandFns, function(fn, command) {
+    return [command, {module: m, fn: fn}];
+  }));
+
+  return commandFnsWithModules;
+};
+
+bot.modifyThisForModule = function(oldBotObj, module) {
+  var newBot = _.clone(oldBotObj);
+  newBot.name = _.find(Object.keys(bot.modules), function(mname) { return bot.modules[mname] === module; });
+  newBot.datadir = bot.getDataFolder(newBot.name);
+  newBot.module = module;
+  return newBot;
 };
 
 bot.callCommandFn = function(command, args) {
   var fns = bot.getAllCommandFns();
-  if(typeof fns[command] === 'function') {
+  if(typeof fns[command].fn === 'function') {
     try {
-      fns[command].apply(bot, args);
-    } catch(ex) { console.log(ex); }
+      fns[command].fn.apply(bot.modifyThisForModule(bot, fns[command].module), args);
+    } catch(ex) { console.trace("Call Command: " + command); console.log(ex); }
   }
 };
 
-bot.traverseCommandHirarchy = function(fnObj, args) {
+bot.traverseCommandHirarchy = function(botObj, fnObj, args) {
   var parts = args[1].slice();
-  while(typeof fnObj == 'object') {
-    fnObj = fnObj[parts.shift()];
+  while(typeof fnObj.fn == 'object') {
+    fnObj.fn = fnObj.fn[parts.shift()];
   }
   args[1] = parts;
 
-  if(typeof fnObj !== 'function') return;
+  if(typeof fnObj.fn !== 'function') return;
 
-  return fnObj.apply(bot, args);
+  return fnObj.fn.apply(bot.modifyThisForModule(botObj, fnObj.module), args);
 };
 
 bot.loadConfig = function() { //sync
@@ -267,9 +297,13 @@ bot.say = function(args) {
   bot.client.say(bot.config.mainChannel, tosay.join(' '));
 };
 
-bot.joinChannels = function() {
+bot.joinChannels = function(cb) {
+  if(!cb) cb = function(err) { if(err) console.log(err); };
+
   var channels = Array.isArray(bot.conf.channels) ? bot.conf.channels : bot.conf.channels.split(',');
-  for(var i=0;i<channels.length;i++) bot.client.join(channels[i], console.log);
+  async.map(channels, function(item, joined) {
+    bot.client.join(item, function(){joined();});
+  }, cb);
 };
 
 
@@ -326,14 +360,27 @@ bot.client.on('ctcp', function(from, to, text, type, raw) {
   }
 });
 
-
-bot.init(function(err) {
-  if(err) return console.log(err);
-  bot.client.connect(function() {
+async.series([
+  function(cb) {
+    bot.conf = bot.loadConfig();
+    cb(null);
+  },
+  bot.init,
+  function(cb){
+    bot.client.connect(function(){cb(null);});
+  },
+  function(cb){
     console.log("Connected!");
-    bot.joinChannels();
-    bot.loadModules();
-  });
+    cb(null);
+  },
+  bot.initDataFolders,
+  bot.loadModules,
+  bot.joinChannels
+], function(err, results) {
+  if(err) {
+    console.trace("Error in init");
+    console.log(err);
+  }
 });
 
 }());

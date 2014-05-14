@@ -14,3 +14,6 @@ module.exports.runTest4 = function(r, p, reply) {
 module.exports.runTest5 = function(r, p, reply) {
   reply("My parts are:", p.join(', '));
 };
+module.exports.run_test6 = function(r,p,reply) {
+  reply("My name is " + this.name);
+};
