@@ -227,7 +227,7 @@ bot.modifyThisForModule = function(oldBotObj, module) {
 
 bot.callCommandFn = function(command, args) {
   var fns = bot.getAllCommandFns();
-  if(typeof fns[command].fn === 'function') {
+  if(typeof fns[command] === 'object' && typeof fns[command].fn === 'function') {
     try {
       fns[command].fn.apply(bot.modifyThisForModule(bot, fns[command].module), args);
     } catch(ex) { console.trace("Call Command: " + command); console.log(ex); }
