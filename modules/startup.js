@@ -10,7 +10,9 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'Wikipedia', 'eHarmony', 'Amazon', 'Adult Friend Finder', 'EC2', 'S3',
     '4chan', 'Blogger', 'Pinterest', 'The PS3', 'The XBOX', 'Craigslist', 'XHamster',
     'CNN', 'A new Programming language', 'A Webbrowser', 'Ads', 'The Pirate Bay', 'Ebay',
-    'Deviant Art', 'Mail order bombs'
+    'Deviant Art', 'Mail order bombs', 'Crowdsourced retirement funding', 'Siri',
+    'A personal assistant', 'Robot replacements', 'Fingerboxes', 'Concealed weaponry',
+    'An iPhone app', 'Complaint management', 'Easy blogging', 'A pyramid scheme'
   ];
   
   var markets = [
@@ -24,7 +26,13 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'gay people', 'cats', 'dogs', 'Germans', 'Christians', 'Athiests',
     'redditors', 'guns', 'ladies', 'men', 'programmers', 'ninjas', 'pirates',
     'criminals', 'prisoners', 'autists', 'artists', 'emo teens', 'babies',
-    'republicans'
+    'republicans', 'people like ek', 'Amazon employees', 'B movies', 'pornstars',
+    'hipsters', 'barbarians', 'native americans', 'hackers', 'retired strippers',
+    'people like reed', 'snipers', 'devoted Christians', 'atheists', 'cats',
+    'the unemployed', 'the 1%', 'business purposes', 'amputees', 'panda lovers',
+    'recipes', 'writers', 'dogs', 'birds', 'anime', 'the POTUS', 'sick horses',
+    'girls that look like brigid', "people who can't read good", 'family photos'
+    
   ];
   
   var chosen_service = services[Math.floor(Math.random() * services.length)],
