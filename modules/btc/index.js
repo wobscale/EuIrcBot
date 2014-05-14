@@ -49,5 +49,3 @@ module.exports.commands = ['btc', 'ltc', 'dgc'];
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
   getTickerData(command, remainder, reply);
 };
-
-module.exports.run('', [], console.log, 'dgc');
