@@ -1,6 +1,7 @@
 var http = require('follow-redirects').http;
 var https = require('follow-redirects').https;
 var URI = require('uri-js');
+var request = require('request');
 
 module.exports.command = "isup";
 
@@ -20,22 +21,18 @@ module.exports.run = function(remainder, p, reply) {
   var url = validateUrl(remainder);
   var parsed = URI.parse(url);
   var getter = /^https/.test(url) ? https.get : http.get;
-  getter(url, function(res) {
 
-    var toSay = url;
-
-    var finalUrl = parsed.scheme + "://" + res.req._headers.host + res.req.path;
-    if(finalUrl != url) {
-      toSay += " (-> " + finalUrl + ")";
-    }
-    if(res.statusCode >= 200 && res.statusCode <= 400) {
-      toSay += " appears to be doing just fine.";
-    } else {
-      toSay += " is error with status code " + res.statusCode;
-    }
-    reply(toSay);
-  }).on('error', function(err) {
-    reply(url + " couldn't be dealt with: " + err.toString());
-  });
+  if(/^https?$/.test(parsed.scheme)) {
+    request({url: url, strictSSL: false}, function(error, response, body) {
+      if(error) return reply(url + " didn't work, yo: " + error.toString());
+      if(response.statusCode >= 200 && response.statusCode < 400) {
+        return reply(url + " appears to be doing just fine.");
+      } else {
+        return reply(url + " is error with status code " + response.statusCode + '.');
+      }
+    });
+  } else {
+    reply(parsed.scheme + " is not supported yet. Open a pull request if you care that much");
+  }
 };
 
