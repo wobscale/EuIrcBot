@@ -86,21 +86,45 @@ bot.initDataFolders = function(cb) {
   cb(null);
 };
 
+/* Sync for now. TODO, make this promises / async */
+bot.getModuleName = function(mpath, def) {
+  var stats = fs.statSync(mpath);
+  if(stats.isFile()) {
+    try {
+      return require(mpath).name;
+    } catch(ex) {
+      return def;
+    }
+  } else if(stats.isDirectory()) {
+    try {
+      return JSON.parse(fs.readFileSync(path.join(mpath, 'package.json'))).name;
+    } catch(ex) {
+      console.log("Invalid package.json for " + mpath);
+      console.log(ex);
+      return def;
+    }
+  }
+  return def;
+};
+
 bot.loadModuleFolder = function(folder, cb) {
-  fs.readdir('./'+folder, function(err, moduleNames) {
+  fs.readdir(path.join('.',folder), function(err, modulePaths) {
     if(err) {
       console.log(err);
       return cb(err);
     }
     //Exclude hidden files and folders
-    moduleNames = moduleNames.filter(function(i){return i[0] !== '.';});
-    for(var i=0;i<moduleNames.length;i++) {
-      if(modules[moduleNames[i]]) continue;
+    modulePaths = modulePaths.filter(function(i){return i[0] !== '.';});
+    for(var i=0;i<modulePaths.length;i++) {
+      /* ./ required because of how require works. go figure. */
+      var fullPath = './' + path.join('.', folder, modulePaths[i]);
+      var moduleName = bot.getModuleName(fullPath, modulePaths[i]);
+      if(modules[moduleName]) continue;
       try {
-        var mod = require("./"+folder+"/"+moduleNames[i]);
+        var mod = require(fullPath);
         if(mod.disabled) continue;
-        modules[moduleNames[i]] = mod;
-        bot.modulePaths[moduleNames[i]] = "./"+folder+"/"+moduleNames[i];
+        modules[moduleName] = mod;
+        bot.modulePaths[moduleName] = fullPath;
         if(typeof mod.init == "function") mod.init(bot);
       } catch(ex) {
         console.error(ex.stack);

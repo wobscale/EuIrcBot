@@ -1,7 +1,9 @@
-
 module.exports.init = function(bot) {};
 
+module.exports.name = "sirc-test";
+
 module.exports.command = "test";
+
 
 module.exports.commands = ['test2', 'test3'];
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
