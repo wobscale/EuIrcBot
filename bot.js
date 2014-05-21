@@ -87,24 +87,26 @@ bot.initDataFolders = function(cb) {
 };
 
 /* Sync for now. TODO, make this promises / async */
-bot.getModuleName = function(mpath, def) {
+bot.getModuleName = function(mpath) {
+  var m;
   var stats = fs.statSync(mpath);
   if(stats.isFile()) {
     try {
-      return require(mpath).name;
+      m = require(mpath).name;
+      if(m) return m;
     } catch(ex) {
-      return def;
+      /* not a warning yet. Eventually maybe */
     }
   } else if(stats.isDirectory()) {
     try {
-      return JSON.parse(fs.readFileSync(path.join(mpath, 'package.json'))).name;
+      m = JSON.parse(fs.readFileSync(path.join(mpath, 'package.json'))).name;
+      if(m) return m;
     } catch(ex) {
       console.log("Invalid package.json for " + mpath);
       console.log(ex);
-      return def;
     }
   }
-  return def;
+  return mpath;
 };
 
 bot.loadModuleFolder = function(folder, cb) {
@@ -118,7 +120,7 @@ bot.loadModuleFolder = function(folder, cb) {
     for(var i=0;i<modulePaths.length;i++) {
       /* ./ required because of how require works. go figure. */
       var fullPath = './' + path.join('.', folder, modulePaths[i]);
-      var moduleName = bot.getModuleName(fullPath, modulePaths[i]);
+      var moduleName = bot.getModuleName(fullPath);
       if(modules[moduleName]) continue;
       try {
         var mod = require(fullPath);
