@@ -78,8 +78,8 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 
           var conditions = weatherData.current_observation;
           reply(conditions.display_location.full + ' | ' + conditions.temp_f +
-            '°F, '  + conditions.weather + ' | Feels Like: ' +
-            conditions.feelslike_f + '°F');
+            '°F, '  + conditions.weather + ' | Humidity: ' +
+            conditions.relative_humidity);
         });
       });
     });
