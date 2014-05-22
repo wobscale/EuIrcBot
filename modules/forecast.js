@@ -2,7 +2,7 @@ var http = require('http');
 var https = require('https');
 var config;
 
-module.exports.commands = ["w", "weather"];
+module.exports.commands = ["forecast"];
 
 module.exports.init = function(bot) {
   bot.getConfig( "weather.json", function( err, conf ) {
@@ -63,7 +63,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
       city = city.replace(/ /g, '_');
       var locStr = state + "/" + city;
       http.get('http://api.wunderground.com/api/' + config.wunderground_key 
-        + '/conditions/q/' + locStr + '.json', function(res) {
+        + '/forecast/q/' + locStr + '.json', function(res) {
         var wudata = '';
         res.on('data', function(chunk) {
         wudata += chunk;
@@ -76,10 +76,15 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
             return reply("Error handling response");
           }
 
-          var conditions = weatherData.current_observation;
-          reply(conditions.display_location.full + ' | ' + conditions.temp_f +
-            '°F, '  + conditions.weather + ' | Humidity: ' +
-            conditions.relative_humidity);
+          var forecast = weatherData.forecast.simpleforecast.forecastday;
+          for(i = 0; i < forecast.length; ++i)
+          {
+            reply(forecast[i].date.weekday + ' ' + forecast[i].date.month + '/' +
+              forecast[i].date.day + ': ' + forecast[i].conditions + ' | High: ' +
+              forecast[i].high.fahrenheit +  '°F  | Low: ' +
+              forecast[i].low.fahrenheit + '°F | Precipitation: ' +
+              forecast[i].pop + '%');
+          }
         });
       });
     });
