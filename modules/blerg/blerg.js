@@ -11,7 +11,7 @@ module.exports.init = function(bot) {
       var watch = conf.watch[i];
       var ablerg = require('blerg');
       ablerg.login(watch.username, watch.password, function(err) {
-        if(err) bot.say("Trouble logging into blerg account: " + err);
+        if(err) return console.log("Trouble logging into blerg account: " + err);
         watches[watch.nick] = ablerg;
       });
     }
