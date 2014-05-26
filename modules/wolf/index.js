@@ -21,11 +21,16 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 
   wc.query(remainder, function(err, res) {
     if(err) return reply("Wolfram error: " + err);
-    var primary_pods = res.filter(function(x){return x.primary;});
-    if(primary_pods.length === 0) {
+
       if(res.length === 1) {
         return reply("No result for query: " + out[0].subpods[0].value);
-      } else {
+      }
+
+    var primary_pods = res.filter(function(x){return x.primary;});
+    if(primary_pods.length === 0) {
+      try {
+        return reply(res[0].subpods[0].value + ': ' + res[1].subpods[0].value.split('\n').join(' ~ '));
+      } catch(ex) {
         return reply("No primary pod, try http://www.wolframalpha.com/input/?i="+encodeURIComponent(remainder));
       }
     }
