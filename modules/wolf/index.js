@@ -12,7 +12,7 @@ module.exports.init = function(bot) {
   });
 };
 
-module.exports.commands = ['wolf', 'wolfram', 'wolframalpha'];
+module.exports.commands = ['wolf', 'wolfram', 'wolframalpha', 'wa'];
 
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
   if(wc === null) {
