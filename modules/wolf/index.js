@@ -7,7 +7,7 @@ module.exports.init = function(bot) {
     try {
       wc = new wolfram.createClient(conf.appid);
     } catch(ex) {
-      bot.say("Error loading twitter library: " + ex);
+      bot.say("Error loading wolfram library: " + ex);
     }
   });
 };
