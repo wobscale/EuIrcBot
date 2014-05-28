@@ -1,0 +1,11 @@
+{
+  "name": "sirc-imgur",
+  "version": "0.0.0",
+  "description": "",
+  "main": "imgur.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "EuanK",
+  "license": "ISC"
+}

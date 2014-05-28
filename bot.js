@@ -217,7 +217,7 @@ bot.getModuleCommandFns = function(m) {
         // the top level ones matter; the specific help of the command
         // can mention other ones.
         commandFns[command] = function(args) {
-          bot.traverseCommandHirarchy(bot, m.commands[command], Array.prototype.slice.apply(arguments));
+          bot.traverseCommandHirarchy(bot, {fn: m.commands[command], module: m}, Array.prototype.slice.apply(arguments));
         };
       }
     });
