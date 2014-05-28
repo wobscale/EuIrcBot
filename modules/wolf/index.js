@@ -7,12 +7,12 @@ module.exports.init = function(bot) {
     try {
       wc = new wolfram.createClient(conf.appid);
     } catch(ex) {
-      bot.say("Error loading twitter library: " + ex);
+      bot.say("Error loading wolfram library: " + ex);
     }
   });
 };
 
-module.exports.commands = ['wolf', 'wolfram', 'wolframalpha'];
+module.exports.commands = ['wolf', 'wolfram', 'wolframalpha', 'wa'];
 
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
   if(wc === null) {
