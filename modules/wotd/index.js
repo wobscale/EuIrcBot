@@ -25,10 +25,14 @@ module.exports.run = function( remainder, parts, reply, command, from, to, text,
     resp.on( 'end', function() {
       try {
         var json = JSON.parse(data);
-        var msg = json.word + " | " + json.definitions[0].partOfSpeech + " | " + json.definitions[0].text + " | " + json.examples[0].text;
-        reply( msg.substring( 0, 500 ) );
+        var msg = [json.word];
+        if(json.definitions[0].partOfSpeech) msg.push(json.definitions[0].partOfSpeech);
+        if(json.definitions[0].text) msg.push(json.definitions[0].text);
+        if(json.examples[0] && json.examples[0].text) msg.push(json.examples[0].text);
+
+        reply( msg.join(" | ").substring( 0, 500 ) );
       } catch(e) {
       }
     });
   });
-}
+};
