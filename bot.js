@@ -5,7 +5,8 @@ var irc = require('irc'),
     fs = require('fs'),
     _ = require('underscore'),
     async = require('async'),
-    path = require('path');
+    path = require('path'),
+    moduleMan = require("./node-module-manager");
 
 var default_config = fs.readFileSync("./config.example.json");
 
@@ -88,62 +89,33 @@ bot.initDataFolders = function(cb) {
 
 /* Sync for now. TODO, make this promises / async */
 bot.getModuleName = function(mpath) {
-  var m;
-  var stats = fs.statSync(mpath);
-  if(stats.isFile()) {
-    try {
-      m = require(mpath).name;
-      if(m) return m;
-    } catch(ex) {
-      /* not a warning yet. Eventually maybe */
-    }
-  } else if(stats.isDirectory()) {
-    try {
-      m = JSON.parse(fs.readFileSync(path.join(mpath, 'package.json'))).name;
-      if(m) return m;
-    } catch(ex) {
-      console.log("Invalid package.json for " + mpath);
-      console.log(ex);
-    }
-  }
-  return mpath;
+  return moduleMan.getModuleName(mpath);
 };
 
 bot.loadModuleFolder = function(folder, cb) {
-  fs.readdir(path.join('.',folder), function(err, modulePaths) {
-    if(err) {
-      console.log(err);
-      return cb(err);
-    }
-    //Exclude hidden files and folders
-    modulePaths = modulePaths.filter(function(i){return i[0] !== '.';});
-    for(var i=0;i<modulePaths.length;i++) {
-      /* ./ required because of how require works. go figure. */
-      var fullPath = './' + path.join('.', folder, modulePaths[i]);
-      var moduleName = bot.getModuleName(fullPath);
-      if(modules[moduleName]) continue;
-      try {
-        var mod = require(fullPath);
-        if(mod.disabled) continue;
-        modules[moduleName] = mod;
-        bot.modulePaths[moduleName] = fullPath;
-        if(typeof mod.init == "function") mod.init(bot);
-      } catch(ex) {
-        console.error(ex.stack);
-        console.error(ex);
-      }
-    }
-    cb(false, modules);
-  });
+  return moduleMan.loadModuleFolder(folder, cb);
 };
 
 bot.loadModules = function(cb) {
   modules = {};
   bot.modules = modules;
   async.mapSeries(bot.config.moduleFolders, bot.loadModuleFolder, function(err, results) {
-    if(err) console.log(err);
+    results.forEach(function(r) {
+      _.extend(bot.modules, r.modules);
+      _.extend(bot.modulePaths, r.modulePaths);
+    });
     if(cb) cb(null);
   });
+};
+
+
+bot.initModules = function(cb) {
+  _.each(_.values(bot.modules), function(mod) {
+    if(typeof mod.init == 'function') {
+      mod.init(bot);
+    }
+  });
+  cb(null); //Technically they aren't initted yet if they're async. Whatev.
 };
 
 bot.reloadModules = function() {
@@ -401,6 +373,7 @@ async.series([
   },
   bot.initDataFolders,
   bot.loadModules,
+  bot.initModules,
   bot.joinChannels
 ], function(err, results) {
   if(err) {
