@@ -15,9 +15,6 @@ var reEscape = function(s) {
 };
 
 var bot = {};
-var modules = {};
-bot.modules = modules;
-bot.modulePaths = {};
 
 bot.util = {}; //Util functions
 
@@ -66,6 +63,11 @@ bot.init = function(cb) {
   cb(null);
 };
 
+bot.initModuleManager = function(cb) {
+  moduleMan.init(bot);
+  cb();
+};
+
 bot.getConfig = function(name, cb) {
   fs.readFile(path.join(bot.config.configfolder, name),{encoding: 'utf8'}, function(err, res) {
     if(err) cb(err);
@@ -87,162 +89,16 @@ bot.initDataFolders = function(cb) {
   cb(null);
 };
 
-/* Sync for now. TODO, make this promises / async */
-bot.getModuleName = function(mpath) {
-  return moduleMan.getModuleName(mpath);
-};
-
-bot.loadModuleFolder = function(folder, cb) {
-  return moduleMan.loadModuleFolder(folder, cb);
-};
-
-bot.loadModules = function(cb) {
-  modules = {};
-  bot.modules = modules;
-  async.mapSeries(bot.config.moduleFolders, bot.loadModuleFolder, function(err, results) {
-    results.forEach(function(r) {
-      _.extend(bot.modules, r.modules);
-      _.extend(bot.modulePaths, r.modulePaths);
-    });
-    if(cb) cb(null);
-  });
-};
-
-
-bot.initModules = function(cb) {
-  _.each(_.values(bot.modules), function(mod) {
-    if(typeof mod.init == 'function') {
-      mod.init(bot);
-    }
-  });
-  cb(null); //Technically they aren't initted yet if they're async. Whatev.
-};
-
-bot.reloadModules = function() {
-  var numToUnload = _.keys(modules).length;
-  _.keys(modules).forEach(function(name) {
-    if(typeof modules[name].unload == "function") {
-      modules[name].unload(function() {
-        var nam = require.resolve(bot.modulePaths[name]);
-        delete require.cache[nam];
-        numToUnload--;
-        if(numToUnload === 0) return bot.loadModules();
-      });
-    } else {
-      var nam = require.resolve(bot.modulePaths[name]);
-      delete require.cache[nam];
-      numToUnload--;
-      if(numToUnload === 0) return bot.loadModules();
-    }
-  });
-};
 
 bot.callModuleFn = function(fname, args) {
-  _.values(modules).forEach(function(m) {
-    if(typeof m[fname] == 'function') {
-      try {
-        m[fname].apply(bot, args);
-      } catch(ex) {
-        console.log(ex.stack);
-        console.log(ex);
-      }
-    }
-  });
+  return moduleMan.callModuleFn(fname, args);
 };
 
-bot.getAllCommandFns = function() {
-  return _.reduce(_.values(modules).map(function(m) {
-    return bot.getModuleCommandFns(m);
-  }), function(left, right) {
-    return _.extend(left,right);
-  });
-};
-
-/* Returns a key/value map of commands:
- * {
- *   command: {
- *     module: m,
- *     fn: f
- *   }
- * }
- */
-bot.getModuleCommandFns = function(m) {
-  var commandFns = {};
-  /* exports.command = 'test'; exports.run = function(){} */
-  if(typeof m.command == 'string' && m.command.length > 0 && typeof m.run == 'function') {
-    commandFns[m.command] = m.run;
-  }
-  // exports.commands = ['test', 'test2']; exports.run = function(){}
-  if(Array.isArray(m.commands) && typeof m.run == 'function') {
-    m.commands.forEach(function(c) {
-      commandFns[c] = m.run;
-    });
-  }
-  // export.commands = { test: function() {} }
-  if(!Array.isArray(m.commands) && typeof m.commands == 'object') {
-    Object.keys(m.commands).forEach(function(command) {
-      if(typeof m.commands[command] == 'function') {
-        commandFns[command] = m.commands[command];
-      } else if(typeof m.commands[command] == 'object') {
-        // exports.commands = {test: {hirarchy: function(){}}}
-        // This one's kinda icky. We're just going to assume only
-        // the top level ones matter; the specific help of the command
-        // can mention other ones.
-        commandFns[command] = function(args) {
-          bot.traverseCommandHirarchy(bot, {fn: m.commands[command], module: m}, Array.prototype.slice.apply(arguments));
-        };
-      }
-    });
-  }
-  // exports.run_test; exports.runTest
-  Object.keys(m).forEach(function(key) {
-    if(typeof m[key] != 'function') return; //continue
-
-    if(key.indexOf('run') === 0 && key.length > 3) {
-      if(key[3] == '_' && key.length > 4) {
-        commandFns[key.substr(4)] = m[key];
-      } else {
-        var c = key.substr(3);
-        c = c[0].toLowerCase() + c.substr(1);
-        commandFns[c] = m[key];
-      }
-    }
-  });
-  var commandFnsWithModules = _.object(_.map(commandFns, function(fn, command) {
-    return [command, {module: m, fn: fn}];
-  }));
-
-  return commandFnsWithModules;
-};
-
-bot.modifyThisForModule = function(oldBotObj, module) {
-  var newBot = _.clone(oldBotObj);
-  newBot.name = _.find(Object.keys(bot.modules), function(mname) { return bot.modules[mname] === module; });
-  newBot.datadir = bot.getDataFolder(newBot.name);
-  newBot.module = module;
-  return newBot;
-};
 
 bot.callCommandFn = function(command, args) {
-  var fns = bot.getAllCommandFns();
-  if(typeof fns[command] === 'object' && typeof fns[command].fn === 'function') {
-    try {
-      fns[command].fn.apply(bot.modifyThisForModule(bot, fns[command].module), args);
-    } catch(ex) { console.trace("Call Command: " + command); console.log(ex); }
-  }
+  return moduleMan.callCommandFn(command, args);
 };
 
-bot.traverseCommandHirarchy = function(botObj, fnObj, args) {
-  var parts = args[1].slice();
-  while(typeof fnObj.fn == 'object') {
-    fnObj.fn = fnObj.fn[parts.shift()];
-  }
-  args[1] = parts;
-
-  if(typeof fnObj.fn !== 'function') return;
-
-  return fnObj.fn.apply(bot.modifyThisForModule(botObj, fnObj.module), args);
-};
 
 bot.loadConfig = function() { //sync
   var conf;
@@ -350,11 +206,11 @@ bot.client.on('message', function(from, to, text, raw) {
 
 bot.client.on('ctcp', function(from, to, text, type, raw) {
   if(from == bot.config.owner && to == bot.client.nick && text == "RELOAD") {
-    bot.reloadModules();
+    moduleMan.reloadModules();
   } else if(from == bot.config.owner && to == bot.client.nick && text == "LOAD") {
-    bot.loadModules();
+    moduleMan.loadModules();
   } else {
-    bot.callModuleFn('ctcp', [text, type, from, to, raw]);
+    moduleMan.callModuleFn('ctcp', [text, type, from, to, raw]);
   }
 });
 
@@ -372,8 +228,9 @@ async.series([
     cb(null);
   },
   bot.initDataFolders,
-  bot.loadModules,
-  bot.initModules,
+  bot.initModuleManager,
+  moduleMan.loadModules,
+  moduleMan.initModules,
   bot.joinChannels
 ], function(err, results) {
   if(err) {
