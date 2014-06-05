@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "description": "",
   "dependencies": {
-    "google": "latest"
+    "google": "git+https://github.com/euank/node-google.git",
+    "humanize": "0.0.9"
   },
   "main": "index.js",
   "scripts": {
