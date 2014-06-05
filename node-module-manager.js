@@ -5,6 +5,7 @@ var fs = require('fs'),
 
 var modules = {};
 var modulePaths = {};
+
 var config;
 var bot;
 
