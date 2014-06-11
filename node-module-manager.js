@@ -192,6 +192,7 @@ me.traverseCommandHirarchy = function(botObj, fnObj, args) {
 
 me.modifyThisForModule = function(module) {
   var obj = _.clone(bot);
+  obj.getAllCommandFns = me.getAllCommandFns;
   obj.name = _.find(Object.keys(modules), function(mname) { return modules[mname] === module; });
   obj.datadir = bot.getDataFolder(obj.name);
   obj.module = module;
