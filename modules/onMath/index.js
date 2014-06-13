@@ -31,7 +31,11 @@ var mathKeys = Object.keys(mathItems);
 var mathSymbols = ".,*+-/()%=";
 
 function MathScopeEval(str) {
-  return (new Function("with(this) { return "+str+"; }")).call(mathItems);
+  try {
+    return (new Function("with(this) { return "+str+"; }")).call(mathItems);
+  } catch(ex) {
+    return null;
+  }
 }
 
 function constructMathRe() {
@@ -52,6 +56,9 @@ module.exports.msg = function(text, from, reply, raw) {
     return;
   }
   if(mathRe.test(text)) {
-    reply(MathScopeEval(text));
+    var res = MathScopeEval(text);
+    if(res !== null) {
+      reply(res);
+    }
   }
 };
