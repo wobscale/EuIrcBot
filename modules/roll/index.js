@@ -7,6 +7,11 @@ function rollDice(str, cb) {
   if(!regex.test(str)) {
     return;
   }
+  var dumbRoll = false;
+  var m = regex.exec(str);
+  if(m[2] == '1') {
+    dumbRoll = true;
+  }
   var res;
   try {
     res = roll.roll(str);
@@ -14,7 +19,9 @@ function rollDice(str, cb) {
     return;
   }
   var s = res.result;
-  if(res.rolled.length > 1) {
+  if(dumbRoll) {
+    s += ', BUT THAT IS A DUMB ROLL';
+  } else if(res.rolled.length > 1) {
     s += ": Rolled " + res.rolled.join(", ");
   }
   cb(s);
