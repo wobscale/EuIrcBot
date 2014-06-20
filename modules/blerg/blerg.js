@@ -30,7 +30,7 @@ module.exports.run = function(rem, parts, reply, command, from, to, text, raw) {
 
     var indented = res.split("\n").map(function(l) {
       return "    " + l; // 4 spaces, pre sorta thing
-    });
+    }).join("\n");
 
     blerg.put(indented, function(err) {
       if(err) return reply(err);
