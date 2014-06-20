@@ -21,7 +21,7 @@ module.exports.run = function(rem, parts, reply, command, from, to, text, raw) {
   if(to[0] != '#') return; // Channels can start with & too? Really? Wow, good thing noone does that
 
 
-  var scrollBackModule = bot.modules['sirc-scrollback'];
+  var scrollbackModule = bot.modules['sirc-scrollback'];
 
   if(!scrollbackModule) return console.log("No scrollback, can't blerg");
 
