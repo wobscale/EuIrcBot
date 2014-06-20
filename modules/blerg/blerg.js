@@ -25,7 +25,7 @@ module.exports.run = function(rem, parts, reply, command, from, to, text, raw) {
 
   if(!scrollbackModule) return console.log("No scrollback, can't blerg");
 
-  scrollbackModule.getFormattedScrollbackLinesFromRanges(channel, parts, function(err, res) {
+  scrollbackModule.getFormattedScrollbackLinesFromRanges(to, parts, function(err, res) {
     if(err) return reply(err);
 
     var indented = res.split("\n").map(function(l) {
