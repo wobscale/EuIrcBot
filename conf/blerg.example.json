@@ -1,5 +1,4 @@
 {
-  "watch": [
-    {"nick": "god","username": "god", "password": "heaven"}
-  ]
+  "username": "god",
+  "password": "heaven"
 }

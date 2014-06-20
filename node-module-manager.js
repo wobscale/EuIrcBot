@@ -75,7 +75,7 @@ me.loadModules = function(cb) {
 me.initModules = function(cb) {
   _.each(_.values(modules), function(mod) {
     if(typeof mod.init == 'function') {
-      mod.init(bot);
+      mod.init(me.modifyThisForModule(mod));
     }
   });
   cb(null); //Technically they aren't initted yet if they're async. Whatev.
@@ -187,23 +187,57 @@ me.traverseCommandHirarchy = function(botObj, fnObj, args) {
 
   if(typeof fnObj.fn !== 'function') return;
 
-  return fnObj.fn.apply(me.modifyThisForModule(botObj, fnObj.module), args);
+  return fnObj.fn.apply(me.modifyThisForModule(fnObj.module), args);
 };
 
 me.modifyThisForModule = function(module) {
   var obj = _.clone(bot);
-  obj.getAllCommandFns = me.getAllCommandFns;
-  obj.name = _.find(Object.keys(modules), function(mname) { return modules[mname] === module; });
+  obj.getAllCommandFns = me.getAllCommandFns();
+  obj.name = _.find(Object.keys(modules), function(mname) {
+    return modules[mname] === module; 
+  });
+
   obj.datadir = bot.getDataFolder(obj.name);
+
+  obj.appendDataFile = function(file, data, cb) {
+    if(typeof data == 'object' && !Buffer.isBuffer(data)) {
+      data = JSON.stringify(data);
+    }
+    bot.fsStoreData(obj.name, file, data, 'a', cb);
+  };
+  obj.writeDataFile = function(file, data, cb) {
+    bot.fsStoreData(obj.name, file, data, cb);
+  };
+
+  obj.readDataFile = function(file, cb) {
+    bot.fsGetData(obj.name, file, cb);
+  };
+
+  obj.listDataFiles = function(path, cb) {
+    bot.fsListData(obj.name, path, cb);
+  };
+
+  obj.modules = modules;
+
   obj.module = module;
   return obj;
+};
+
+me.transformModulesIntoApi = function(mods) {
+  return _.map(mods, function(module, name) {
+    return {
+      getName: function(cb){cb(name);},
+      getModule: function(cb){cb(module);},
+      // Todo, add more functions here such as fsGetData stuff
+    };
+  });
 };
 
 me.callCommandFn = function(command, args) {
   var fns = me.getAllCommandFns();
   if(typeof fns[command] === 'object' && typeof fns[command].fn === 'function') {
     try {
-      fns[command].fn.apply(me.modifyThisForModule(bot, fns[command].module), args);
+      fns[command].fn.apply(me.modifyThisForModule(fns[command].module), args);
     } catch(ex) { console.trace("Call Command: " + command); console.log(ex); }
   }
 };

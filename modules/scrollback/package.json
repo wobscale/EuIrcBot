@@ -1,0 +1,13 @@
+{
+  "name": "sirc-scrollback",
+  "version": "0.0.0",
+  "description": "",
+  "dependencies": {
+    "async": "^0.9.0",
+    "underscore": "^1.6.0",
+    "parse-numeric-range": "0.0.1"
+  },
+  "main": "index.js",
+  "author": "Euank",
+  "license": "ISC"
+}
