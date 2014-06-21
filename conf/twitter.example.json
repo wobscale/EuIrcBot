@@ -2,5 +2,6 @@
   "consumer_key":         "...",
   "consumer_secret":      "...",
   "access_token":         "...",
-  "access_token_secret":  "..."
+  "access_token_secret":  "...",
+  "baseUrl": "https://twitter.com/UserName/", "//": "Must include the trailing /"
 }

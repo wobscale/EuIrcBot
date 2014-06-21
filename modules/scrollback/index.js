@@ -162,7 +162,6 @@ module.exports.getFormattedScrollbackLinesByNick = function(channel, nick, lineN
   // Now here's a tricky problem; we don't know how many lines we actually need to get that many lines for a nick.
   // We arbitrarily scale it by 2 until we get enough
   var maxNum = _.max(lineNums);
-  console.log("MaxNum: " + maxNum);
   var numToGet = maxNum * 2;
   var linesByNick;
 
@@ -171,7 +170,6 @@ module.exports.getFormattedScrollbackLinesByNick = function(channel, nick, lineN
   async.doUntil(function(innerCb) {
     module.exports.getChannelScrollbackLines(channel, numToGet, function(err, lines) {
       if(err) return innerCb(err);
-      console.log(nick);
 
       if(scrollbackLinesGot == lines.length) return innerCb("Ran out of lines without finding enough");
       scrollbackLinesGot = lines.length;

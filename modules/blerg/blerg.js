@@ -15,7 +15,7 @@ module.exports.init = function(b) {
   });
 };
 
-module.exports.commands = ['qub', 'blergit'];
+module.exports.commands = ['quo', 'quob', 'qub', 'blergit'];
 
 module.exports.run = function(rem, parts, reply, command, from, to, text, raw) {
   if(to[0] != '#') return; // Channels can start with & too? Really? Wow, good thing noone does that
