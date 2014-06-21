@@ -58,7 +58,7 @@ module.exports.run = function(r, parts, reply, command, from, to) {
 
     t.post('statuses/update', {status: res}, function(err, data) {
       if(err) return reply(err);
-      bot.sayTo(from, tConf.baseUrl + data.id);
+      bot.sayTo(from, tConf.baseUrl + 'status/' + data.id_str);
     });
   });
 };
