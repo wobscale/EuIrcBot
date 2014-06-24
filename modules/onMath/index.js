@@ -39,7 +39,7 @@ function MathScopeEval(str) {
 }
 
 function constructMathRe() {
-  var re = new RegExp("^([\\d\\s" + REEscape(mathSymbols) + "]|(" + mathKeys.join(")|(") + "))+$");
+  var re = new RegExp("^((?:\\d*(?:\\.\\d+)?(e\\d+)?)|[\\s" + REEscape(mathSymbols) + "]|(" + mathKeys.join(")|(") + "))+$");
   return re;
 }
 
