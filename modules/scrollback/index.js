@@ -143,7 +143,7 @@ module.exports.getFormattedScrollbackLines = function(channel, lineNums, cb) {
   });
 };
 
-module.exports.getFormattedScrollbackLines = function(channel, lineNums, cb) {
+module.exports.getFormattedScrollbackLinesm1 = function(channel, lineNums, cb) {
   var numNeeded = _.max(lineNums) + 1;
 
   module.exports.getChannelScrollbackLinesm1(channel, numNeeded, function(err, lines) {
@@ -198,7 +198,6 @@ module.exports.getFormattedScrollbackLinesByNickm1 = function(channel, nick, lin
   // Now here's a tricky problem; we don't know how many lines we actually need to get that many lines for a nick.
   // We arbitrarily scale it by 2 until we get enough
   var maxNum = _.max(lineNums);
-  console.log("MaxNum: " + maxNum);
   var numToGet = maxNum * 2;
   var linesByNick;
 
