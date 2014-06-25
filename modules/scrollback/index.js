@@ -206,7 +206,6 @@ module.exports.getFormattedScrollbackLinesByNickm1 = function(channel, nick, lin
   async.doUntil(function(innerCb) {
     module.exports.getChannelScrollbackLinesm1(channel, numToGet, function(err, lines) {
       if(err) return innerCb(err);
-      console.log(nick);
 
       if(scrollbackLinesGot == lines.length) return innerCb("Ran out of lines without finding enough");
       scrollbackLinesGot = lines.length;
