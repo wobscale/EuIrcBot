@@ -67,12 +67,13 @@ me.loadModuleFolder = function(folder, cb) {
 };
 
 me.loadModules = function(cb) {
-  async.mapSeries(config.moduleFolders, me.loadModuleFolder, function(err, results) {
+  async.mapSeries(config.moduleFolders, me.loadModuleFolder, me.initModules, function(err, results) {
     if(cb) cb(null);
   });
 };
 
 me.initModules = function(cb) {
+  // Todo, don't ever init if they're already initted
   _.each(_.values(modules), function(mod) {
     if(typeof mod.init == 'function') {
       mod.init(me.modifyThisForModule(mod));
