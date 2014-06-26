@@ -79,7 +79,7 @@ me.initModules = function(cb) {
       mod.init(me.modifyThisForModule(mod));
     }
   });
-  cb(null); //Technically they aren't initted yet if they're async. Whatev.
+  if(cb) cb(null); //Technically they aren't initted yet if they're async. Whatev.
 };
 
 me.reloadModules = function() {
