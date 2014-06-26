@@ -344,7 +344,6 @@ async.series([
   },
   bot.initModuleManager,
   moduleMan.loadModules,
-  moduleMan.initModules,
   bot.joinChannels
 ], function(err, results) {
   if(err) {
