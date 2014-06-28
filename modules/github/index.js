@@ -32,7 +32,7 @@ var githubURLRegexes = [
     },
     {
         name: "Repo",
-        regex: /github\.com\/(\w+)\/(\w+)\/?$/,
+        regex: /github\.com\/(\w+)\/((?:\w|-)+)\/?$/,
         getMessage: function(username, reponame, cb) {
             github.repos.get({
                 user: username,
@@ -59,7 +59,7 @@ var githubURLRegexes = [
     },
     {
         name: "Commit",
-        regex: /github\.com\/(\w+)\/(\w+)\/commit\/(\w+)\/?$/,
+        regex: /github\.com\/(\w+)\/((?:\w|-)+)\/commit\/(\w+)\/?$/,
         getMessage: function(username, reponame, commit, cb) {
             github.repos.getCommit({
                 user: username,
@@ -84,7 +84,7 @@ var githubURLRegexes = [
     },
     {
         name: "Issue",
-        regex: /github\.com\/(\w+)\/(\w+)\/issues\/(\d+)\/?$/,
+        regex: /github\.com\/(\w+)\/((?:\w|-)+)\/issues\/(\d+)\/?$/,
         getMessage: function(username, reponame, issue, cb) {
             github.issues.getRepoIssue({
                 user: username,
