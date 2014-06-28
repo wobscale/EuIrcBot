@@ -6,6 +6,30 @@ var github = new GitHubAPI({
     timeout: 5000
 });
 
+function getRepoInformation(username, reponame, cb) {
+    github.repos.get({
+        user: username,
+        repo: reponame
+    }, function(err, res) {
+        if (err) {
+            cb("Github response is dicked");
+        } else {
+            var name = res.name,
+                description = res.description,
+                language = res.language,
+                forks = "Forks: " + res.forks_count;
+            if (!language)
+                language = "";
+            else
+                language = "| " + language;
+            if (description.length > 60)
+                description = description.substr(0, 40);
+
+            cb(name, '| ', description, language, '| ', forks);
+        }
+    });
+}
+
 var githubURLRegexes = [
     {
         name: "User",
@@ -33,29 +57,7 @@ var githubURLRegexes = [
     {
         name: "Repo",
         regex: /github\.com\/(\w+)\/((?:\w|-)+)\/?$/,
-        getMessage: function(username, reponame, cb) {
-            github.repos.get({
-                user: username,
-                repo: reponame
-            }, function(err, res) {
-                if (err) {
-                    cb("Github response is dicked");
-                } else {
-                    var name = res.name,
-                        description = res.description,
-                        language = res.language,
-                        forks = "Forks: " + res.forks_count;
-                    if (!language)
-                        language = "";
-                    else
-                        language = "| " + language;
-                    if (description.length > 60)
-                        description = description.substr(0, 40);
-
-                    cb(name, '| ', description, language, '| ', forks);
-                }
-            });
-        }
+        getMessage: getRepoInformation
     },
     {
         name: "Commit",
@@ -100,6 +102,11 @@ var githubURLRegexes = [
                 }
             });
         }
+    },
+    {
+        name: "IO Page",
+        regex: /\/\/(\w+)\.github\.io\/((?:\w|-)+)\/?/,
+        getMessage: getRepoInformation
     }
 ];
 
