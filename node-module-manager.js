@@ -11,9 +11,10 @@ var bot;
 
 var me = module.exports = {};
 
-me.init = function(botObj) {
+me.init = function(botObj, cb) {
   bot = botObj;
   config = botObj.config;
+  if(cb) cb(null);
 };
 
 me.getModuleName = function(mpath) {
@@ -67,7 +68,14 @@ me.loadModuleFolder = function(folder, cb) {
 };
 
 me.loadModules = function(cb) {
-  async.mapSeries(config.moduleFolders, me.loadModuleFolder, me.initModules, function(err, results) {
+  async.series([
+     function(cb) {
+        async.mapSeries(config.moduleFolders, me.loadModuleFolder, function(err, res) {
+          return cb(null);
+        });
+     }, 
+     me.initModules
+  ], function(err, results) {
     if(cb) cb(null);
   });
 };

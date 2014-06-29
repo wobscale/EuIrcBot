@@ -64,8 +64,7 @@ bot.init = function(cb) {
 };
 
 bot.initModuleManager = function(cb) {
-  moduleMan.init(bot);
-  cb();
+  moduleMan.init(bot, cb);
 };
 
 bot.getConfig = function(name, cb) {
@@ -344,7 +343,7 @@ async.series([
   },
   bot.initModuleManager,
   moduleMan.loadModules,
-  bot.joinChannels
+  bot.joinChannels,
 ], function(err, results) {
   if(err) {
     console.trace("Error in init");
