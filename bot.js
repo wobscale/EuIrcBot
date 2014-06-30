@@ -8,7 +8,6 @@ var irc = require('irc'),
     path = require('path'),
     moduleMan = require("./node-module-manager");
 
-var default_config = fs.readFileSync("./config.example.json");
 
 var reEscape = function(s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -69,9 +68,9 @@ bot.initModuleManager = function(cb) {
 
 bot.getConfig = function(name, cb) {
   fs.readFile(path.join(bot.config.configfolder, name),{encoding: 'utf8'}, function(err, res) {
-    if(err) cb(err);
+    if(err) return cb(err);
     try {
-      cb(null, JSON.parse(res));
+      return cb(null, JSON.parse(res));
     } catch(ex) {
       cb(null, res);
     }
@@ -93,17 +92,18 @@ bot.callCommandFn = function(command, args) {
 };
 
 
-bot.loadConfig = function() { //sync
+bot.loadConfig = function(cb) { //sync
   var conf;
   try {
+    var default_config = JSON.parse(fs.readFileSync("./config.example.json"));
     conf = JSON.parse(fs.readFileSync('./config.json'));
     var def_keys = Object.keys(default_config);
-    for(var i=0;i<def_keys;i++) {
-      if(typeof conf[def_keys[i]] === 'undefined')  {
-        console.log("Setting: ", def_keys[i], " to ", default_config[def_keys[i]]);
-        conf[def_keys[i]] = default_config[def_keys[i]];
+    _.each(default_config, function(value, key) {
+      if(typeof conf[key] === 'undefined') {
+        console.log("Setting: ", key, " to ", value);
+        conf[key] = value;
       }
-    }
+    });
   } catch(e) {
     console.log("Error reading config:", e);
     conf = default_config;
@@ -111,29 +111,96 @@ bot.loadConfig = function() { //sync
   return conf;
 };
 
-var conf = bot.loadConfig();
-bot.config = conf;
+
+bot.initClient = function(cb) {
+  var conf = bot.config;
+  bot.client = new irc.Client(conf.server, conf.nick, {
+    userName: conf.userName,
+    realName: conf.realName,
+    port: conf.port,
+    debug: conf.debug,
+    showErrors: conf.showErrors,
+    autoRejoin: true,
+    autoConnect: false,
+    channels: [],
+    secure: conf.ssl,
+    selfSigned: true,
+    floodProtection: false,
+    channelPrefixes: conf.channelPrefixes,
+    messageSplit: conf.messageSplit
+  });
+  bot.client.on('error', function(err) { console.log(err);});
 
 
+  bot.client.on('join', function(channel, nick, raw) {
+    bot.callModuleFn('join', [channel, nick, raw]);
+  });
+  bot.client.on('part', function(channel, nick, raw) {
+    bot.callModuleFn('part', [channel, nick, raw]);
+  });
+  bot.client.on('quit', function(nick,reason,channels,raw) {
+    bot.callModuleFn('quit', [nick, reason, channels, raw]);
+  });
 
-bot.client = new irc.Client(conf.server, conf.nick, {
-  userName: conf.userName,
-  realName: conf.realName,
-  port: conf.port,
-  debug: conf.debug,
-  showErrors: conf.showErrors,
-  autoRejoin: true,
-  autoConnect: false,
-  channels: [],
-  secure: conf.ssl,
-  selfSigned: true,
-  floodProtection: false,
-  channelPrefixes: conf.channelPrefixes,
-  messageSplit: conf.messageSplit
-});
 
-bot.client.on('error', function(err) { console.log(err);});
-bot.conf = conf;
+  bot.client.on('notice', function(from, to, text, raw) {
+    var primaryFrom = (to == bot.client.nick) ? from : to;
+
+    bot.callModuleFn('notice', [text, from, to, bot.getNoticeReply(primaryFrom), raw]);
+    if(to == bot.client.nick) {
+      bot.callModuleFn('pmnotice', [text, from, bot.getNoticeReply(primaryFrom), raw]);
+    } else {
+      bot.callModuleFn('channotice', [text, to, from, bot.getNoticeReply(primaryFrom), raw]);
+    }
+
+  });
+
+  bot.client.on('message', function(from, to, text, raw) {
+    var primaryFrom = (to == bot.client.nick) ? from : to;
+    bot.callModuleFn('message', [text, from, to, bot.getReply(primaryFrom), raw]);
+
+    bot.callModuleFn('msg', [text, from, bot.getReply(primaryFrom), raw]);
+
+    if(to == bot.client.nick) {
+      bot.callModuleFn('pm', [text, from, bot.getReply(from), raw]);
+    } else {
+      bot.callModuleFn('chanmsg', [text, to, from, bot.getReply(to), raw]);
+    }
+    if(text.substring(0, bot.config.commandPrefix.length) == bot.config.commandPrefix) {
+      var re = new RegExp('^' + reEscape(bot.config.commandPrefix) + '(\\S*)\\s*(.*)$', 'g');
+      var rem = re.exec(text);
+      var command = rem[1];
+      var remainder = rem.length == 3 ? rem[2] : "";
+      var respTo = (bot.client.nick == to) ? from : to;
+      bot.callCommandFn(command, [remainder, bot.util.quotedSplit(remainder), bot.getReply(respTo), command, from, to, text, raw]);
+    }
+  });
+
+  bot.client.on('ctcp', function(from, to, text, type, raw) {
+    if(from == bot.config.owner && to == bot.client.nick && text == "RELOAD") {
+      moduleMan.reloadModules();
+    } else if(from == bot.config.owner && to == bot.client.nick && text == "LOAD") {
+      moduleMan.loadModules();
+    } else {
+      moduleMan.callModuleFn('ctcp', [text, type, from, to, raw]);
+    }
+
+    if(raw.args && raw.args[1] && /^\u0001ACTION.*\u0001$/.test(raw.args[1])) {
+      if(/^ACTION /.test(text)) text = text.substring("ACTION ".length);
+
+      var primaryFrom = (to == bot.client.nick) ? from : to;
+      moduleMan.callModuleFn('action', [text, from, to, bot.getActionReply(primaryFrom), raw]);
+      if(to == bot.client.nick) {
+        moduleMan.callModuleFn('pmaction', [text, from, bot.getActionReply(primaryFrom), raw]);
+      } else {
+        moduleMan.callModuleFn('chanaction', [text, to, from, bot.getActionReply(primaryFrom), raw]);
+      }
+    }
+  });
+
+
+  cb();
+};
 
 bot.sayTo = function(target, args) {
   // Todo, make this use stringifyArgs.
@@ -219,72 +286,6 @@ bot.getActionReply = function(to) {
   };
 };
 
-bot.client.on('join', function(channel, nick, raw) {
-  bot.callModuleFn('join', [channel, nick, raw]);
-});
-bot.client.on('part', function(channel, nick, raw) {
-  bot.callModuleFn('part', [channel, nick, raw]);
-});
-bot.client.on('quit', function(nick,reason,channels,raw) {
-  bot.callModuleFn('quit', [nick, reason, channels, raw]);
-});
-
-
-bot.client.on('notice', function(from, to, text, raw) {
-  var primaryFrom = (to == bot.client.nick) ? from : to;
-
-  bot.callModuleFn('notice', [text, from, to, bot.getNoticeReply(primaryFrom), raw]);
-  if(to == bot.client.nick) {
-    bot.callModuleFn('pmnotice', [text, from, bot.getNoticeReply(primaryFrom), raw]);
-  } else {
-    bot.callModuleFn('channotice', [text, to, from, bot.getNoticeReply(primaryFrom), raw]);
-  }
-
-});
-
-bot.client.on('message', function(from, to, text, raw) {
-  var primaryFrom = (to == bot.client.nick) ? from : to;
-  bot.callModuleFn('message', [text, from, to, bot.getReply(primaryFrom), raw]);
-
-  bot.callModuleFn('msg', [text, from, bot.getReply(primaryFrom), raw]);
-
-  if(to == bot.client.nick) {
-    bot.callModuleFn('pm', [text, from, bot.getReply(from), raw]);
-  } else {
-    bot.callModuleFn('chanmsg', [text, to, from, bot.getReply(to), raw]);
-  }
-  if(text.substring(0, bot.config.commandPrefix.length) == bot.config.commandPrefix) {
-    var re = new RegExp('^' + reEscape(bot.config.commandPrefix) + '(\\S*)\\s*(.*)$', 'g');
-    var rem = re.exec(text);
-    var command = rem[1];
-    var remainder = rem.length == 3 ? rem[2] : "";
-    var respTo = (bot.client.nick == to) ? from : to;
-    bot.callCommandFn(command, [remainder, bot.util.quotedSplit(remainder), bot.getReply(respTo), command, from, to, text, raw]);
-  }
-});
-
-bot.client.on('ctcp', function(from, to, text, type, raw) {
-  if(from == bot.config.owner && to == bot.client.nick && text == "RELOAD") {
-    moduleMan.reloadModules();
-  } else if(from == bot.config.owner && to == bot.client.nick && text == "LOAD") {
-    moduleMan.loadModules();
-  } else {
-    moduleMan.callModuleFn('ctcp', [text, type, from, to, raw]);
-  }
-
-  if(raw.args && raw.args[1] && /^\u0001ACTION.*\u0001$/.test(raw.args[1])) {
-    if(/^ACTION /.test(text)) text = text.substring("ACTION ".length);
-
-    var primaryFrom = (to == bot.client.nick) ? from : to;
-    moduleMan.callModuleFn('action', [text, from, to, bot.getActionReply(primaryFrom), raw]);
-    if(to == bot.client.nick) {
-      moduleMan.callModuleFn('pmaction', [text, from, bot.getActionReply(primaryFrom), raw]);
-    } else {
-      moduleMan.callModuleFn('chanaction', [text, to, from, bot.getActionReply(primaryFrom), raw]);
-    }
-  }
-});
-
 bot.createPathIfNeeded = function(fullPath, cb) {
   var dirname = path.dirname(fullPath);
   fs.mkdir(dirname, function(err) {
@@ -330,9 +331,10 @@ bot.fsListData = function(namespace, listPath, cb) {
 
 async.series([
   function(cb) {
-    bot.conf = bot.loadConfig();
+    bot.conf = bot.config = bot.loadConfig();
     cb(null);
   },
+  bot.initClient,
   bot.init,
   function(cb){
     bot.client.connect(function(){cb(null);});

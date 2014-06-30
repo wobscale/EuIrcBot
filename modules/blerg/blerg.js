@@ -6,7 +6,7 @@ var blerg = require('blerg');
 module.exports.init = function(b) {
   bot = b;
   bot.getConfig("blerg.json", function(err, conf) {
-    if(err) console.log(err);
+    if(err) return console.log(err);
     config = conf;
 
     blerg.login(config.username, config.password, function(err) {

@@ -19,7 +19,7 @@ module.exports.url = function(url, reply) {
     var id = parseInt(query.id, 10);
     if(typeof id !== 'number' || isNaN(id)) return;
 
-    hn.getItem(id, function(err, res) {
+    hn.item(id, function(err, res) {
       if(err) return reply("Unable to get HN store info");
 
       if(res.type == 'story') {
