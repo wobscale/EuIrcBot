@@ -37,13 +37,14 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
       var address_components = locData.results[0].address_components;
       var city;
       var state;
-      var country;
+      var country, longCountry;
       var i;
       for (i = 0; i < address_components.length; ++i)
       {
         if (address_components[i].types.indexOf("country") != -1)
         {
           country = address_components[i].short_name;
+          longCountry = address_components[i].long_name;
         }
 
         if (address_components[i].types.indexOf("locality") != -1)
@@ -57,14 +58,14 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
         }
       }
       
-      if (country != "US" && country != "PR")
-        return reply("Error: Location is not in the United States!");
-      if (typeof(city) === "undefined" || typeof(state) === "undefined")
-        return reply("Error: Couldn't find city/state");
-
+      if (typeof(city) === "undefined" || typeof(longCountry) === "undefined")
+        return reply("Error: Couldn't find city/country");
+      console.log("country = " + longCountry);
+      console.log("state = " + state);
+      console.log("city = " + city);
       city = city.replace(/ /g, '_');
-      if (country == "PR")
-        locStr = country + "/" + city;
+      if (country != "US")
+        locStr = longCountry + "/" + city;
       else
         locStr = state + "/" + city;
 
@@ -100,7 +101,8 @@ function getWeather(locStr, reply) {
       } catch(e) {
         return reply("Error handling response");
       }
-
+      if (typeof(weatherData.current_observation) === "undefined")
+        return reply("Couldn't get Weather for : " + locStr);
       var conditions = weatherData.current_observation;
       reply(conditions.display_location.full + ' | ' + conditions.temp_f +
         '°F, '  + conditions.weather + ' | Humidity: ' +
@@ -124,6 +126,8 @@ function getForecast(locStr, reply) {
       } catch(e) {
         return reply("Error handling response");
       }
+      if (typeof(weatherData.forecast.simpleforecast.forecastday) === "undefined")
+        return reply("Couldn't get forecast for : " + locStr);
 
       var forecast = weatherData.forecast.simpleforecast.forecastday;
       for(i = 0; i < forecast.length; ++i)
