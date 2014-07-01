@@ -16,10 +16,10 @@ module.exports.init = function(bot) {
 
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw){
   var locStr;
-  locStr = remainder.replace(/ /g, '+');
+  locStr = encodeURIComponent(remainder);
 
-  https.get('https://maps.googleapis.com/maps/api/geocode/json?address=' + locStr 
-  +'&sensor=false&key=' + config.google_key, function(res) {
+  https.get('https://maps.googleapis.com/maps/api/geocode/json?address=' + locStr +
+  '&sensor=false&key=' + config.google_key, function(res) {
     var data = '';
     res.on('data', function(chunk) {
       data += chunk;
@@ -29,7 +29,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
       try {
         locData = JSON.parse(data.toString());
       } catch(e) {
-        return reply("Error handling response");
+        return reply("Error handling goog maps response");
       }
 
       if (typeof(locData.results[0]) === "undefined" )
@@ -51,18 +51,16 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
         {
           city = address_components[i].short_name;
         }
-        
+
         if (address_components[i].types.indexOf("administrative_area_level_1") != -1)
         {
           state = address_components[i].short_name;
         }
       }
-      
+
       if (typeof(city) === "undefined" || typeof(longCountry) === "undefined")
         return reply("Error: Couldn't find city/country");
-      console.log("country = " + longCountry);
-      console.log("state = " + state);
-      console.log("city = " + city);
+
       city = city.replace(/ /g, '_');
       if (country != "US")
         locStr = longCountry + "/" + city;
@@ -85,11 +83,11 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 
     });
   });
-}
+};
 
 function getWeather(locStr, reply) {
-  http.get('http://api.wunderground.com/api/' + config.wunderground_key 
-      + '/conditions/q/' + locStr + '.json', function(res) {
+  http.get('http://api.wunderground.com/api/' + config.wunderground_key +
+      '/conditions/q/' + locStr + '.json', function(res) {
     var wudata = '';
     res.on('data', function(chunk) {
       wudata += chunk;
@@ -99,7 +97,7 @@ function getWeather(locStr, reply) {
       try {
         weatherData = JSON.parse(wudata.toString());
       } catch(e) {
-        return reply("Error handling response");
+        return reply("Error handling wunderground response");
       }
       if (typeof(weatherData.current_observation) === "undefined")
         return reply("Couldn't get Weather for : " + locStr);
@@ -113,8 +111,8 @@ function getWeather(locStr, reply) {
 
 
 function getForecast(locStr, reply) {
-  http.get('http://api.wunderground.com/api/' + config.wunderground_key 
-      + '/forecast/q/' + locStr + '.json', function(res) {
+  http.get('http://api.wunderground.com/api/' + config.wunderground_key +
+      '/forecast/q/' + locStr + '.json', function(res) {
     var wudata = '';
     res.on('data', function(chunk) {
       wudata += chunk;
