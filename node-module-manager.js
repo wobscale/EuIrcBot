@@ -187,14 +187,65 @@ me.getModuleCommandFns = function(m) {
 };
 
 
+/*
+ * exports = {
+ *   x: {
+ *     y: {
+ *       z: function(){
+ *         console.log("You ran !x y z");
+ *       },
+ *       _default: function() {
+ *         console.log("You ran !x y, not !x y z");
+ *       }
+ *     }
+ *   }
+ * }
+ *
+ * //parent default behavior demo
+ * exports = {
+ *   x: {
+ *     _default: function() {
+ *       console.log("You called `!x` or `!x y`, but not `!x y z`");
+ *     },
+ *     y: {
+ *       z: function(){}
+ *     }
+ *   }
+ * }
+ *
+ * // Parent default overriding
+ * exports = {
+ *   x: {
+ *     _default: function(){
+ *       console.log("I only get called for `!x [<unknown>]`, not `!x y` as happens above");
+ *     },
+ *     y: {
+ *       _default: null,
+ *       z: function(){}
+ *     }
+ *   }
+ * }
+ */
 me.traverseCommandHirarchy = function(botObj, fnObj, args) {
   var parts = args[1].slice();
-  while(typeof fnObj.fn == 'object') {
+  // Check above for 'parent default behavior'
+
+  var currentDefault = null;
+
+  while(typeof fnObj.fn === 'object') {
+    if(typeof fnObj.fn._default === 'function' || fnObj.fn._default === null) {
+        currentDefault = fnObj.fn._default;
+    }
     fnObj.fn = fnObj.fn[parts.shift()];
   }
   args[1] = parts;
 
-  if(typeof fnObj.fn !== 'function') return;
+  if(typeof fnObj.fn !== 'function') {
+    if(currentDefault !== null && typeof currentDefault === 'function') {
+      return currentDefault.apply(me.modifyThisForModule(fnObj.module), args);
+    }
+    return;
+  }
 
   return fnObj.fn.apply(me.modifyThisForModule(fnObj.module), args);
 };
