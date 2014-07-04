@@ -270,12 +270,17 @@ function WatchManager() {
         } else {
             var repoData = { user: username, repo: repository };
             var repo = new GithubRepo(repoData);
-            repo.checkForUpdates(function() {
-                repos[key] = repo;
-                self.overwrite(function() {
-                    callback("Watching", key + ".", "Last commit seen:",
-                            repo.lastCommitSeen);
-                });
+            repo.checkForUpdates(function(err) {
+                if (err) {
+                    callback("Github response is dicked. Could not watch repo",
+                        key);
+                } else {
+                    repos[key] = repo;
+                    self.overwrite(function() {
+                        callback("Watching", key + ".", "Last commit seen:",
+                                repo.lastCommitSeen);
+                    });
+                }
             });
         }
     }
