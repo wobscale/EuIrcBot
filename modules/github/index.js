@@ -158,10 +158,15 @@ function WatchManager() {
      * }
      */
     this.load = function(callback) {
+        var self = this;
         bot.fsGetData(storageNamespace, storageFilename, function(err, res) {
             if (err) {
                 // There's nothing there yet!
-                var initData = '{ "repos": [], "issues": [] }';
+                var initData = JSON.stringify({
+                    repos: [],
+                    issues: [],
+                    version: "1.0"
+                });
                 repos = {};
                 issues = {};
                 bot.fsStoreData(storageNamespace, storageFilename, initData,
@@ -170,6 +175,11 @@ function WatchManager() {
                 });
             } else {
                 var savData = JSON.parse(res);
+                if (res.hasOwnProperty('version')) {
+                    self.configVersion = res.version;
+                } else {
+                    self.configVersion = '1.0';
+                }
                 var repoList = _.map(savData.repos, function(repoData) {
                     return new GithubRepo(repoData);
                 });
@@ -194,7 +204,11 @@ function WatchManager() {
     this.overwrite = function(callback) {
         var repoList = _.values(repos),
             issueList = _.values(issues);
-        var data = JSON.stringify({ repos: repoList, issues: issueList });
+        var data = JSON.stringify({
+            repos: repoList,
+            issues: issueList,
+            version: this.configVersion
+        });
         bot.fsStoreData(storageNamespace, storageFilename, data,
                 function(err, res) {
             if (callback) callback();
