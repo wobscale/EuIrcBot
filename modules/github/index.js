@@ -9,6 +9,19 @@ var github = new GitHubAPI({
     timeout: 5000
 });
 
+// Only auth if auth details given
+github.tryAuthenticate = function() {
+    var authType = config.type;
+    var authed = false;
+    if (authType.length) {
+        this.authenticate(config);
+        authed = true;
+    }
+    return authed;
+}
+
+var config;
+
 function WatchManager() {
     var storageNamespace = "github",
         storageFilename = "watchman.json";
@@ -19,10 +32,14 @@ function WatchManager() {
     function GithubRepo(dataObj) {
         for (var prop in dataObj) this[prop] = dataObj[prop];
 
+        var recentlySeen = [];
+
         this.checkForUpdates = function(callback) {
             var self = this;
             var hasChanged = false;
-            github.repos.getCommits({
+
+            github.tryAuthenticate();
+            github.events.getFromRepo({
                 user: this.user,
                 repo: this.repo
             }, function(err, res) {
@@ -30,27 +47,100 @@ function WatchManager() {
                     callback(err, false);
                 } else {
                     var mostRecent = res[0];
-
-                    // Update internal info
-                    if (mostRecent.sha != self.lastCommitSeen) {
+                    
+                    if (mostRecent.id != self.lastSeenEventId) {
                         hasChanged = true;
-                        self.lastCommitSeen = mostRecent.sha;
-                        // Get just the first line of the commit message
-                        var cMessage = mostRecent.commit.message;
-                        self.lastCommitMessage = cMessage.split('\n')[0];
-                        self.lastCommiter = mostRecent.committer.login;
-                        self.lastCommitUrl = mostRecent.commit.url;
+                        var ls = self.lastSeenEventId;
+                        // An update has occured, get unseen messages
+                        var itr = 0,
+                            currEvent = { id: '' };
+                        recentlySeen = [];
+                        if (res.length) currEvent = res[0];
+                        while (itr < res.length && currEvent.id != ls) {
+                            recentlySeen.push(currEvent);
+                            itr ++;
+                            currEvent = res[itr];
+                        }
+                        self.lastSeenEventId = mostRecent.id;
                     }
                     callback(null, hasChanged);
                 }
             });
         }
 
+        this.getHTMLUrl = function() {
+            return "https://github.com/" + this.user + "/" + this.repo;
+        }
+
         this.generateUpdateMessage = function() {
             var self = this;
-            var msg = ["Github -- New commits on " + self.getKey(),
-                       "Most recent - " + self.lastCommiter + ': ' +
-                           self.lastCommitMessage];
+            var msg = [];
+            var key = this.getKey();
+            _.each(recentlySeen, function(githubEvent) {
+                var payload = githubEvent.payload,
+                    user = githubEvent.actor.login;
+                switch (githubEvent.type) {
+                    case "CommitCommentEvent":
+                        var comment = payload.comment;
+                        var commitId = '[' + comment.commit_id.substr(0, 7) + 
+                                '...]',
+                            link = comment.html_url;
+                        msg.push(["Github --", user, "commented on commit",
+                            commitId, "for repo", key + '.', link].join(' '));
+                        break;
+                    case "PushEvent":
+                        var numCommits = payload.size,
+                            ref = payload.ref;
+                        msg.push(["Github --", pusher, "pushed", numCommits,
+                            "commits to", key + '.', "ref:", ref + '.',
+                            self.getHTMLUrl].join(' '));
+                        break;
+                    case "IssuesEvent":
+                        var action = payload.action,
+                            issueNum = payload.issue.number,
+                            title = payload.issue.title,
+                            link = payload.issue.html_url;
+                        msg.push(["Github --", user, action, "issue",
+                                "#" + issueNum, "for repo", key + ":",
+                                title + '.', link].join(' '));
+                        break;
+                    case "IssueCommentEvent":
+                        var issueNum = payload.issue.number,
+                            title = payload.issue.title,
+                            link = payload.comment.html_url;
+                        msg.push(["Github --", user, "commented on issue",
+                                "#" + issueNum, "for repo", key + ":",
+                                title + '.', link].join(' '));
+                        break;
+                    case "PullRequestEvent":
+                        var action = payload.action,
+                            prNumber = payload.number,
+                            link = payload.pull_request.html_url,
+                            title = payload.pull_request.title;
+                        msg.push(["Github --", user, action,
+                                "pull request for repo", key,
+                                "PR #" + prNumber + ":", title + '.',
+                                link].join(' '));
+                        break;
+                    case "PullRequestReviewCommentEvent":
+                        var prNumber = payload.pull_request.number,
+                            title = payload.pull_request.title,
+                            link = payload.comment.html_url;
+                        msg.push(["Github --", user,
+                                "commented on a pull request for repo", key,
+                                "PR #" + prNumber + ":", title + '.',
+                                link].join(' '));
+
+                        break;
+                    case "ForkEvent":
+                        var link = payload.forkee.html_url;
+                        msg.push(["Github -- ", user, "forked repo", key + "!",
+                                "Neat!", link].join(' '));
+                        break;
+                    default:
+                        break;
+                }
+            });
             return msg;
         }
 
@@ -58,105 +148,7 @@ function WatchManager() {
             return [this.user, this.repo].join('/');
         }
     }
-
-    function GithubIssue(dataObj) {
-        for (var prop in dataObj) this[prop] = dataObj[prop];
-
-        this.checkForUpdates = function(callback) {
-            var self = this;
-            var hasChanged = false;
-            github.issues.getRepoIssue({
-                user: this.user,
-                repo: this.repo,
-                number: this.issue,
-                direction: "desc"
-            }, function(err, res) {
-                var firstRes = res;
-                // Check for comment changes
-                if (err) {
-                    callback(err, false);
-                } else {
-                    if (self.lastCommentNumber == res.comments) {
-                        doneCheckingComments(firstRes, []);
-                    } else {
-                        github.issues.getComments({
-                            user: self.user,
-                            repo: self.repo,
-                            number: self.issue
-                        }, function(err, res) {
-                            var comments = [];
-                            if (!err) {
-                                comments = res;
-                            }
-                            doneCheckingComments(firstRes, comments);
-                        });
-                    }
-                }
-            });
-
-            function doneCheckingComments(res, comments) {
-                var currCommNumber = parseInt(self.lastCommentNumber);
-                if (self.title != res.title) {
-                    self.title = res.title;
-                }
-                if (comments.length || res.state != self.lastStatus) {
-                    hasChanged = true;
-                    self.lastStatus = res.state;
-                    self.lastCommentNumber = '' + res.comments;
-
-                    // Get all commenters in last comments
-                    var numComments = res.comments - currCommNumber;
-                    var recentComments = _.first(comments, numComments);
-                    var recentUsers = _.map(recentComments, function(comm) {
-                        return comm.user.login;
-                    });
-                    self.lastCommenters = _.reduce(recentUsers, function(m, u) {
-                        if (m.indexOf(u) == -1) {
-                            m.push(u);
-                        }
-                        return m;
-                    }, []);
-                }
-                callback(null, hasChanged);
-            }
-        }
-
-        this.generateUpdateMessage = function() {
-            var self = this;
-            var msg = ["Github -- Update for issue " + this.getKey() + ".",
-                "Current status: " + self.lastStatus + '.'];
-
-            if (this.lastCommenters.length) {
-                var commenters = JSON.stringify(this.lastCommenters);
-                msg.push("New comments by " + commenters);
-            }
-
-            return msg;
-        }
-
-        this.getKey = function() {
-            return [this.user, this.repo, this.issue].join('/');
-        }
-    }
    
-
-    /* Repos are stored as:
-     * {
-     *     user: username,
-     *     repo: repository,
-     *     lastCommitSeen: sha
-     * }
-     *
-     * Issues stored as:
-     * {
-     *     user: username,
-     *     repo: repository,
-     *     issue: issueNumber,
-     *     lastStatus: status,
-     *     lastCommentNumber: comment
-     *     lastCommenters: [commenters]
-     * }
-     */
     this.load = function(callback) {
         var self = this;
         bot.fsGetData(storageNamespace, storageFilename, function(err, res) {
@@ -164,11 +156,9 @@ function WatchManager() {
                 // There's nothing there yet!
                 var initData = JSON.stringify({
                     repos: [],
-                    issues: [],
                     version: "1.0"
                 });
                 repos = {};
-                issues = {};
                 bot.fsStoreData(storageNamespace, storageFilename, initData,
                         function() {
                     callback();
@@ -176,25 +166,17 @@ function WatchManager() {
             } else {
                 var savData = JSON.parse(res);
                 if (res.hasOwnProperty('version')) {
-                    self.configVersion = res.version;
+                    self.storageVersion = res.version;
                 } else {
-                    self.configVersion = '1.0';
+                    self.storageVersion = '1.0';
                 }
                 var repoList = _.map(savData.repos, function(repoData) {
                     return new GithubRepo(repoData);
                 });
-                var issueList = _.map(savData.issues, function(issueData) {
-                    return new GithubIssue(issueData);
-                });
                 repos = {};
-                issues = {};
                 _.each(repoList, function(repo) {
                     var key = repo.getKey();
                     repos[key] = repo;
-                });
-                _.each(issueList, function(issue) {
-                    var key = issue.getKey();
-                    issues[key] = issue;
                 });
                 callback();
             }
@@ -202,12 +184,10 @@ function WatchManager() {
     }
 
     this.overwrite = function(callback) {
-        var repoList = _.values(repos),
-            issueList = _.values(issues);
+        var repoList = _.values(repos);
         var data = JSON.stringify({
             repos: repoList,
-            issues: issueList,
-            version: this.configVersion
+            version: this.storageVersion
         });
         bot.fsStoreData(storageNamespace, storageFilename, data,
                 function(err, res) {
@@ -218,39 +198,27 @@ function WatchManager() {
     this.checkForUpdates = function(callback) {
         var self = this;
         var numChecked = 0;
-        var repoList = _.values(repos),
-            issueList = _.values(issues);
-        var repoLen = repoList.length,
-            issueLen = issueList.length;
+        var repoList = _.values(repos);
+        var repoLen = repoList.length;
         var anyChanged = false;
         _.each(repoList, function(repo) {
             console.log("Checking " + repo.getKey() + " for updates");
             repo.checkForUpdates(function(err, changed) {
                 numChecked++;
                 if (err) {
-                    bot.say("Error reaching repo " + repo.getKey());
+                    bot.say("Github response is dicked for repo " +
+                        repo.getKey());
                 } else if (changed) {
                     anyChanged = true;
-                    bot.say(repo.generateUpdateMessage().join(' '));
-                }
-                maybeDone();
-            });
-        });
-        _.each(issueList, function(issue) {
-            console.log("Checking " + issue.getKey() + " for updates");
-            issue.checkForUpdates(function(err, changed) {
-                numChecked++;
-                if (err) {
-                    bot.say("Error reaching issue " + issue.getKey());
-                } else if (changed) {
-                    anyChanged = true;
-                    bot.say(issue.generateUpdateMessage().join(' '));
+                    _.each(repo.generateUpdateMessage(), function(msg) {
+                        bot.say(msg);
+                    });
                 }
                 maybeDone();
             });
         });
         function maybeDone() {
-            if (numChecked == repoLen + issueLen) {
+            if (numChecked == repoLen) {
                 if (anyChanged) {
                     self.overwrite(function() {
                         if (callback) callback();
@@ -268,7 +236,11 @@ function WatchManager() {
         if (repos.hasOwnProperty(key)) {
             callback("Repo", key, "is already being watched.");
         } else {
-            var repoData = { user: username, repo: repository };
+            var repoData = {
+                user: username,
+                repo: repository,
+                lastSeenEventId: ''
+            };
             var repo = new GithubRepo(repoData);
             repo.checkForUpdates(function(err) {
                 if (err) {
@@ -277,38 +249,7 @@ function WatchManager() {
                 } else {
                     repos[key] = repo;
                     self.overwrite(function() {
-                        callback("Watching", key + ".", "Last commit seen:",
-                                repo.lastCommitSeen);
-                    });
-                }
-            });
-        }
-    }
-
-    this.watchIssue = function(username, repository, issueNum, callback) {
-        var self = this;
-        var key = [username, repository, issueNum].join('/');
-        if (issues.hasOwnProperty(key)) {
-            callback("Issue", key, "is already being watched.");
-        } else {
-            var issueData = {
-                user: username,
-                repo: repository,
-                issue: issueNum,
-                title: '',
-                lastStatus: '',
-                lastCommentNumber: '',
-                lastCommenters: []
-            };
-            var issue = new GithubIssue(issueData);
-            issue.checkForUpdates(function(err, changed) {
-                if (err) {
-                    callback("Github response is dicked. Could not add", key);
-                } else {
-                    issues[key] = issue;
-                    self.overwrite(function() {
-                        callback("Now watching issue", key, '|', issue.title,
-                            "|", issue.lastStatus);
+                        callback("Watching repo " + key);
                     });
                 }
             });
@@ -322,29 +263,32 @@ function WatchManager() {
             callback("Stopped watching", key);
         });
     }
-
-    this.unwatchIssue = function(username, repository, issueNum, callback) {
-        var key = [username, repository, issueNum].join('/');
-        delete issues[key];
-        this.overwrite(function() {
-            callback("Stopped watching", key);
-        });
-    }
 }
 
 var bot,
     watchMan = new WatchManager(),
-    updateInterval = 60000 * 15;  // 15 Minutes
-
+    updateInterval = 60000 * 15; // Default 15 minute updates
 module.exports.init = function(b) {
     bot = b;
-    watchMan.load(function() {
-        function check() {
-            watchMan.checkForUpdates(function() {
-                setTimeout(check, updateInterval);
-            });
-        }
-        check();
+    bot.getConfig("github.json", function(err, conf) {
+        config = conf;
+        if (github.tryAuthenticate())
+            updateInterval = 1 * 60000; // 1 minute updates if authed
+        watchMan.load(function() {
+            function check() {
+                // Always run no matter what
+                try {
+                    console.log("Checking");
+                    watchMan.checkForUpdates(function() {
+                        setTimeout(check, updateInterval);
+                    });
+                } catch(e) {
+                    console.log(e);
+                    setTimeout(check, updateInterval);
+                }
+            }
+            check();
+        });
     });
 }
 
@@ -359,6 +303,7 @@ var USER_REGEX = /github\.com\/(\w+)\/?/,
  * gathering various stats such as language and number of forks
  */
 function getRepoInformation(username, reponame, cb) {
+    github.tryAuthenticate();
     github.repos.get({
         user: username,
         repo: reponame
@@ -396,6 +341,7 @@ var githubURLRegexes = [
     {
         regex: USER_REGEX,
         getMessage: function(username, cb) {
+            github.tryAuthenticate();
             github.user.getFrom({
                 user: username
             }, function(err, res) {
@@ -422,6 +368,7 @@ var githubURLRegexes = [
     {
         regex: COMMIT_REGEX,
         getMessage: function(username, reponame, commit, cb) {
+            github.tryAuthenticate();
             github.repos.getCommit({
                 user: username,
                 repo: reponame,
@@ -446,6 +393,7 @@ var githubURLRegexes = [
     {
         regex: ISSUE_REGEX,
         getMessage: function(username, reponame, issue, cb) {
+            github.tryAuthenticate();
             github.issues.getRepoIssue({
                 user: username,
                 repo: reponame,
@@ -499,38 +447,18 @@ module.exports.url = function(url, reply) {
 
 module.exports.commands = {
     github: {
-        // Polls a github repo or issue and posts updates
+        _default: function(r, p, reply) {
+            reply("Usage: !github watch [username] [reponame]");
+        },
         watch: function(r, p, reply) {
-            var watchType = p[0];
-
-            if (watchType == 'repo') {
-                var user = p[1],
-                    repo = p[2];
-                watchMan.watchRepo(user, repo, reply);
-            } else if (watchType == 'issue') {
-                var user = p[1],
-                    repo = p[2],
-                    issueNum = p[3];
-                watchMan.watchIssue(user, repo, issueNum, reply);
-            } else {
-                reply("Usage: watch [repo|issue] username repo [issuenum]");
-            }
+            var user = p[0],
+                repo = p[1];
+            watchMan.watchRepo(user, repo, reply);
         },
         unwatch: function(r, p, reply) {
-            var watchType = p[0];
-
-            if (watchType == 'repo') {
-                var user = p[1],
-                    repo = p[2];
-                watchMan.unwatchRepo(user, repo, reply);
-            } else if (watchType == 'issue') {
-                var user = p[1],
-                    repo = p[2],
-                    issueNum = p[3];
-                watchMan.unwatchIssue(user, repo, issueNum, reply);
-            } else {
-                reply("Usage: unwatch [repo|issue] username repo [issuenum]");
-            }
+            var user = p[0],
+                repo = p[1];
+            watchMan.unwatchRepo(user, repo, reply);
         }
     }
 }
