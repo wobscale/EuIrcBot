@@ -93,7 +93,7 @@ function WatchManager() {
                             ref = payload.ref;
                         msg.push(["Github --", user, "pushed", numCommits,
                             "commits to", key + '.', "ref:", ref + '.',
-                            self.getHTMLUrl].join(' '));
+                            self.getHTMLUrl()].join(' '));
                         break;
                     case "IssuesEvent":
                         var action = payload.action,
