@@ -202,7 +202,6 @@ function WatchManager() {
         var repoLen = repoList.length;
         var anyChanged = false;
         _.each(repoList, function(repo) {
-            console.log("Checking " + repo.getKey() + " for updates");
             repo.checkForUpdates(function(err, changed) {
                 numChecked++;
                 if (err) {
@@ -278,7 +277,6 @@ module.exports.init = function(b) {
             function check() {
                 // Always run no matter what
                 try {
-                    console.log("Checking");
                     watchMan.checkForUpdates(function() {
                         setTimeout(check, updateInterval);
                     });
