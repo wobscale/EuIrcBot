@@ -201,6 +201,7 @@ function WatchManager() {
         var repoList = _.values(repos);
         var repoLen = repoList.length;
         var anyChanged = false;
+       
         _.each(repoList, function(repo) {
             repo.checkForUpdates(function(err, changed) {
                 numChecked++;
@@ -227,6 +228,8 @@ function WatchManager() {
                 }
             }
         }
+        // Just in case there are no repos to check
+        maybeDone();
     }
 
     this.watchRepo = function(username, repository, callback) {
@@ -261,6 +264,10 @@ function WatchManager() {
         this.overwrite(function() {
             callback("Stopped watching", key);
         });
+    }
+
+    this.listRepos = function() {
+        return _.sortBy(_.keys(repos));
     }
 }
 
@@ -457,6 +464,17 @@ module.exports.commands = {
             var user = p[0],
                 repo = p[1];
             watchMan.unwatchRepo(user, repo, reply);
+        },
+        list: function(r, p, reply) {
+            var watching = watchMan.listRepos();
+            if (watching.length) {
+                bot.say("Github -- Watching repos:");
+                _.each(watching, function(repoKey) {
+                    bot.say('-  ' + repoKey);
+                });
+            } else {
+                bot.say("No repos being watched.");
+            }
         }
     }
 }
