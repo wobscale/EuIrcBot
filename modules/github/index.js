@@ -91,7 +91,7 @@ function WatchManager() {
                     case "PushEvent":
                         var numCommits = payload.size,
                             ref = payload.ref;
-                        msg.push(["Github --", pusher, "pushed", numCommits,
+                        msg.push(["Github --", user, "pushed", numCommits,
                             "commits to", key + '.', "ref:", ref + '.',
                             self.getHTMLUrl].join(' '));
                         break;
