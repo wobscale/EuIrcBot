@@ -11,6 +11,8 @@ var github = new GitHubAPI({
 
 // Only auth if auth details given
 github.tryAuthenticate = function() {
+    if(typeof config === 'undefined') return false;
+
     var authType = config.type;
     var authed = false;
     if (authType.length) {

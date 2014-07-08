@@ -4,9 +4,9 @@
   "description": "An irc bot",
   "main": "bot.js",
   "dependencies": {
-    "underscore": "latest",
     "async": "latest",
-    "irc": "^0.3.7"
+    "irc": "^0.3.7",
+    "underscore": "latest"
   },
   "devDependencies": {},
   "repository": {
