@@ -207,10 +207,7 @@ function WatchManager() {
         _.each(repoList, function(repo) {
             repo.checkForUpdates(function(err, changed) {
                 numChecked++;
-                if (err) {
-                    bot.say("Github response is dicked for repo " +
-                        repo.getKey());
-                } else if (changed) {
+                if (!err && changed) {
                     anyChanged = true;
                     _.each(repo.generateUpdateMessage(), function(msg) {
                         bot.say(msg);
