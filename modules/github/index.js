@@ -303,6 +303,34 @@ var USER_REGEX = /github\.com\/(\w+)\/?/,
     IO_PAGE_REGEX = /\/\/(\w+)\.github\.io\/((?:\w|-)+)\/?/;
 
 
+/* Any of these base paths will be immediately ignored by onUrl.
+ *
+ * There is not a good way to find a comprehensive list of reserved URLS by
+ * github; however, this list is created as of
+ * https://github.com/euank/EuIrcBot/issues/34
+ */
+var blacklistedPaths = [
+    '/about',
+    '/blog',
+    '/contact',
+    '/explore',
+    '/features',
+    '/plans',
+    '/privacy',
+    '/security',
+    '/showcases',
+    '/stars',
+    '/styleguide',
+    '/terms',
+    '/trending'
+]
+// Generate regexp strings
+blacklistedPaths = _.map(blacklistedPaths, function(pathBase) {
+    var reg = ['^https?:\/\/(?:www\.)?github.com\\', pathBase, '\/.*$'];
+    return new RegExp(reg.join(''));
+});
+
+
 /* Generates IRC message from github username/repo by querying that repo and
  * gathering various stats such as language and number of forks
  */
@@ -421,6 +449,13 @@ var githubURLRegexes = [
 
 /* If a URL is said, try and match it to a github url and post info. */
 module.exports.url = function(url, reply) {
+    // If the URL is on the blacklist, just exit
+    var blacklisted = _.filter(blacklistedPaths, function(pathRegex) {
+        var execd = pathRegex.exec(url);
+        return execd && execd.length;
+    });
+    if (blacklisted.length) return;
+
     var matchInfo, githubObj;
     var matched = [];
     for (var i = 0; i < githubURLRegexes.length; i++) {
