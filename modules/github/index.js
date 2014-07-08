@@ -296,11 +296,12 @@ module.exports.init = function(b) {
     });
 }
 
-var USER_REGEX = /github\.com\/(\w+)\/?/,
-    REPO_REGEX = /github\.com\/(\w+)\/((?:\w|-)+)\/?/,
-    COMMIT_REGEX = /github\.com\/(\w+)\/((?:\w|-)+)\/commit\/(\w+)\/?/,
-    ISSUE_REGEX = /github\.com\/(\w+)\/((?:\w|-)+)\/issues\/(\d+)\/?/,
-    IO_PAGE_REGEX = /\/\/(\w+)\.github\.io\/((?:\w|-)+)\/?/;
+
+var USER_REGEX = /https?:\/\/(?:www\.)?github\.com\/((?:\w|-)+)\/?/,
+    REPO_REGEX = /https?:\/\/(?:www\.)?github\.com\/((?:\w|-)+)\/((?:\w|-)+)\/?/,
+    COMMIT_REGEX = /https?:\/\/(?:www\.)?github\.com\/((?:\w|-)+)\/((?:\w|-)+)\/commit\/(\w+)\/?/,
+    ISSUE_REGEX = /https?:\/\/(?:www\.)?github\.com\/((?:\w|-)+)\/((?:\w|-)+)\/issues\/(\d+)\/?/,
+    IO_PAGE_REGEX = /https?:\/\/(?:www\.)?((?:\w|-)+)\.github\.io\/((?:\w|-)+)\/?/;
 
 
 /* Any of these base paths will be immediately ignored by onUrl.
