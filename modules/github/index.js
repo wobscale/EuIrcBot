@@ -92,10 +92,22 @@ function WatchManager() {
                         break;
                     case "PushEvent":
                         var numCommits = payload.size,
-                            ref = payload.ref;
-                        msg.push(["Github --", user, "pushed", numCommits,
-                            "commits to", key + '.', "ref:", ref + '.',
-                            self.getHTMLUrl()].join(' '));
+                            ref = payload.ref.split('/'),
+                            head = payload.head.substr(0, 7),
+                            before = payload.before.substr(0, 7);
+                        ref = ref[ref.length - 1];
+                        var link = self.getHTMLUrl() + '/compare/' + before +
+                            '...' + head;
+                        msg.push(["Github --", '[' + key + ']', user, "pushed",
+                            numCommits, "commits to", ref + '.',
+                            link].join(' '));
+                        _.each(payload.commits, function(commit) {
+                            // Generate message for each commit
+                            var sha = commit.sha.substr(0, 6),
+                                message = commit.message.split('\n')[0];
+                            msg.push(["Github --", key + '/' + ref, sha,
+                                user + ':', message].join(' '));
+                        });
                         break;
                     case "IssuesEvent":
                         var action = payload.action,
