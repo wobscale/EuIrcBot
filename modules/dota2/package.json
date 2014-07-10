@@ -1,0 +1,15 @@
+{
+  "name": "sirc-dota2",
+  "version": "0.0.0",
+  "description": "Dota2 module",
+  "main": "index.js",
+  "dependencies": {
+    "dazzle": "^1.0.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "EuanK",
+  "license": "ISC"
+}
