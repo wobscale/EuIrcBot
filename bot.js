@@ -66,14 +66,46 @@ bot.initModuleManager = function(cb) {
   moduleMan.init(bot, cb);
 };
 
-bot.getConfig = function(name, cb) {
-  fs.readFile(path.join(bot.config.configfolder, name),{encoding: 'utf8'}, function(err, res) {
-    if(err) return cb(err);
-    try {
-      return cb(null, JSON.parse(res));
-    } catch(ex) {
-      cb(null, res);
+var supportedConfigTypes = [
+  {
+    exts: [".json"],
+    test: null, //TODO
+    parse: function(data, loc, cb) {
+      try {
+        cb(null, JSON.parse(data));
+      } catch(ex) {
+        cb(ex);
+      }
+    },
+  },
+  {
+    exts: ['.js'],
+    test: null,
+    parse: function(data, loc, cb) {
+      try {
+        cb(null, require(loc));
+      } catch(ex) {
+        cb(ex);
+      }
     }
+  }
+];
+
+bot.getConfig = function(name, cb) {
+  var fullPath = path.join(bot.config.configfolder, name);
+  var done = false;
+  fs.readFile(fullPath,{encoding: 'utf8'}, function(err, res) {
+    if(err) return cb(err);
+
+    var ext = path.extname(fullPath);
+    supportedConfigTypes.forEach(function(type) {
+      if(_.any(type.exts, function(e) { return e === ext; })) {
+        type.parse(res, fullPath, cb);
+        done = true;
+        return false;
+      }
+    });
+    if(!done) return cb(null, res);
   });
 };
 
