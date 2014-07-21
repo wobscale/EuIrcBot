@@ -14,9 +14,9 @@ function formatSecs(secs) {
     return time;
 }
 
-function sayInfo(vid, cb) {
+function sayInfo(vid, cb, sayUrl) {
   var url = 'http://youtu.be/' + vid.id;
-  cb(url, vid.title, '-', formatSecs(vid.duration), (vid.viewCount ? '- ' + vid.viewCount + ' views' : ''));
+  cb((sayUrl ? (url + " ") : '') + vid.title, '-', formatSecs(vid.duration), (vid.viewCount ? '- ' + vid.viewCount + ' views' : ''));
 }
 
 
@@ -26,7 +26,7 @@ module.exports.url = function(url, reply) {
     var id = m[1];
     yt.video(id).details(function(err, res) {
       if(err) reply("Invalid video:", err);
-      else sayInfo(res, reply);
+      else sayInfo(res, reply, false);
     });
 
   }
@@ -38,6 +38,6 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
   yt.feeds.videos({q: remainder}, function(err,res) {
     if(err || res.totalItems < 1) return reply("No results");
     var vid = res.items[0];
-    sayInfo(vid, reply);
+    sayInfo(vid, reply, true);
   });
 };

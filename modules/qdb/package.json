@@ -1,15 +1,13 @@
 {
-  "name": "sirc-google",
+  "name": "sirc-qdb",
   "version": "0.0.0",
   "description": "",
-  "dependencies": {
-    "google": "git+https://github.com/euank/node-google.git",
-    "humanize": "0.0.9"
-  },
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "MIT"
+  "license": "ISC",
+  "dependencies": {
+  }
 }

@@ -1,0 +1,15 @@
+{
+  "name": "sirc-blerg",
+  "version": "0.0.0",
+  "description": "",
+  "main": "blerg.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "blerg": "0.0.2",
+    "parse-numeric-range": "0.0.1"
+  }
+}

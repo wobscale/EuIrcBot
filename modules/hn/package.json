@@ -1,0 +1,14 @@
+{
+  "name": "sirc-hn",
+  "version": "0.0.0",
+  "description": "",
+  "dependencies": {
+    "hacker-news-api":
+      "git+https://github.com/christianbundy/node-hacker-news-api#65a9c5110ddbbcd5579a514902562a8fd44cf3eb",
+    "ent": "^2.0.0",
+    "string": "^1.8.1"
+  },
+  "main": "index.js",
+  "author": "EuanK",
+  "license": "MIT"
+}

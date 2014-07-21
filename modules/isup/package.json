@@ -1,0 +1,16 @@
+{
+  "name": "isup-sirc",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "EuanK",
+  "license": "ISC",
+  "dependencies": {
+    "uri-js": "^1.4.2",
+    "follow-redirects": "0.0.3",
+    "request": "^2.34.0"
+  }
+}

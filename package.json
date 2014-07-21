@@ -4,9 +4,9 @@
   "description": "An irc bot",
   "main": "bot.js",
   "dependencies": {
-    "irc": "git+https://github.com/martynsmith/node-irc.git#master",
-    "underscore": "latest",
-    "async": "latest"
+    "async": "latest",
+    "irc": "^0.3.7",
+    "underscore": "latest"
   },
   "devDependencies": {},
   "repository": {

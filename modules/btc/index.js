@@ -23,6 +23,7 @@ function getDogecoinData(callback) {
           callback("Last: $" + data.last * dgc_to_btc_last + " | Avg: $" + data.avg * dgc_to_btc_avg);
         });
       } catch(ex) {
+        callback(ex);
         callback("Could not get doge");
       }
     });

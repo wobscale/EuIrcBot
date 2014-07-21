@@ -1,0 +1,11 @@
+{
+  "name": "sirc-newegg",
+  "version": "0.0.0",
+  "description": "",
+  "dependencies": {
+    "node-newegg-api": "0.0.1"
+  },
+  "main": "index.js",
+  "author": "EuanK",
+  "license": "ISC"
+}

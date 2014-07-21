@@ -1,9 +1,9 @@
 {
-  "name": "sirc-reddit",
+  "name": "sirc-github",
   "version": "0.0.0",
   "description": "",
   "dependencies": {
-    "string": "~1.8.0"
+      "github": "git+https://github.com/mikedeboer/node-github.git" 
   },
   "main": "index.js",
   "author": "",

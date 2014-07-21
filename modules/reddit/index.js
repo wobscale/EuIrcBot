@@ -1,7 +1,9 @@
-var S = requre('string');
 var http = require('http');
 
-module.exports.url = function(url, reply) {
+var redditRE = /reddit\.com\/[^\s]+|redd\.it\//;
+
+function getCommentText(url, reply) {
+  if(!redditRE.test(url)) return;
 	http.get(url + '.json', function(res) {
 		var data = '';
 		res.on('data', function(chunk) {
@@ -10,14 +12,19 @@ module.exports.url = function(url, reply) {
 		res.on('end', function() {
 			try {
 				var json = JSON.parse(data);
-				var comment_json = json[1]['data']['children']['data']['body_html'];
-				var comment = S(comment_json).stripTags().decodeHTMLEntities().s //For some reason functions are applied right-to-left
+				var comment = json[1].data.children[0].data.body.replace(/\n/g, '\t');
 				
-				console.log(comment);
 				reply(comment.substring(0,500));
 			} catch(e) {
-				return reply("Error handling response");
+        //console.log(e);
+				//return reply("Error handling response");
 			}
 		});
 	});
+}
+
+module.exports.commands = {
+  reddit: function(r, p, reply) {
+    getCommentText(r, reply);
+  }
 };

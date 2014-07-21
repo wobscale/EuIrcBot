@@ -1,35 +1,64 @@
 var Twit = require('twit');
 var ent = require('ent');
-var conf = require("./config");
 
-var t = null; 
+var t = null;
+var tConf = null;
+var bot = null;
 
 var twitRegex = /^(https?\:\/\/)?(www\.)?twitter\.com\/([a-zA-Z0-9_]+)(\/status\/(\d+))?/;
 
-module.init = function(bot) {
-  bot.getConfig("twitter.js", function(err, conf) {
+module.exports.init = function(b) {
+  bot = b;
+  bot.getConfig("twitter.json", function(err, conf) {
+    tConf = conf;
     if(err) bot.say("Unable to load twitter module: " + err);
-    t = new Twit(conf);
+    try {
+      t = new Twit(conf);
+    } catch(ex) {
+      bot.say("Error loading twitter library: " + ex);
+    }
   });
 };
 
 module.exports.url = function(url, reply) {
-  if(t === null) return;
+  if(t === null) return reply("Unable to handle twitter url; lib not loaded");
+
   var m;
   if((m = twitRegex.exec(url))) {
     if(m[3] && !m[5]) {
       // User page
       t.get("/users/show", {screen_name: m[3]}, function(err, res) {
         if(err) reply("Error getting user " + m[3]);
-        else reply(ent.decode(res.name) + ": " + ent.decode(res.description));
+        else reply(ent.decode(res.name) + " (@" + ent.decode(res.screen_name) + "): " + ent.decode(res.description).replace(/\n/g, "\t"));
       });
     } else {
       var uname = m[3];
       var id = m[5];
       t.get("/statuses/show/:id", {id: id}, function(err, res) {
         if(err) reply("Error getting tweet");
-        else reply(ent.decode(res.user.name) + ": " + ent.decode(res.text));
+        else reply(ent.decode(res.user.name) + " (@" + ent.decode(res.user.screen_name) + "): " + ent.decode(res.text).replace(/\n/g, "\t\t"));
       });
     }
   }
+};
+
+
+module.exports.commands = ['quo', 'quot', 'quoth'];
+
+
+module.exports.run = function(r, parts, reply, command, from, to) {
+  if(to[0] != '#' && to[0] != '&') return;
+
+  var scrollbackModule = bot.modules['sirc-scrollback'];
+
+  if(!scrollbackModule) return console.log("No scrollback, can't tweet");
+
+  scrollbackModule.getFormattedScrollbackLinesFromRanges(to, parts, function(err, res) {
+    if(err) return reply(err);
+
+    t.post('statuses/update', {status: res}, function(err, data) {
+      if(err) return reply(err);
+      bot.sayTo(from, tConf.baseUrl + 'status/' + data.id_str);
+    });
+  });
 };

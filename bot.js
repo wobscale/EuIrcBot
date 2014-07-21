@@ -5,18 +5,15 @@ var irc = require('irc'),
     fs = require('fs'),
     _ = require('underscore'),
     async = require('async'),
-    path = require('path');
+    path = require('path'),
+    moduleMan = require("./node-module-manager");
 
-var default_config = fs.readFileSync("./config.example.json");
 
 var reEscape = function(s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
 
 var bot = {};
-var modules = {};
-bot.modules = modules;
-bot.modulePaths = {};
 
 bot.util = {}; //Util functions
 
@@ -65,131 +62,80 @@ bot.init = function(cb) {
   cb(null);
 };
 
-bot.getConfig = function(name, cb) {
-  fs.readFile(path.join(bot.configfolder, name),{encoding: 'utf8'}, function(err, res) {
-    if(err) cb(err);
-    try {
-      cb(null, JSON.parse(res));
-    } catch(ex) {
-      cb(null, res);
-    }
-  });
+bot.initModuleManager = function(cb) {
+  moduleMan.init(bot, cb);
 };
 
-bot.loadModuleFolder = function(folder, cb) {
-  fs.readdir('./'+folder, function(err, moduleNames) {
-    if(err) {
-      console.log(err);
-      return cb(err);
-    }
-    //Exclude hidden files and folders
-    moduleNames = moduleNames.filter(function(i){return i[0] !== '.';});
-    for(var i=0;i<moduleNames.length;i++) {
-      if(modules[moduleNames[i]]) continue;
+var supportedConfigTypes = [
+  {
+    exts: [".json"],
+    test: null, //TODO
+    parse: function(data, loc, cb) {
       try {
-        var mod = require("./"+folder+"/"+moduleNames[i]);
-        modules[moduleNames[i]] = mod;
-        bot.modulePaths[moduleNames[i]] = "./"+folder+"/"+moduleNames[i];
-        if(typeof mod.init == "function") mod.init(bot);
+        cb(null, JSON.parse(data));
       } catch(ex) {
-        console.error(ex.stack);
-        console.error(ex);
+        cb(ex);
+      }
+    },
+  },
+  {
+    exts: ['.js'],
+    test: null,
+    parse: function(data, loc, cb) {
+      try {
+        cb(null, require(loc));
+      } catch(ex) {
+        cb(ex);
       }
     }
-    cb(false, modules);
+  }
+];
+
+bot.getConfig = function(name, cb) {
+  var fullPath = path.join(bot.config.configfolder, name);
+  var done = false;
+  fs.readFile(fullPath,{encoding: 'utf8'}, function(err, res) {
+    if(err) return cb(err);
+
+    var ext = path.extname(fullPath);
+    supportedConfigTypes.forEach(function(type) {
+      if(_.any(type.exts, function(e) { return e === ext; })) {
+        type.parse(res, fullPath, cb);
+        done = true;
+        return false;
+      }
+    });
+    if(!done) return cb(null, res);
   });
 };
 
-bot.loadModules = function() {
-  modules = {};
-  bot.modules = modules;
-  async.mapSeries(bot.config.moduleFolders, bot.loadModuleFolder, function(err, results) {
-    if(err) console.log(err);
-  });
+bot.getDataFolder = function(namespace) {
+  return path.join(bot.datafolder, namespace);
 };
 
-bot.reloadModules = function() {
-  var numToUnload = _.keys(modules).length;
-  _.keys(modules).forEach(function(name) {
-    if(typeof modules[name].unload == "function") {
-      modules[name].unload(function() {
-        var nam = require.resolve(bot.modulePaths[name]);
-        delete require.cache[nam];
-        numToUnload--;
-        if(numToUnload === 0) return bot.loadModules();
-      });
-    } else {
-      var nam = require.resolve(bot.modulePaths[name]);
-      delete require.cache[nam];
-      numToUnload--;
-      if(numToUnload === 0) return bot.loadModules();
-    }
-  });
-};
 
 bot.callModuleFn = function(fname, args) {
-  _.values(modules).forEach(function(m) {
-    if(typeof m[fname] == 'function') {
-      try {
-        m[fname].apply(bot, args);
-      } catch(ex) {
-        console.log(ex.stack);
-        console.log(ex);
-      }
-    }
-  });
+  return moduleMan.callModuleFn(fname, args);
 };
+
 
 bot.callCommandFn = function(command, args) {
-  _.values(modules).forEach(function(m) {
-    try {
-      if(typeof m.command == 'string' && m.command == command && typeof m.run == 'function') {
-        m.run.apply(bot, args);
-        return;
-      }
-      if(Array.isArray(m.commands) && m.commands.indexOf(command) !== -1 && typeof m.run == 'function') {
-        m.run.apply(bot, args);
-        return;
-      }
-      if(!Array.isArray(m.commands) && typeof m.commands == 'object' && typeof m.commands[command] == 'function') {
-        m.commands[command].apply(bot, args);
-        return;
-      }
-      if(typeof m["run_"+command] == 'function') {
-        m["run_"+command].apply(bot, args);
-        return;
-      }
-      if(typeof (m["run" + command[0].toUpperCase() + command.substring(1)]) === 'function') {
-        m["run" + command[0].toUpperCase() + command.substring(1)].apply(bot, args);
-        return;
-      }
-      if(typeof m.commands === 'object' && typeof m.commands[command] === 'object') {
-        var parts = args[1].slice();
-        var fnObj = m.commands[command];
-        while(typeof fnObj === 'object') {
-          fnObj = fnObj[parts.shift()];
-        }
-        args[1] = parts;
-        if(typeof(fnObj) === 'function') {
-          fnObj.apply(bot, args);
-          return;
-        }
-      }
-    } catch(ex) { console.log(ex); }
-  });
+  return moduleMan.callCommandFn(command, args);
 };
 
-bot.loadConfig = function() { //sync
+
+bot.loadConfig = function(cb) { //sync
   var conf;
   try {
+    var default_config = JSON.parse(fs.readFileSync("./config.example.json"));
     conf = JSON.parse(fs.readFileSync('./config.json'));
     var def_keys = Object.keys(default_config);
-    for(var i=0;i<def_keys;i++) {
-      if(typeof conf[def_keys[i]] === 'undefined')  {
-        console.log("Setting: ", def_keys[i], " to ", default_config[def_keys[i]]);
-        conf[def_keys[i]] = default_config[def_keys[i]];
+    _.each(default_config, function(value, key) {
+      if(typeof conf[key] === 'undefined') {
+        console.log("Setting: ", key, " to ", value);
+        conf[key] = value;
       }
-    }
+    });
   } catch(e) {
     console.log("Error reading config:", e);
     conf = default_config;
@@ -197,30 +143,105 @@ bot.loadConfig = function() { //sync
   return conf;
 };
 
-var conf = bot.loadConfig();
-bot.config = conf;
+
+bot.initClient = function(cb) {
+  var conf = bot.config;
+  bot.client = new irc.Client(conf.server, conf.nick, {
+    userName: conf.userName,
+    realName: conf.realName,
+    port: conf.port,
+    debug: conf.debug,
+    showErrors: conf.showErrors,
+    autoRejoin: true,
+    autoConnect: false,
+    channels: [],
+    secure: conf.ssl,
+    selfSigned: true,
+    floodProtection: false,
+    channelPrefixes: conf.channelPrefixes,
+    messageSplit: conf.messageSplit
+  });
+  bot.client.on('error', function(err) { console.log(err);});
 
 
+  bot.client.on('join', function(channel, nick, raw) {
+    bot.callModuleFn('join', [channel, nick, raw]);
+  });
+  bot.client.on('part', function(channel, nick, raw) {
+    bot.callModuleFn('part', [channel, nick, raw]);
+  });
+  bot.client.on('quit', function(nick,reason,channels,raw) {
+    bot.callModuleFn('quit', [nick, reason, channels, raw]);
+  });
 
-bot.client = new irc.Client(conf.server, conf.nick, {
-  userName: conf.userName,
-  realName: conf.realName,
-  port: conf.port,
-  debug: conf.debug,
-  showErrors: conf.showErrors,
-  autoRejoin: true,
-  autoConnect: false,
-  channels: [],
-  secure: conf.ssl,
-  selfSigned: true,
-  floodProtection: false,
-  channelPrefixes: conf.channelPrefixes,
-  messageSplit: conf.messageSplit
-});
 
-bot.client.on('error', function(err) { console.log(err);});
-bot.conf = conf;
+  bot.client.on('notice', function(from, to, text, raw) {
+    var primaryFrom = (to == bot.client.nick) ? from : to;
 
+    bot.callModuleFn('notice', [text, from, to, bot.getNoticeReply(primaryFrom), raw]);
+    if(to == bot.client.nick) {
+      bot.callModuleFn('pmnotice', [text, from, bot.getNoticeReply(primaryFrom), raw]);
+    } else {
+      bot.callModuleFn('channotice', [text, to, from, bot.getNoticeReply(primaryFrom), raw]);
+    }
+
+  });
+
+  bot.client.on('message', function(from, to, text, raw) {
+    var primaryFrom = (to == bot.client.nick) ? from : to;
+    bot.callModuleFn('message', [text, from, to, bot.getReply(primaryFrom), raw]);
+
+    bot.callModuleFn('msg', [text, from, bot.getReply(primaryFrom), raw]);
+
+    if(to == bot.client.nick) {
+      bot.callModuleFn('pm', [text, from, bot.getReply(from), raw]);
+    } else {
+      bot.callModuleFn('chanmsg', [text, to, from, bot.getReply(to), raw]);
+    }
+    if(text.substring(0, bot.config.commandPrefix.length) == bot.config.commandPrefix) {
+      var re = new RegExp('^' + reEscape(bot.config.commandPrefix) + '(\\S*)\\s*(.*)$', 'g');
+      var rem = re.exec(text);
+      var command = rem[1];
+      var remainder = rem.length == 3 ? rem[2] : "";
+      var respTo = (bot.client.nick == to) ? from : to;
+      bot.callCommandFn(command, [remainder, bot.util.quotedSplit(remainder), bot.getReply(respTo), command, from, to, text, raw]);
+    }
+  });
+
+  bot.client.on('ctcp', function(from, to, text, type, raw) {
+    if(from == bot.config.owner && to == bot.client.nick && text == "RELOAD") {
+      moduleMan.reloadModules();
+    } else if(from == bot.config.owner && to == bot.client.nick && text == "LOAD") {
+      moduleMan.loadModules();
+    } else {
+      moduleMan.callModuleFn('ctcp', [text, type, from, to, raw]);
+    }
+
+    if(raw.args && raw.args[1] && /^\u0001ACTION.*\u0001$/.test(raw.args[1])) {
+      if(/^ACTION /.test(text)) text = text.substring("ACTION ".length);
+
+      var primaryFrom = (to == bot.client.nick) ? from : to;
+      moduleMan.callModuleFn('action', [text, from, to, bot.getActionReply(primaryFrom), raw]);
+      if(to == bot.client.nick) {
+        moduleMan.callModuleFn('pmaction', [text, from, bot.getActionReply(primaryFrom), raw]);
+      } else {
+        moduleMan.callModuleFn('chanaction', [text, to, from, bot.getActionReply(primaryFrom), raw]);
+      }
+    }
+  });
+
+
+  cb();
+};
+
+bot.sayTo = function(target, args) {
+  // Todo, make this use stringifyArgs.
+  var tosay = [];
+  for(var i=1;i<arguments.length;i++) {
+    tosay.push(arguments[i]);
+  }
+  bot.client.say(target, tosay.join(' '));
+};
 /* say("one", "two") => "one two" */
 bot.say = function(args) {
   var tosay = [];
@@ -230,73 +251,138 @@ bot.say = function(args) {
   bot.client.say(bot.config.mainChannel, tosay.join(' '));
 };
 
-bot.joinChannels = function() {
+bot.joinChannels = function(cb) {
+  if(!cb) cb = function(err) { if(err) console.log(err); };
+
   var channels = Array.isArray(bot.conf.channels) ? bot.conf.channels : bot.conf.channels.split(',');
-  for(var i=0;i<channels.length;i++) bot.client.join(channels[i], console.log);
+  async.map(channels, function(item, joined) {
+    bot.client.join(item, function(){joined();});
+  }, cb);
+};
+
+bot.stringifyArgs = function(args) {
+  var strParts = [];
+  for(var i=0;i<arguments.length;i++) {
+    if(typeof arguments[i] === 'string') {
+      strParts.push(arguments[i]);
+    } else if(Array.isArray(arguments[i])) {
+      strParts.push(bot.stringifyArgs.apply(this, arguments[i]));
+    } else if(arguments[i] === undefined || arguments[i] === null) {
+      strParts.push('');
+    } else{
+      strParts.push(arguments[i].toString());
+    }
+  }
+  return strParts.join(' ');
+};
+
+bot.isChannel = function(name) {
+  return _.some(_.map(bot.config.channelPrefixes.split(''), function(el) { return name[0] == el; }));
 };
 
 
 bot.getReply = function(chan) {
-  var stringifyArgs = function(args) {
-    var strParts = [];
-    for(var i=0;i<arguments.length;i++) {
-      if(typeof arguments[i] === 'string') {
-        strParts.push(arguments[i]);
-      } else if(Array.isArray(arguments[i])) {
-        strParts.push(stringifyArgs.apply(this, arguments[i]));
-      } else if(arguments[i] === undefined || arguments[i] === null) {
-        strParts.push('');
-      } else{
-        strParts.push(arguments[i].toString());
-      }
-    }
-    return strParts.join(' ');
-  };
-
   return function(args) {
-    bot.client.say(chan, stringifyArgs.apply(this, arguments));
+    var repStr = bot.stringifyArgs.apply(this, arguments);
+    if(bot.isChannel(chan)) {
+      bot.callModuleFn('chansay', [bot.client.nick, chan, repStr]);
+    } else {
+      bot.callModuleFn('pmsay', [bot.client.nick, chan, repStr]);
+    }
+    bot.client.say(chan, repStr);
   };
 };
 
-bot.client.on('message', function(from, to, text, raw) {
-  var primaryFrom = (to == bot.client.nick) ? from : to;
-  bot.callModuleFn('message', [text, from, to, bot.getReply(primaryFrom), raw]);
+bot.getNoticeReply = function(to) {
+  return function(args) {
+    var repStr = bot.stringifyArgs.apply(this, arguments);
 
-  bot.callModuleFn('msg', [text, from, bot.getReply(primaryFrom), raw]);
+    if(bot.isChannel(chan)) {
+      bot.callModuleFn('channotice', [bot.client.nick, to, repStr]);
+    } else {
+      bot.callModuleFn('pmnotice', [bot.client.nick, to, repStr]);
+    }
+    bot.client.notice(to, repStr);
+  };
+};
+bot.getActionReply = function(to) {
+  return function(args) {
+    var repStr = bot.stringifyArgs.apply(this, arguments);
 
-  if(to == bot.client.nick) {
-    bot.callModuleFn('pm', [text, from, bot.getReply(from), raw]);
-  } else {
-    bot.callModuleFn('chanmsg', [text, to, from, bot.getReply(to), raw]);
-  }
-  if(text.substring(0, bot.config.commandPrefix.length) == bot.config.commandPrefix) {
-    var re = new RegExp('^' + reEscape(bot.config.commandPrefix) + '(\\S*)\\s*(.*)$', 'g');
-    var rem = re.exec(text);
-    var command = rem[1];
-    var remainder = rem.length == 3 ? rem[2] : "";
-    var respTo = (bot.client.nick == to) ? from : to;
-    bot.callCommandFn(command, [remainder, bot.util.quotedSplit(remainder), bot.getReply(respTo), command, from, to, text, raw]);
-  }
-});
+    if(bot.isChannel(chan)) {
+      bot.callModuleFn('channotice', [bot.client.nick, to, repStr]);
+    } else {
+      bot.callModuleFn('pmnotice', [bot.client.nick, to, repStr]);
+    }
+    bot.client.action(to, repStr);
+  };
+};
 
-bot.client.on('ctcp', function(from, to, text, type, raw) {
-  if(from == bot.config.owner && to == bot.client.nick && text == "RELOAD") {
-    bot.reloadModules();
-  } else if(from == bot.config.owner && to == bot.client.nick && text == "LOAD") {
-    bot.loadModules();
-  } else {
-    bot.callModuleFn('ctcp', [text, type, from, to, raw]);
-  }
-});
-
-
-bot.init(function(err) {
-  if(err) return console.log(err);
-  bot.client.connect(function() {
-    console.log("Connected!");
-    bot.joinChannels();
-    bot.loadModules();
+bot.createPathIfNeeded = function(fullPath, cb) {
+  var dirname = path.dirname(fullPath);
+  fs.mkdir(dirname, function(err) {
+    if(err && err.code != 'EEXIST') {
+      // Directory doesn't already exist and couldn't be made
+      cb(err);
+    } else {
+      // Made or already exists.
+      cb(null);
+    }
   });
+};
+
+bot.fsStoreData = function(namespace, filePath, data, flag, cb) {
+  // Flags is an optional argument
+  if(typeof flag == 'function') {
+    cb = flag;
+    flag = 'w';
+  }
+
+  var basePath = bot.getDataFolder(namespace);
+  var finalPath = path.join(basePath, filePath);
+
+  bot.createPathIfNeeded(finalPath, function(err, res) {
+    if(err) return cb(err);
+    fs.writeFile(finalPath, data, {flag: flag}, cb);
+  });
+};
+
+bot.fsGetData = function(namespace, filePath, cb) {
+  var basePath = bot.getDataFolder(namespace);
+  var finalPath = path.join(basePath, filePath);
+
+  fs.readFile(finalPath, cb);
+};
+
+bot.fsListData = function(namespace, listPath, cb) {
+  var basePath = bot.getDataFolder(namespace);
+  var finalPath = path.join(basePath, listPath);
+
+  fs.readdir(finalPath, cb);
+};
+
+async.series([
+  function(cb) {
+    bot.conf = bot.config = bot.loadConfig();
+    cb(null);
+  },
+  bot.initClient,
+  bot.init,
+  function(cb){
+    bot.client.connect(function(){cb(null);});
+  },
+  function(cb){
+    console.log("Connected!");
+    cb(null);
+  },
+  bot.initModuleManager,
+  moduleMan.loadModules,
+  bot.joinChannels,
+], function(err, results) {
+  if(err) {
+    console.trace("Error in init");
+    console.log(err);
+  }
 });
 
 }());

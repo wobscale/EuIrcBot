@@ -17,16 +17,29 @@ for(var i=0;i<mathKeysToGet.length;i++) {
   mathItems[mathKeysToGet[i]] = Math[mathKeysToGet[i]];
 }
 mathItems.TAU = Math.PI * 2;
+mathItems.fact = function(num) {
+    var rval=1;
+    for (var i = 2; i <= num; i++) {
+        rval = rval * i;
+    }
+    return rval;
+};
+
+
 var mathKeys = Object.keys(mathItems);
 
-var mathSymbols = ".,*+-/()%";
+var mathSymbols = ".,*+-/()%=";
 
 function MathScopeEval(str) {
-  return (new Function("with(this) { return "+str+"; }")).call(mathItems);
+  try {
+    return (new Function("with(this) { return "+str+"; }")).call(mathItems);
+  } catch(ex) {
+    return null;
+  }
 }
 
 function constructMathRe() {
-  var re = new RegExp("^([\\d\\s" + REEscape(mathSymbols) + "]|(" + mathKeys.join(")|(") + "))+$");
+  var re = new RegExp("^((?:\\d*(?:\\.\\d+)?(e\\d+)?)|[\\s" + REEscape(mathSymbols) + "]|(" + mathKeys.join(")|(") + "))+$");
   return re;
 }
 
@@ -43,6 +56,9 @@ module.exports.msg = function(text, from, reply, raw) {
     return;
   }
   if(mathRe.test(text)) {
-    reply(MathScopeEval(text));
+    var res = MathScopeEval(text);
+    if(res !== null) {
+      reply(res);
+    }
   }
 };

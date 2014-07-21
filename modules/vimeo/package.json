@@ -1,11 +1,11 @@
 {
-  "name": "sirc-reddit",
+  "name": "sirc-vimeo",
   "version": "0.0.0",
   "description": "",
   "dependencies": {
-    "string": "~1.8.0"
+    "vimeo": "^0.1.7"
   },
   "main": "index.js",
-  "author": "",
+  "author": "EuanK",
   "license": "MIT"
 }
