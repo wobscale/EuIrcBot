@@ -24,7 +24,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     if(!(res && res.length)) return reply("Wolfram error, response is dicked");
 
     if(res.length === 1) {
-      return reply("No result for query: " + out[0].subpods[0].value);
+      return reply("No result for query: " + res[0].subpods[0].value);
     }
 
     var primary_pods = res.filter(function(x){return x.primary;});
