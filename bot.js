@@ -204,6 +204,8 @@ bot.initClient = function(cb) {
       var command = rem[1];
       var remainder = rem.length == 3 ? rem[2] : "";
       var respTo = (bot.client.nick == to) ? from : to;
+
+      bot.callModuleFn("any_command", [remainder, bot.util.quotedSplit(remainder), bot.getReply(respTo), command, from, to, text, raw]);
       bot.callCommandFn(command, [remainder, bot.util.quotedSplit(remainder), bot.getReply(respTo), command, from, to, text, raw]);
     }
   });
