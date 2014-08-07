@@ -330,6 +330,7 @@ var blacklistedPaths = [
     '/features',
     '/plans',
     '/privacy',
+    '/search',
     '/security',
     '/showcases',
     '/stars',
@@ -422,8 +423,13 @@ var githubURLRegexes = [
                 if (err) {
                     cb("Github response is dicked");
                 } else {
-                    var committer = res.committer.login,
+                    var committer = res.committer,
                         message = res.commit.message;
+                    if (committer == null) {
+                        committer = res.committer.name;
+                    } else {
+                        committer = res.committer.login;
+                    }
                     // Extract first line of commit message
                     message = /.*/.exec(message);
                     if (message) message = message[0];
