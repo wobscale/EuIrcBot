@@ -5,7 +5,7 @@ var t = null;
 var tConf = null;
 var bot = null;
 
-var twitRegex = /^(https?\:\/\/)?(www\.)?twitter\.com\/([a-zA-Z0-9_]+)(\/status\/(\d+))?/;
+var twitRegex = /^(https?\:\/\/)?(www\.)?twitter\.com\/([a-zA-Z0-9_]+)(\/status(es)?\/(\d+))?/;
 
 module.exports.init = function(b) {
   bot = b;
@@ -25,7 +25,7 @@ module.exports.url = function(url, reply) {
 
   var m;
   if((m = twitRegex.exec(url))) {
-    if(m[3] && !m[5]) {
+    if(m[3] && !m[6]) {
       // User page
       t.get("/users/show", {screen_name: m[3]}, function(err, res) {
         if(err) reply("Error getting user " + m[3]);
@@ -33,7 +33,7 @@ module.exports.url = function(url, reply) {
       });
     } else {
       var uname = m[3];
-      var id = m[5];
+      var id = m[6];
       t.get("/statuses/show/:id", {id: id}, function(err, res) {
         if(err) reply("Error getting tweet");
         else reply(ent.decode(res.user.name) + " (@" + ent.decode(res.user.screen_name) + "): " + ent.decode(res.text).replace(/\n/g, "\t\t"));
