@@ -15,9 +15,11 @@ module.exports.msg =  function(text, from, reply, raw) {
                 replace = match[2];
             var fixed = replaceAll(find, replace, personLastSaid);
 
-            var response = "<" + from + "> " + fixed;
+						if (fixed != personLastSaid) {
+							var response = "<" + from + "> " + fixed;
 
-            reply(response);
+							reply(response);
+						}
         }
     } else {
         // The proper way to do this would be with scrollback module but w/e
