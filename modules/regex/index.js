@@ -11,11 +11,13 @@ module.exports.msg =  function(text, from, reply, raw) {
         // Replace the last thing the person said, if anything
         if (lastSaid[from] != undefined) {
             var personLastSaid = lastSaid[from],
-                from = match[1],
-                to = match[2];
-            var fixed = replaceAll(from, to, personLastSaid);
+                find = match[1],
+                replace = match[2];
+            var fixed = replaceAll(find, replace, personLastSaid);
 
-            reply(fixed);
+            var response = "<" + from + "> " + fixed;
+
+            reply(response);
         }
     } else {
         // The proper way to do this would be with scrollback module but w/e
