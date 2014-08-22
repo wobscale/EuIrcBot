@@ -1,5 +1,5 @@
 var lastSaid = {};
-var replaceRegex = /^s\/(.*?)\/(.*?)(:?\/g)?$/;
+var replaceRegex = /^s\/(.*?)\/(.*?)(?:(?:\/g)|(?:\/))?$/;
 
 function replaceAll(find, replace, str) {
     return str.replace(new RegExp(find, 'g'), replace);
