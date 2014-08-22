@@ -1,0 +1,9 @@
+{
+  "name": "sirc-regex",
+  "version": "0.0.0",
+  "description": "",
+  "dependencies": {},
+  "main": "index.js",
+  "author": "",
+  "license": "MIT"
+}
