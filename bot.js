@@ -373,8 +373,6 @@ bot.pingCheck = function() {
   console.log("Reconnecting");
   bot.client.disconnect( );
   bot.lastPing += bot.conf.timeout;
-  console.log("Last ping: ")
-  console.log(bot.lastPing);
   bot.client.connect( );
   bot.joinChannels( );
 };
