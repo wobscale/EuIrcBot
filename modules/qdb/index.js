@@ -26,7 +26,7 @@ module.exports.run = function(rem, parts, reply, command, from, to, text, raw) {
 
     requestify.post(conf.baseUrl + '/api/quote', {
       quote: res,
-      source: conf.source
+      source: conf.source + to
     }).then(function(response) {
       // Success
       var id = 'unknown';
