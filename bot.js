@@ -371,13 +371,9 @@ bot.pingCheck = function() {
   if(bot.lastPing + bot.conf.timeout > (new Date).getTime())
     return;
 
-  console.log("Reconnecting");
-  bot.client.disconnect( );
-  bot.lastPing += bot.conf.timeout;
-  console.log("Last ping: ")
-  console.log(bot.lastPing);
-  bot.client.connect( );
-  bot.joinChannels( );
+  console.log("Probably lost connection, terminating process.");
+  bot.client.disconnect();
+  process.exit(1);
 };
 
 async.series([
