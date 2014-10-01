@@ -148,6 +148,7 @@ bot.initClient = function(cb) {
   var conf = bot.config;
   bot.client = new irc.Client(conf.server, conf.nick, {
     userName: conf.userName,
+    password: conf.password,
     realName: conf.realName,
     port: conf.port,
     debug: conf.debug,

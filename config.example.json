@@ -1,6 +1,7 @@
 {
   "nick": "suebot",
   "userName": "seubot",
+  "password": null,
   "realName": "seubot",
   "server": "irc.freenode.net",
   "owner": "owner",
