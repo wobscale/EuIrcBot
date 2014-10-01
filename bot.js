@@ -233,6 +233,9 @@ bot.initClient = function(cb) {
     }
   });
 
+  bot.client.on('ping', function() {
+    bot.lastPing = (new Date).getTime();
+  } );
 
   cb();
 };
@@ -364,6 +367,15 @@ bot.fsListData = function(namespace, listPath, cb) {
   fs.readdir(finalPath, cb);
 };
 
+bot.pingCheck = function() {
+  if(bot.lastPing + bot.conf.timeout > (new Date).getTime())
+    return;
+
+  console.log("Probably lost connection, terminating process.");
+  bot.client.disconnect();
+  process.exit(1);
+};
+
 async.series([
   function(cb) {
     bot.conf = bot.config = bot.loadConfig();
@@ -381,6 +393,11 @@ async.series([
   bot.initModuleManager,
   moduleMan.loadModules,
   bot.joinChannels,
+  function(cb) {
+    bot.conf.timeout *= 1000;
+    bot.lastPing = (new Date).getTime() + bot.config.timeout;
+    setInterval( bot.pingCheck, 5000 );
+  },
 ], function(err, results) {
   if(err) {
     console.trace("Error in init");
