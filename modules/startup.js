@@ -34,9 +34,15 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'girls that look like brigid', "people who can't read good", 'family photos'
     
   ];
-  
+
+	var prefixless_markets = [
+		'as a service'
+	];
+
+	var market_idx = Math.floor(Math.random() * (markets.length + prefixless_markets.length));
   var chosen_service = services[Math.floor(Math.random() * services.length)],
-      chosen_market  = markets[Math.floor(Math.random() * markets.length)];
+      chosen_market  = (markets.concat(prefixless_markets))[market_idx];
   
-  reply('Random startup idea: ' + chosen_service + ' for ' + chosen_market);
+  reply('Random startup idea: ' + chosen_service + (market_idx < markets.length? ' for ' : ' ') + chosen_market);
 };
+
