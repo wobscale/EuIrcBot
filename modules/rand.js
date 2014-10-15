@@ -23,11 +23,11 @@ module.exports.commands = {
 		}
 
 		reply(
-				Object.keys(results)
-				.sort(function(k1,k2){return results[k2]-results[k1];})
-				.map(function(k) { return k + " " + results[k] + " times"; }) 
-				.join(", ")
-			);
+			Object.keys(results)
+			.sort(function(k1,k2){return results[k2]-results[k1];})
+			.map(function(k) { return k + " " + results[k] + " times"; }) 
+			.join(", ")
+		);
 	}
 
 };
