@@ -2,7 +2,7 @@
 module.exports.commands = {
 	rand: function(r, parts, reply) {
 		reply(parts[Math.floor(Math.random() * parts.length)]);
-	}
+	},
 	multirand: function(r, parts, reply) {
 		var results = {};
 		console.log(parts);
@@ -22,6 +22,7 @@ module.exports.commands = {
 //   print(thing + " " + count)
 //
 // apparently this is a hard problem in computer science
+	}
 
 };
 
