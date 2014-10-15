@@ -6,13 +6,13 @@ module.exports.commands = {
 	},
 
 	multirand: function(r, parts, reply) {
-		if(parseInt(parts[0]) > 9e5) { 
+		if(parseInt(parts[0],10) > 9e5) { 
 			reply("no");
 			return;
 		}
 
 		var results = {};
-		for(var i = 0; i < parseInt(parts[0]); i++) {
+		for(var i = 0; i < parseInt(parts[0],10); i++) {
 			var choice = parts[Math.floor(Math.random() * (parts.length - 1)) + 1];
 			if(typeof results[choice] == "undefined") {
 				results[choice] = 1;
