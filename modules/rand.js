@@ -1,13 +1,19 @@
 
 module.exports.commands = {
+
 	rand: function(r, parts, reply) {
 		reply(parts[Math.floor(Math.random() * parts.length)]);
 	},
+
 	multirand: function(r, parts, reply) {
+		if(parseInt(parts[0]) > 9e5) { 
+			reply("no");
+			return;
+		}
+
 		var results = {};
-		console.log(parts);
-		for(var i = 0; i < parts[0]; i++) {
-			var choice = parts[Math.floor(Math.random() * parts.length)];
+		for(var i = 0; i < parseInt(parts[0]); i++) {
+			var choice = parts[Math.floor(Math.random() * (parts.length - 1)) + 1];
 			if(typeof results[choice] == "undefined") {
 				results[choice] = 1;
 			}
@@ -16,12 +22,12 @@ module.exports.commands = {
 			}
 		}
 
-// Iterate over map by sorted values and print or whatever
-// python:
-// for (thing, count) in sorted(results.items(), key=lambda x: x[1]):
-//   print(thing + " " + count)
-//
-// apparently this is a hard problem in computer science
+		reply(
+				Object.keys(results)
+				.sort(function(k1,k2){return results[k2]-results[k1];})
+				.map(function(k) { return k + " " + results[k] + " times"; }) 
+				.join(", ")
+			);
 	}
 
 };
