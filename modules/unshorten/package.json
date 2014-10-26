@@ -1,0 +1,11 @@
+{
+  "name": "unshorten",
+  "version": "0.0.0",
+  "description": "unshorten module",
+  "main": "index.js",
+  "dependencies": {
+    "unshortener": "^0.1.0"
+  },
+  "author": "brhoades",
+  "license": "MIT"
+}
