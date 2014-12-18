@@ -10,6 +10,10 @@ module.exports.commands = {
 			reply("no");
 			return;
 		}
+		if(parts.length > 10) {
+			reply("dicks a million times");
+			return;
+		}
 
 		var results = {};
 		for(var i = 0; i < parseInt(parts[0],10); i++) {
