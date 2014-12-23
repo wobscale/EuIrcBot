@@ -6,11 +6,11 @@ module.exports.commands = {
 	},
 
 	multirand: function(r, parts, reply) {
-		if(parseInt(parts[0],10) > 9e5) { 
+		if(parseInt(parts[0],10) > 9e10) { 
 			reply("no");
 			return;
 		}
-		if(parts.length > 10) {
+		if(parts.length > 100) {
 			reply("dicks a million times");
 			return;
 		}
