@@ -14,7 +14,6 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'A personal assistant', 'Robot replacements', 'Fingerboxes', 'Concealed weaponry',
     'An iPhone app', 'Complaint management', 'Easy blogging', 'A pyramid scheme'
   ];
-  
   var markets = [
     'finance', 'music', 'movies', 'pictures', 'gifs', 'pirated content', 'education',
     'hairstyling', 'red wine', 'literature', 'adult dancers', 'food', 'math',
@@ -32,7 +31,6 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'the unemployed', 'the 1%', 'business purposes', 'amputees', 'panda lovers',
     'recipes', 'writers', 'dogs', 'birds', 'anime', 'the POTUS', 'sick horses',
     'girls that look like brigid', "people who can't read good", 'family photos'
-    
   ];
 
 	var prefixless_markets = [
@@ -42,7 +40,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 	var market_idx = Math.floor(Math.random() * (markets.length + prefixless_markets.length));
   var chosen_service = services[Math.floor(Math.random() * services.length)],
       chosen_market  = (markets.concat(prefixless_markets))[market_idx];
-  
+
   reply('Random startup idea: ' + chosen_service + (market_idx < markets.length? ' for ' : ' ') + chosen_market);
 };
 
