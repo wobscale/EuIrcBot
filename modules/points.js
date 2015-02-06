@@ -1,9 +1,7 @@
 var bot;
 module.exports.init = function(b) {
-  bot = b;
+  this.scoreboard = {};
 };
-
-module.exports.scoreboard = {};
 
 var xplusplus = /(\w+)\+\+/;
 var xplusplusfory = /(\w+)\+\+ (for)? (.*)/;
@@ -13,8 +11,10 @@ var xplusplusfory = /(\w+)\+\+ (for)? (.*)/;
 // dru++ for some reason
 module.exports.msg = function(text, from, reply, raw) {
   var re;
+
+  this.scoreboard = this.scoreboard || {};
   
-  if (xplusplusfory.exec(text)) {
+  if (re = xplusplusfory.exec(text)) {
     var user = re[0],
       reason = re[2];
 
@@ -22,15 +22,15 @@ module.exports.msg = function(text, from, reply, raw) {
     this.scoreboard[user]['points']++;
     this.scoreboard[user]['reasons'].push(reason);
     
-    reply(user + " now has " + this.scoreboard[user] + " points (nth place!), including 1 for " + reason); // #todo nth place
+    reply(user + " now has " + this.scoreboard[user]['points'] + " points (nth place!), including 1 for " + reason); // #todo nth place
 
-  } elsif (xplusplus.exec(text)) {
+  } else if (re = xplusplus.exec(text)) {
     var user = re[0];
 
     this.scoreboard[user] = this.scoreboard[user] || { points: 0, reasons: [] };
     this.scoreboard[user]['points']++;
     
-    reply(user + " now has " + this.scoreboard[user] + " points (nth place!)"); // #todo nth place
+    reply(user + " now has " + this.scoreboard[user]['points'] + " points (nth place!)"); // #todo nth place
   }
 };
 
@@ -42,7 +42,7 @@ module.exports.commands = {
 
     // yolo js
     for (var user in this.scoreboard) {
-      users_and_scores.append([user, scoreboard[user]['points']]);
+      users_and_scores.append([user, this.scoreboard[user]['points']]);
     }
 
     // Sort pairs by score: [["dru", 4], ["suroi", 53]]
