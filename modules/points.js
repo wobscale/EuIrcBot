@@ -21,12 +21,16 @@ module.exports.msg = function(text, from, reply, raw) {
     this.scoreboard[user] = this.scoreboard[user] || { points: 0, reasons: [] };
     this.scoreboard[user]['points']++;
     this.scoreboard[user]['reasons'].push(reason);
+    
+    reply(user + " now has " + this.scoreboard[user] + " points (nth place!), including 1 for " + reason); // #todo nth place
 
   } elsif (xplusplus.exec(text)) {
     var user = re[0];
 
     this.scoreboard[user] = this.scoreboard[user] || { points: 0, reasons: [] };
     this.scoreboard[user]['points']++;
+    
+    reply(user + " now has " + this.scoreboard[user] + " points (nth place!)"); // #todo nth place
   }
 };
 
