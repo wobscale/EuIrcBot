@@ -12,7 +12,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'CNN', 'A new Programming language', 'A Webbrowser', 'Ads', 'The Pirate Bay', 'Ebay',
     'Deviant Art', 'Mail order bombs', 'Crowdsourced retirement funding', 'Siri',
     'A personal assistant', 'Robot replacements', 'Fingerboxes', 'Concealed weaponry',
-    'An iPhone app', 'Complaint management', 'Easy blogging', 'A pyramid scheme'
+    'An iPhone app', 'Complaint management', 'Easy blogging', 'A pyramid scheme', 'Fleshlights'
   ];
   var markets = [
     'finance', 'music', 'movies', 'pictures', 'gifs', 'pirated content', 'education',
