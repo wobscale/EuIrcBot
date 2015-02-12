@@ -38,7 +38,8 @@ module.exports.commands = {
     },
     add: function(r, parts, reply) {
       if(parts.length !== 2) return reply("add must have *exactly* two arguments");
-      var exists = commandDict[parts[0]];
+      if(parts[1].charAt(0) === '!') return reply ("You are an asshole");
+	  var exists = commandDict[parts[0]];
       commandDict[parts[0]] = parts[1];
 
       if(exists) reply("Overwrite command " + parts[0]);
