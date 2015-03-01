@@ -167,12 +167,12 @@ me.getModuleCommandFns = function(m) {
 			if(typeof m.commands[command] == 'function') {
 				commandFns[command] = m.commands[command];
 			} else if(typeof m.commands[command] == 'object') {
-				// exports.commands = {test: {hirarchy: function(){}}}
+				// exports.commands = {test: {hierarchy: function(){}}}
 				// This one's kinda icky. We're just going to assume only
 				// the top level ones matter; the specific help of the command
 				// can mention other ones.
 				commandFns[command] = function(args) {
-					me.traverseCommandHirarchy(bot, {fn: m.commands[command], module: m}, Array.prototype.slice.apply(arguments));
+					me.traverseCommandHierarchy(bot, {fn: m.commands[command], module: m}, Array.prototype.slice.apply(arguments));
 				};
 			}
 		});
@@ -310,7 +310,7 @@ me.callCommandFn = function(command, args) {
 	var call = function(ctx, args) {
 		try {
 			ctx.fn.apply(me.modifyThisForModule(ctx.module), args);
-		} catch(ex) { console.trace("Call Command: " + command); console.log(ex); }
+		} catch(ex) { console.trace("Call Command: " + command + "\n" + ex.stack); console.log(ex); }
 	};
 
 	if(typeof fns.string[command] === 'object' && typeof fns.string[command].fn === 'function') {
