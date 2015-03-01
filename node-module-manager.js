@@ -307,21 +307,21 @@ me.transformModulesIntoApi = function(mods) {
 
 me.callCommandFn = function(command, args) {
 	var fns = me.getAllCommandFns();
-	var call = function(ctx) {
+	var call = function(ctx, args) {
 		try {
 			ctx.fn.apply(me.modifyThisForModule(ctx.module), args);
 		} catch(ex) { console.trace("Call Command: " + command); console.log(ex); }
 	};
 
 	if(typeof fns.string[command] === 'object' && typeof fns.string[command].fn === 'function') {
-		call(fns.string[command]);
+		call(fns.string[command], args);
 	} else {
 		var matches = _.filter(fns.regex, function(regex) {
 			return command.match(regex[0]);
 		});
 
 		_.each(matches, function(match) {
-			call(match[1]);
+			call(match[1], args.concat([match[0]]));
 		});
 	}
 };
