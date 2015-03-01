@@ -1,5 +1,3 @@
-var _ = require("underscore");
-
 module.exports.command = /(r+)and/;
 
 module.exports.run = function(r, parts, reply, command) {
