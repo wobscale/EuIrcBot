@@ -1,0 +1,11 @@
+{
+  "name": "clojure-repl",
+  "version": "0.0.0",
+  "description": "Run some clj",
+  "main": "index.js",
+  "dependencies": {
+    "request-promise": "v0.3.2"
+  },
+  "author": "micmarsh",
+  "license": "MIT"
+}
