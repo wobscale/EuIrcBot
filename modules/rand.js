@@ -1,4 +1,4 @@
-module.exports.command = /(r+)and/;
+module.exports.command = /^(r+)and/;
 
 module.exports.run = function(r, parts, reply, command) {
 	var res = command.match(module.exports.command);
