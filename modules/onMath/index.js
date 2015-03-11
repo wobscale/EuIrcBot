@@ -49,8 +49,9 @@ var onlySymbols = new RC("^[\\s" + REEscape(mathSymbols) + "]*$");
 var onlyNumbers = new RC(/^[\s\d]*$/);
 var onlyKeys = new RC("^\\s*((" + mathKeys.join(")|(") + "))+\\s*$");
 var funnyFractions = new RC(/^\s*([0-9][0]?\s*\/\s*(10|5|100))\s*$/);
+var plusN = new RC("^\+\d+$");
 
-var ignoreRe = onlySymbols.or(onlyNumbers).or(funnyFractions).or(onlyKeys);
+var ignoreRe = onlySymbols.or(onlyNumbers).or(funnyFractions).or(onlyKeys).or(plusN);
 
 module.exports.msg = function(text, from, reply, raw) {
   if(ignoreRe.test(text)) {
