@@ -4,14 +4,14 @@ var smtpTransport = require('nodemailer-smtp-transport');
 var config, bot, transporter;
 var addresses = {}
 
-function sendMailTo(alias, text, reply) {
-	if(!addresses.alias) {
+function sendMailTo(user, channel, text, reply) {
+	if(!addresses[channel] || !addresses[channel][user]) {
 		reply("Who the heck is that");
 	}
 
 	transporter.sendMail({
 		from: config.from,
-		to: addresses.alias,
+		to: addresses[channel][user],
 		subject: config.subject,
 		text: text
 	}, function(error, info) {
@@ -43,19 +43,22 @@ module.exports.init = function(b) {
 }
 
 module.exports.commands = {
-	addpager: function(r, p, reply) {
-		if(p.length >= 2) {
-			addresses[p[0]] = p[1];
-			reply("Added address " + p[1] + " for alias " + p[0]);
+	addpager: function(r, p, reply, command, from, channel) {
+		if(p.length >= 1) {
+			if(!addresses[channel]) {
+				addresses[channel] = {};
+			}
+			addresses[channel][from] = p[0];
+			reply("Added address " + p[0] + " for user " + from);
 		}
 		else {
 			reply("you didn't tell me enough stuff, doofus");
 		}
 	},
 
-	page: function(r, p, reply) {
+	page: function(r, p, reply, command, from, channel) {
 		if(p.length >= 2) {
-			sendMailTo(p[0], p.slice(1).join(" "), reply);
+			sendMailTo(p[0], channel, p.slice(1).join(" "), reply);
 		}
 		else {
 			reply("Yah I don't know what that means");
