@@ -1,5 +1,18 @@
-{}
+{
+	"host":"mx.cool.io",
+	"port":465,
+	"auth": {
+		"user": "totally@cool.io",
+		"pass": "hunter2"
+	},
+	"debug": false,
+	"secure": false,
+	"authMethod": "PLAIN",
+	"ignoreTLS": false,
+	"tls": {
+		"rejectUnauthorized": true
+	},
+	"from": "The Sun's Shades <totally@cool.io>",
+	"subject": "You're Outta Sight!"
+}
 
-https://github.com/andris9/nodemailer-smtp-transport#usage
-https://www.npmjs.com/package/nodemailer
-also, from and subject
