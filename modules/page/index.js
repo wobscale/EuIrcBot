@@ -27,9 +27,18 @@ function sendMailTo(alias, text, reply) {
 module.exports.init = function(b) {
 	bot = b;
 	config = bot.getConfig("page.json", function(err, conf) {
-		if(err == nil) {
+		if(err == null) {
 			config = conf;
 			transporter = nodemailer.createTransport(smtpTransport(config));
+
+			transporter.on('log', function(log) {
+				console.log(log);
+			});
+
+		}
+		else {
+			console.err("Can't get pager config");
+		}
 	});
 }
 
