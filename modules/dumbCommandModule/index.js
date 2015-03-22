@@ -1,6 +1,7 @@
 var bot;
 
 var commandDict = null;
+var allowCmds = false;
 
 function writeCommands() {
   bot.writeDataFile("commands.json", JSON.stringify(commandDict), function(err) {
@@ -24,6 +25,12 @@ module.exports.init = function(b) {
     }
     writeCommands();
   });
+
+  bot.getConfig("dumbcommand.json", function(err, conf) {
+    if(!err) {
+			allowCmds = conf['allow_commands'];
+		}
+  });
 };
 
 
@@ -38,8 +45,8 @@ module.exports.commands = {
     },
     add: function(r, parts, reply) {
       if(parts.length !== 2) return reply("add must have *exactly* two arguments");
-      if(parts[1].charAt(0) === '!') return reply ("You are an asshole");
-	  var exists = commandDict[parts[0]];
+      if(!allowCmds && parts[1].charAt(0) === '!') return reply ("You are an asshole");
+			var exists = commandDict[parts[0]];
       commandDict[parts[0]] = parts[1];
 
       if(exists) reply("Overwrite command " + parts[0]);
