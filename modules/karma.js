@@ -26,8 +26,10 @@ module.exports.init = function(b) {
   loadKarma();
 };
 
-var xplusplus = /(\w+)\+\+/;
-var xplusplusfory = /(\w+)\+\+ (for)? (.*)/;
+var inc = /(\w+)\+\+/;
+var incfor = /(\w+)\+\+\s+(\sfor)?\s+(.+)/;
+var dec = /(\w+)--/;
+var decfor = /(\w+)--\s*(\sfor)?\s+(.+)/;
 
 // Watch for messages of the following forms
 // dru++
@@ -35,25 +37,40 @@ var xplusplusfory = /(\w+)\+\+ (for)? (.*)/;
 module.exports.msg = function(text, from, reply, raw) {
   var re;
 
-  this.scoreboard = this.scoreboard || {};
-  
-  if (re = xplusplusfory.exec(text)) {
+  scoreboard[from] = scoreboard[from] || {};
+
+  if (re = incfor.exec(text)) {
     var user = re[0],
       reason = re[2];
 
-    this.scoreboard[user] = this.scoreboard[user] || { points: 0, reasons: [] };
-    this.scoreboard[user]['points']++;
-    this.scoreboard[user]['reasons'].push(reason);
-    
-    reply(user + " now has " + this.scoreboard[user]['points'] + " points (nth place!), including 1 for " + reason); // #todo nth place
+    this.scoreboard[from][user] = this.scoreboard[from][user] || { points: 0, reasons: [] };
+    this.scoreboard[from][user]['points']++;
+    this.scoreboard[from][user]['increasons'].push(reason);
 
-  } else if (re = xplusplus.exec(text)) {
+    //    reply(user + " now has " + this.scoreboard[user]['points'] + " points (nth place!), including 1 for " + reason); // #todo nth place
+
+  } 
+  else if (re = inc.exec(text)) {
     var user = re[0];
 
-    this.scoreboard[user] = this.scoreboard[user] || { points: 0, reasons: [] };
-    this.scoreboard[user]['points']++;
-    
-    reply(user + " now has " + this.scoreboard[user]['points'] + " points (nth place!)"); // #todo nth place
+    this.scoreboard[from][user] = this.scoreboard[from][user] || { points: 0, reasons: [] };
+    this.scoreboard[from][user]['points']++;
+
+    //    reply(user + " now has " + this.scoreboard[user]['points'] + " points (nth place!)"); // #todo nth place
+  }
+  else if (re = decfor.exec(text)) {
+    var user = re[0],
+      reason = re[2];
+
+    this.scoreboard[from][user] = this.scoreboard[from][user] || { points: 0, reasons: [] };
+    this.scoreboard[from][user]['points']--;
+    this.scoreboard[from][user]['decreasons'].push(reason);
+  }
+  else if (re = dec.exec(text)) {
+    var user = re[0];
+
+    this.scoreboard[from][user] = this.scoreboard[from][user] || { points: 0, reasons: [] };
+    this.scoreboard[from][user]['points']--;
   }
 };
 
