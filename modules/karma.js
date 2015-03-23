@@ -6,6 +6,7 @@ loadKarma = function(cb) {
   bot.fsGetData('karma', 'karma.json', function(err, res) {
     if(err) {
       console.log("Error loading karma data " + err);
+      scoreboard = {};
       return;
     }
 
@@ -34,60 +35,64 @@ var decfor = /(\w+)--\s*(\sfor)?\s+(.+)/;
 // Watch for messages of the following forms
 // dru++
 // dru++ for some reason
-module.exports.msg = function(text, from, reply, raw) {
+module.exports.message = function(text, from, to, reply, raw) {
   var re;
 
-  scoreboard[from] = scoreboard[from] || {};
+  scoreboard[to] = scoreboard[to] || {};
 
   if (re = incfor.exec(text)) {
     var user = re[0],
       reason = re[2];
 
-    this.scoreboard[from][user] = this.scoreboard[from][user] || { points: 0, reasons: [] };
-    this.scoreboard[from][user]['points']++;
-    this.scoreboard[from][user]['increasons'].push(reason);
+    scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
+    scoreboard[to][user]['points']++;
+    scoreboard[to][user]['increasons'].push(reason);
 
-    //    reply(user + " now has " + this.scoreboard[user]['points'] + " points (nth place!), including 1 for " + reason); // #todo nth place
+    console.log("incfor " + to + " " + user + " " + scoreboard[to][user]['points']);
+    //    reply(user + " now has " + scoreboard[user]['points'] + " points (nth place!), including 1 for " + reason); // #todo nth place
     saveKarma();
   } 
   else if (re = inc.exec(text)) {
     var user = re[0];
 
-    this.scoreboard[from][user] = this.scoreboard[from][user] || { points: 0, reasons: [] };
-    this.scoreboard[from][user]['points']++;
+    scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
+    scoreboard[to][user]['points']++;
 
-    //    reply(user + " now has " + this.scoreboard[user]['points'] + " points (nth place!)"); // #todo nth place
+    console.log("inc " + to + " " + user + " " + scoreboard[to][user]['points']);
+    //    reply(user + " now has " + scoreboard[user]['points'] + " points (nth place!)"); // #todo nth place
     saveKarma();
   }
   else if (re = decfor.exec(text)) {
     var user = re[0],
       reason = re[2];
 
-    this.scoreboard[from][user] = this.scoreboard[from][user] || { points: 0, reasons: [] };
-    this.scoreboard[from][user]['points']--;
-    this.scoreboard[from][user]['decreasons'].push(reason);
+    scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
+    scoreboard[to][user]['points']--;
+    scoreboard[to][user]['decreasons'].push(reason);
+    console.log("decfor " + to + " " + user + " " + scoreboard[to][user]['points']);
     saveKarma();
   }
   else if (re = dec.exec(text)) {
     var user = re[0];
 
-    this.scoreboard[from][user] = this.scoreboard[from][user] || { points: 0, reasons: [] };
-    this.scoreboard[from][user]['points']--;
+    scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
+    scoreboard[to][user]['points']--;
+    console.log("dec " + to + " " + user + " " + scoreboard[to][user]['points']);
     saveKarma();
   }
 };
 
 module.exports.commands = {
 
-  top3: function(r, parts, reply, command, from) { // todo: use regex parsed commands to implement topN
+  top3: function(r, parts, reply, command, from, to) { // todo: use regex parsed commands to implement topN
     var users_and_scores = [],
     rank = 1;
 
-    this.scoreboard[from] = this.scoreboard[from] || {};
+    scoreboard[to] = scoreboard[to] || {};
 
     // yolo js
-    for (var user in this.scoreboard[from]) {
-      users_and_scores.append([user, this.scoreboard[from][user]['points']]);
+    for (var user in scoreboard[to]) {
+      users_and_scores.append([user, scoreboard[to][user]['points']]);
     }
 
     // Sort pairs by score: [["dru", 4], ["suroi", 53]]
@@ -97,23 +102,24 @@ module.exports.commands = {
 
     var output = "";
     for (var line_data in users_and_scores.slice(0,2)) {
-      output += line_data[0] + ": " + line_data[1] + ", ");
+      output += line_data[0] + ": " + line_data[1] + ", ";
     }
     output += "\b\b";
 
     reply(output);
   },
 
-  karma: function(r, parts, reply, command, from) {
+  karma: function(r, parts, reply, command, from, to) {
     var user = parts[0],
     points = 0;
 
-    this.scoreboard[from] = this.scoreboard[from] || {};
+    scoreboard[to] = scoreboard[to] || {};
 
-    if (this.scoreboard[from][user]) {
-      points = this.scoreboard[from][user]['points'];
+    if (scoreboard[to][user]) {
+      points = scoreboard[to][user]['points'];
     }
 
+    console.log(user + " " + to + " " + scoreboard);
     reply(user + " has "  + points + " karma");
     // todo: point reasons
   }
