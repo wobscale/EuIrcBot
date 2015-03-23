@@ -1,29 +1,29 @@
 var bot;
 
-var scoreboards = {};
+var scoreboard = {};
 
 loadKarma = function(cb) {
-	bot.fsGetData('karma', 'karma.json', function(err, res) {
-		if(err) {
-			console.log("Error loading karma data " + err);
-			return;
-		}
+  bot.fsGetData('karma', 'karma.json', function(err, res) {
+    if(err) {
+      console.log("Error loading karma data " + err);
+      return;
+    }
 
-		scoreboards = JSON.parse(res);
+    scoreboard = JSON.parse(res);
 
-		cb && cb();
-	});
+    cb && cb();
+  });
 }
 
 saveKarma = function(cb) {
-	bot.fsStoreData('karma', 'karma.json', JSON.stringify(scoreboards), function() {
-		cb && cb();
-	});
+  bot.fsStoreData('karma', 'karma.json', JSON.stringify(scoreboard), function() {
+    cb && cb();
+  });
 }
 
 module.exports.init = function(b) {
-	bot = b;
-	loadKarma();
+  bot = b;
+  loadKarma();
 };
 
 var xplusplus = /(\w+)\+\+/;
