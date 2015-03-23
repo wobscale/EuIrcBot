@@ -90,7 +90,7 @@ module.exports.commands = {
 
     // yolo js
     for (var user in scoreboard[to]) {
-      users_and_scores.append([user, scoreboard[to][user]['points']]);
+      users_and_scores.push([user, scoreboard[to][user]['points']]);
     }
 
     // Sort pairs by score: [["dru", 4], ["suroi", 53]]
@@ -98,11 +98,12 @@ module.exports.commands = {
       return a[1] <= b[1];
     });
 
+    users_and_scores = users_and_scores.slice(0,3);
     var output = "";
-    for (var line_data in users_and_scores.slice(0,2)) {
-      output += line_data[0] + ": " + line_data[1] + ", ";
+    for (var i = 0; i < users_and_scores.length; i++) {
+      output += users_and_scores[i][0] + ": " + users_and_scores[i][1] + ", ";
     }
-    output += "\b\b";
+    output = output.substring(0, output.length-2);
 
     reply(output);
   },
