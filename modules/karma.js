@@ -27,14 +27,21 @@ module.exports.init = function(b) {
   loadKarma();
 };
 
-var inc = /(\w+)\+\+/;
-var incfor = /(\w+)\+\+\s+(\sfor)?\s+(.+)/;
-var dec = /(\w+)--/;
-var decfor = /(\w+)--\s*(\sfor)?\s+(.+)/;
+// todo: these are probably wrong somehow
+var postinc = /([^\s\+-]+)\+\+/;
+var preinc = /\+\+([^\s\+-]+)/;
+var incfor = /([^\s\+-]+)\+\+\s+(\sfor)?\s+(.+)/;
+var postdec = /([^\s\+-]+)--/;
+var predec = /--([^\s\+-]+)/;
+var decfor = /([^\s\+-]+)--\s*(\sfor)?\s+(.+)/;
 
 // Watch for messages of the following forms
 // dru++
+// ++dru
 // dru++ for some reason
+// dru--
+// --dru
+// dru-- for some reason
 module.exports.message = function(text, from, to, reply, raw) {
   var re;
 
@@ -51,7 +58,7 @@ module.exports.message = function(text, from, to, reply, raw) {
     //    reply(user + " now has " + scoreboard[user]['points'] + " points (nth place!), including 1 for " + reason); // #todo nth place
     saveKarma();
   } 
-  else if (re = inc.exec(text)) {
+  else if (re = preinc.exec(text) || postinc.exec(text)) {
     var user = re[1];
 
     scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
@@ -70,7 +77,7 @@ module.exports.message = function(text, from, to, reply, raw) {
 
     saveKarma();
   }
-  else if (re = dec.exec(text)) {
+  else if (re = predec.exec(text) || postdec.exec(text)) {
     var user = re[1];
 
     scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
