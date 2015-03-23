@@ -79,13 +79,15 @@ module.exports.msg = function(text, from, reply, raw) {
 
 module.exports.commands = {
 
-  top3: function(r, parts, reply) { // todo: use regex parsed commands to implement topN
+  top3: function(r, parts, reply, command, from) { // todo: use regex parsed commands to implement topN
     var users_and_scores = [],
     rank = 1;
 
+    this.scoreboard[from] = this.scoreboard[from] || {};
+
     // yolo js
-    for (var user in this.scoreboard) {
-      users_and_scores.append([user, this.scoreboard[user]['points']]);
+    for (var user in this.scoreboard[from]) {
+      users_and_scores.append([user, this.scoreboard[from][user]['points']]);
     }
 
     // Sort pairs by score: [["dru", 4], ["suroi", 53]]
@@ -105,6 +107,8 @@ module.exports.commands = {
   karma: function(r, parts, reply, command, from) {
     var user = parts[0],
     points = 0;
+
+    this.scoreboard[from] = this.scoreboard[from] || {};
 
     if (this.scoreboard[from][user]) {
       points = this.scoreboard[from][user]['points'];
