@@ -1,6 +1,29 @@
 var bot;
+
+var scoreboards = {};
+
+loadKarma = function(cb) {
+	bot.fsGetData('karma', 'karma.json', function(err, res) {
+		if(err) {
+			console.log("Error loading karma data " + err);
+			return;
+		}
+
+		scoreboards = JSON.parse(res);
+
+		cb && cb();
+	});
+}
+
+saveKarma = function(cb) {
+	bot.fsStoreData('karma', 'karma.json', JSON.stringify(scoreboards), function() {
+		cb && cb();
+	});
+}
+
 module.exports.init = function(b) {
-  this.scoreboard = {};
+	bot = b;
+	loadKarma();
 };
 
 var xplusplus = /(\w+)\+\+/;
