@@ -48,7 +48,7 @@ module.exports.msg = function(text, from, reply, raw) {
     this.scoreboard[from][user]['increasons'].push(reason);
 
     //    reply(user + " now has " + this.scoreboard[user]['points'] + " points (nth place!), including 1 for " + reason); // #todo nth place
-
+    saveKarma();
   } 
   else if (re = inc.exec(text)) {
     var user = re[0];
@@ -57,6 +57,7 @@ module.exports.msg = function(text, from, reply, raw) {
     this.scoreboard[from][user]['points']++;
 
     //    reply(user + " now has " + this.scoreboard[user]['points'] + " points (nth place!)"); // #todo nth place
+    saveKarma();
   }
   else if (re = decfor.exec(text)) {
     var user = re[0],
@@ -65,12 +66,14 @@ module.exports.msg = function(text, from, reply, raw) {
     this.scoreboard[from][user] = this.scoreboard[from][user] || { points: 0, reasons: [] };
     this.scoreboard[from][user]['points']--;
     this.scoreboard[from][user]['decreasons'].push(reason);
+    saveKarma();
   }
   else if (re = dec.exec(text)) {
     var user = re[0];
 
     this.scoreboard[from][user] = this.scoreboard[from][user] || { points: 0, reasons: [] };
     this.scoreboard[from][user]['points']--;
+    saveKarma();
   }
 };
 
