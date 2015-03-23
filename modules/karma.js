@@ -48,7 +48,6 @@ module.exports.message = function(text, from, to, reply, raw) {
     scoreboard[to][user]['points']++;
     scoreboard[to][user]['increasons'].push(reason);
 
-    console.log("incfor " + to + " " + user + " " + scoreboard[to][user]['points']);
     //    reply(user + " now has " + scoreboard[user]['points'] + " points (nth place!), including 1 for " + reason); // #todo nth place
     saveKarma();
   } 
@@ -58,7 +57,6 @@ module.exports.message = function(text, from, to, reply, raw) {
     scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
     scoreboard[to][user]['points']++;
 
-    console.log("inc " + to + " " + user + " " + scoreboard[to][user]['points']);
     //    reply(user + " now has " + scoreboard[user]['points'] + " points (nth place!)"); // #todo nth place
     saveKarma();
   }
@@ -69,7 +67,7 @@ module.exports.message = function(text, from, to, reply, raw) {
     scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
     scoreboard[to][user]['points']--;
     scoreboard[to][user]['decreasons'].push(reason);
-    console.log("decfor " + to + " " + user + " " + scoreboard[to][user]['points']);
+
     saveKarma();
   }
   else if (re = dec.exec(text)) {
@@ -77,7 +75,7 @@ module.exports.message = function(text, from, to, reply, raw) {
 
     scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
     scoreboard[to][user]['points']--;
-    console.log("dec " + to + " " + user + " " + scoreboard[to][user]['points']);
+
     saveKarma();
   }
 };
@@ -119,7 +117,6 @@ module.exports.commands = {
       points = scoreboard[to][user]['points'];
     }
 
-    console.log(user + " " + to + " " + scoreboard);
     reply(user + " has "  + points + " karma");
     // todo: point reasons
   }
