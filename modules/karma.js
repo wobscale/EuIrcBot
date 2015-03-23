@@ -41,7 +41,7 @@ module.exports.message = function(text, from, to, reply, raw) {
   scoreboard[to] = scoreboard[to] || {};
 
   if (re = incfor.exec(text)) {
-    var user = re[0],
+    var user = re[1],
       reason = re[2];
 
     scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
@@ -53,7 +53,7 @@ module.exports.message = function(text, from, to, reply, raw) {
     saveKarma();
   } 
   else if (re = inc.exec(text)) {
-    var user = re[0];
+    var user = re[1];
 
     scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
     scoreboard[to][user]['points']++;
@@ -63,7 +63,7 @@ module.exports.message = function(text, from, to, reply, raw) {
     saveKarma();
   }
   else if (re = decfor.exec(text)) {
-    var user = re[0],
+    var user = re[1],
       reason = re[2];
 
     scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
@@ -73,7 +73,7 @@ module.exports.message = function(text, from, to, reply, raw) {
     saveKarma();
   }
   else if (re = dec.exec(text)) {
-    var user = re[0];
+    var user = re[1];
 
     scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
     scoreboard[to][user]['points']--;
