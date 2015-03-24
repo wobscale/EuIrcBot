@@ -1,4 +1,7 @@
 {
+	"accessKeyId": "keyz",
+	"secretAccessKey": "sekretz",
+	"region": "from http://docs.aws.amazon.com/ses/latest/DeveloperGuide/regions.html",
 	"host":"mx.cool.io",
 	"port":465,
 	"auth": {
