@@ -125,6 +125,12 @@ module.exports.commands = {
       reply("you didn't tell me enough stuff, doofus");
     }
   },
+  
+  unsubscribe: function(r, p, reply, command, from, channel) {
+    delete addresses[channel][from];
+    saveAddresses(channel);
+    reply("Removed address for user " + from);
+  },
 
   page: function(r, p, reply, command, from, channel) {
     if(p.length >= 2) {
