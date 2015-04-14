@@ -99,7 +99,7 @@ module.exports.init = function(b) {
 }
 
 module.exports.commands = {
-  addpager: function(r, p, reply, command, from, channel) {
+  subscribe: function(r, p, reply, command, from, channel) {
     if(p.length >= 1) {
       getAddresses(channel, function() {
         if(ses) {
