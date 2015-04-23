@@ -44,7 +44,8 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     '-service- for -market-, but like -service-',
     '-service- for -market-, in the style of -service-',
     '-service- for -market-, marketed at -market-',
-    '-service- to combine -market- with -market-'
+    '-service- to combine -market- with -market-',
+    '-service- as a service'
   ];
 
   var pitch = startup_pitches[Math.floor(Math.random() * startup_pitches.length)];
