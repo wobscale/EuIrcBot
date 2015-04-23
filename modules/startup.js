@@ -12,7 +12,8 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'CNN', 'A new Programming language', 'A Webbrowser', 'Ads', 'The Pirate Bay', 'Ebay',
     'Deviant Art', 'Mail order bombs', 'Crowdsourced retirement funding', 'Siri',
     'A personal assistant', 'Robot replacements', 'Fingerboxes', 'Concealed weaponry',
-    'An iPhone app', 'Complaint management', 'Easy blogging', 'A pyramid scheme', 'Fleshlights'
+    'An iPhone app', 'Complaint management', 'Easy blogging', 'A pyramid scheme', 'Fleshlights',
+    'Farmlogs', 'Red Nova Labs', 'Threat Stack', 'graduate school'
   ];
   var markets = [
     'finance', 'music', 'movies', 'pictures', 'gifs', 'pirated content', 'education',
@@ -32,15 +33,33 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'recipes', 'writers', 'dogs', 'birds', 'anime', 'the POTUS', 'sick horses',
     'girls that look like brigid', "people who can't read good", 'family photos'
   ];
+  
+  var startup_pitches = [
+    '-service- for -market-',
+    '-service- for -market-',
+    '-service- for -market-',
+    '-service- for -market-',
+    '-service- for -market-', // yolo 50% x for y
+    '-market- as a -service-',
+    '-service- for -market-, but like -service-',
+    '-service- for -market-, in the style of -service-',
+    '-service- for -market-, marketed at -market-',
+    '-service- to combine -market- with -market-',
+    '-service- as a service'
+  ];
 
-	var prefixless_markets = [
-		'as a service'
-	];
-
-	var market_idx = Math.floor(Math.random() * (markets.length + prefixless_markets.length));
-  var chosen_service = services[Math.floor(Math.random() * services.length)],
-      chosen_market  = (markets.concat(prefixless_markets))[market_idx];
-
-  reply('Random startup idea: ' + chosen_service + (market_idx < markets.length? ' for ' : ' ') + chosen_market);
+  var pitch = startup_pitches[Math.floor(Math.random() * startup_pitches.length)];
+  
+  while (pitch.indexOf('-service-') > -1) {
+  	var random_service = services[Math.floor(Math.random() * services.length)];
+  	pitch = pitch.replace('-service-', random_service);
+  }
+  
+  while (pitch.indexOf('-market-') > -1) {
+  	var random_market = markets[Math.floor(Math.random() * markets.length)];
+  	pitch = pitch.replace('-market-', random_market);
+  }
+  
+  reply('Random startup idea: ' + pitch);
 };
 
