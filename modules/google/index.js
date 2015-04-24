@@ -42,3 +42,7 @@ var firstimg = function(r, p, reply) {
 module.exports.run_gi = firstimg;
 module.exports.run_gimg = firstimg;
 module.exports.run_gimgs = firstimg;
+
+module.exports.run_yt = function(r,p,reply, command, from, to, text, raw) {
+  return module.exports.run(r + " site:youtube.com inurl:watch", p, reply, command, from, to, text, raw);
+}
