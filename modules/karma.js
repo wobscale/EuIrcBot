@@ -46,14 +46,15 @@ module.exports.message = function(text, from, to, reply, raw) {
   var re;
 
   scoreboard[to] = scoreboard[to] || {};
+	// TODO validate the given 'user' does, in fact, exist in some sane form
 
   if (re = incfor.exec(text)) {
     var user = re[1],
       reason = re[2];
 
-    scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
-    scoreboard[to][user]['points']++;
-    scoreboard[to][user]['increasons'].push(reason);
+    scoreboard[to][user] = scoreboard[to][user] || { points: 0, increasons: [], decreasons: [] };
+    scoreboard[to][user].points++;
+    scoreboard[to][user].increasons.push(reason);
 
     //    reply(user + " now has " + scoreboard[user]['points'] + " points (nth place!), including 1 for " + reason); // #todo nth place
     saveKarma();
@@ -61,8 +62,8 @@ module.exports.message = function(text, from, to, reply, raw) {
   else if (re = preinc.exec(text) || postinc.exec(text)) {
     var user = re[1];
 
-    scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
-    scoreboard[to][user]['points']++;
+    scoreboard[to][user] = scoreboard[to][user] || { points: 0, increasons: [], decreasons: [] };
+    scoreboard[to][user].points++;
 
     //    reply(user + " now has " + scoreboard[user]['points'] + " points (nth place!)"); // #todo nth place
     saveKarma();
@@ -71,17 +72,17 @@ module.exports.message = function(text, from, to, reply, raw) {
     var user = re[1],
       reason = re[2];
 
-    scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
-    scoreboard[to][user]['points']--;
-    scoreboard[to][user]['decreasons'].push(reason);
+    scoreboard[to][user] = scoreboard[to][user] || { points: 0, increasons: [], decreasons: [] };
+    scoreboard[to][user].points--;
+    scoreboard[to][user].decreasons.push(reason);
 
     saveKarma();
   }
   else if (re = predec.exec(text) || postdec.exec(text)) {
     var user = re[1];
 
-    scoreboard[to][user] = scoreboard[to][user] || { points: 0, reasons: [] };
-    scoreboard[to][user]['points']--;
+    scoreboard[to][user] = scoreboard[to][user] || { points: 0, increasons: [], decreasons: [] };
+    scoreboard[to][user].points--;
 
     saveKarma();
   }
@@ -89,6 +90,7 @@ module.exports.message = function(text, from, to, reply, raw) {
 
 module.exports.commands = {
 
+	// TODO reimplement this because believe me it needs it
   top3: function(r, parts, reply, command, from, to) { // todo: use regex parsed commands to implement topN
     var users_and_scores = [],
     rank = 1;
@@ -96,9 +98,9 @@ module.exports.commands = {
     scoreboard[to] = scoreboard[to] || {};
 
     // yolo js
-    for (var user in scoreboard[to]) {
-      users_and_scores.push([user, scoreboard[to][user]['points']]);
-    }
+		Object.keys(scoreboard[to]).forEach(function(user) {
+      users_and_scores.push([user, scoreboard[to][user].points]);
+    })
 
     // Sort pairs by score: [["dru", 4], ["suroi", 53]]
     users_and_scores = users_and_scores.sort(function (a, b) {
@@ -122,7 +124,7 @@ module.exports.commands = {
     scoreboard[to] = scoreboard[to] || {};
 
     if (scoreboard[to][user]) {
-      points = scoreboard[to][user]['points'];
+      points = scoreboard[to][user].points;
     }
 
     reply(user + " has "  + points + " karma");
