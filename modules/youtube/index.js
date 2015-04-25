@@ -44,7 +44,6 @@ function sayInfo(vid, cb, sayUrl) {
 
 function sayIdInfo(id, cb, sayUrl) {
 	yt.videos.list({auth: apiKey, id: id, part: "snippet,statistics,contentDetails"}, function(err, results) {
-		console.log(results)
 		if(results.items.length > 0) {
 			sayInfo(results.items[0], cb, sayUrl)
 		}
