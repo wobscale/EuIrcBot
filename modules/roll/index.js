@@ -1,4 +1,4 @@
-var roll = require('roll');
+var Roll = require('roll');
 var regex = /^(\d*)d(\d+|\%)(([\+\-\/\*b])(\d+))?$/;
 
 module.exports.command = "roll";
@@ -14,6 +14,7 @@ function rollDice(str, cb) {
   }
   var res;
   try {
+    var roll = new Roll()
     res = roll.roll(str);
   } catch(e) {
     return;

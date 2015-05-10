@@ -4,7 +4,7 @@
   "description": "Roll module",
   "main": "index.js",
   "dependencies": {
-    "roll": "latest"
+    "roll": "^1.1.0"
   },
   "author": "EuanK",
   "license": "MIT"
