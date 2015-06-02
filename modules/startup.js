@@ -13,7 +13,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'Deviant Art', 'mail order bombs', 'crowdsourced retirement funding', 'Siri',
     'a personal assistant', 'robot replacements', 'fingerboxes', 'concealed weaponry',
     'an iPhone app', 'complaint management', 'easy blogging', 'a pyramid scheme', 'fleshlights',
-    'Farmlogs', 'Red Nova Labs', 'Threat Stack', 'graduate school'
+    'Farmlogs', 'Red Nova Labs', 'Threat Stack', 'graduate school', 'suscd\'s birthday'
   ];
   var markets = [
     'finance', 'music', 'movies', 'pictures', 'gifs', 'pirated content', 'education',
@@ -31,7 +31,8 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'people like reed', 'snipers', 'devoted Christians', 'atheists', 'cats',
     'the unemployed', 'the 1%', 'business purposes', 'amputees', 'panda lovers',
     'recipes', 'writers', 'dogs', 'birds', 'anime', 'the POTUS', 'sick horses',
-    'girls that look like brigid', "people who can't read good", 'family photos'
+    'girls that look like brigid', "people who can't read good", 'family photos',
+		'suscd\'s birthday', 'academia'
   ];
   
   var startup_pitches = [
