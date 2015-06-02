@@ -8,11 +8,11 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'Weedmaps', 'SnapChat', 'drones', 'WordPress', 'Napster', 'Tumblr', 'AirBnB',
     'cloud storage', 'a jQuery plugin', 'Reddit', 'Cash4Gold', 'Flickr', 'dongs',
     'Wikipedia', 'eHarmony', 'Amazon', 'Adult Friend Finder', 'EC2', 'S3',
-    '4chan', 'Blogger', 'Pinterest', 'The PS3', 'The XBOX', 'Craigslist', 'XHamster',
-    'CNN', 'A new Programming language', 'A Webbrowser', 'Ads', 'The Pirate Bay', 'Ebay',
-    'Deviant Art', 'Mail order bombs', 'Crowdsourced retirement funding', 'Siri',
-    'A personal assistant', 'Robot replacements', 'Fingerboxes', 'Concealed weaponry',
-    'An iPhone app', 'Complaint management', 'Easy blogging', 'A pyramid scheme', 'Fleshlights',
+    '4chan', 'Blogger', 'Pinterest', 'the PS3', 'the XBOX', 'Craigslist', 'XHamster',
+    'CNN', 'a new programming language', 'a webbrowser', 'ads', 'The Pirate Bay', 'Ebay',
+    'Deviant Art', 'mail order bombs', 'crowdsourced retirement funding', 'Siri',
+    'a personal assistant', 'robot replacements', 'fingerboxes', 'concealed weaponry',
+    'an iPhone app', 'complaint management', 'easy blogging', 'a pyramid scheme', 'fleshlights',
     'Farmlogs', 'Red Nova Labs', 'Threat Stack', 'graduate school'
   ];
   var markets = [
