@@ -43,7 +43,7 @@ module.exports.url = function(url, reply) {
 };
 
 
-module.exports.commands = ['quo', 'quot', 'quoth'];
+module.exports.commands = ['quo', 'quoth'];
 
 
 module.exports.run = function(r, parts, reply, command, from, to) {
@@ -58,7 +58,7 @@ module.exports.run = function(r, parts, reply, command, from, to) {
 
     t.post('statuses/update', {status: res}, function(err, data) {
       if(err) return reply(err);
-      bot.sayTo(from, tConf.baseUrl + 'status/' + data.id_str);
+      reply(tConf.baseUrl + 'status/' + data.id_str);
     });
   });
 };

@@ -125,18 +125,42 @@ me.getAllCommandFns = function() {
 	return _.reduce(_.values(modules).map(function(m) {
 		return me.getModuleCommandFns(m);
 	}), function(left, right) {
-		_.extend(left.string,right.string);
+		left.string = left.string.concat(right.string);
 		left.regex = left.regex.concat(right.regex);
 		return left;
 	});
 };
 
-/* Returns a key/value map of commands:
+/* Returns an object with two types of command functions; string type and regex
+ * type.  The 'string' key contains an array of the command string along with an object
+ * containing its module reference and a function reference.  The regex type is
+ * an array of the same form, except it's first element is a regex, not a string,
+ * Example input/output pair:
+ *
+ * Input:
+ * Module of: {
+ *   commands: ['test1', 'test2', /^asdf$/]
+ *   run:  someFunction,
+ *   run_xyz: someFunction2
+ * }
+ *
+ * Output:
  * {
- *   command: {
- *     module: m,
- *     fn: f
- *   }
+ *   string: [
+ *     ["test1", {
+ *        module: m,
+ *        fn: someFunction
+ *     }],
+ *     ["test2", {
+ *        module: m,
+ *        fn: someFunction
+ *     }],
+ *     ["xyz", {
+ *        module: m,
+ *        fn: someFunction2
+ *     }]
+ *   },
+ *   regex: [[/^asdf$/, {module: m, fn: someFunction}]]
  * }
  */
 me.getModuleCommandFns = function(m) {
@@ -191,9 +215,9 @@ me.getModuleCommandFns = function(m) {
 			}
 		}
 	});
-	var commandFnsWithModules = _.object(_.map(commandFns, function(fn, command) {
+	var commandFnsWithModules = _.map(commandFns, function(fn, command) {
 		return [command, {module: m, fn: fn}];
-	}));
+	});
 
 	return {string: commandFnsWithModules, regex: regexFns};
 };
@@ -313,16 +337,20 @@ me.callCommandFn = function(command, args) {
 		} catch(ex) { console.trace("Call Command: " + command + "\n" + ex.stack); console.log(ex); }
 	};
 
-	if(typeof fns.string[command] === 'object' && typeof fns.string[command].fn === 'function') {
-		call(fns.string[command], args);
-	} else {
-		var matches = _.filter(fns.regex, function(regex) {
-			return command.match(regex[0]);
-		});
+	// String functions
+	_.each(fns.string, function(fn) {
+		if(fn.length === 2 && fn[0] === command && typeof fn[1] === 'object' && typeof fn[1].fn === 'function') {
+			call(fn[1], args);
+		}
+	});
 
-		_.each(matches, function(match) {
-			call(match[1], args.concat([match[0]]));
-		});
-	}
+	// Regex functions
+	var matches = _.filter(fns.regex, function(regex) {
+		return command.match(regex[0]);
+	});
+
+	_.each(matches, function(match) {
+		call(match[1], args.concat([match[0]]));
+	});
 };
 
