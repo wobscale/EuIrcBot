@@ -17,4 +17,4 @@ module.exports.run = function(r, parts, reply) {
 	reply(hash);
 }
 
-module.exports.commands = ['version', 'head', 'hash'];
+module.exports.commands = ['version'];
