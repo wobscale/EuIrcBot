@@ -12,13 +12,14 @@ function getDicks(n, reply) {
 			try {
 				var json = JSON.parse(data);
 				var num = 0;
-				json['dicks'].forEach(function(dick) {
+				json['dicks'].every(function(dick) {
 					reply(dick);
 					num++;
 					if(num > 16) {
 						reply("http://i.imgur.com/WoouIW3.gif");
-						break;
+						return false;
 					}
+					return true;
 				});
 			} catch(e) {
 			}
