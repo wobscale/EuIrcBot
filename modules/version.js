@@ -1,5 +1,7 @@
 var exec = require('child_process').exec;
 
+var ver = require('../package.json').version;
+
 var hash;
 
 module.exports.init = function(b) {
@@ -9,12 +11,11 @@ module.exports.init = function(b) {
 			console.err("git's broken yo");
 		}
 		hash = stdout;
-		console.log(hash);
 	});
 }
 
 module.exports.run = function(r, parts, reply) {
-	reply(hash);
+	reply(ver + ": " + hash);
 }
 
 module.exports.commands = ['version'];
