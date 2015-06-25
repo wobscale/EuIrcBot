@@ -11,12 +11,17 @@ function getDicks(n, reply) {
 		res.on('end', function() {
 			try {
 				var json = JSON.parse(data);
-				json['dicks'].forEach(function(dick) {
+				var num = 0;
+				json['dicks'].every(function(dick) {
 					reply(dick);
+					num++;
+					if(num > 16) {
+						reply("http://i.imgur.com/WoouIW3.gif");
+						return false;
+					}
+					return true;
 				});
 			} catch(e) {
-        //console.log(e);
-				//return reply("Error handling response");
 			}
 		});
 	});
