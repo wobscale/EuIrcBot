@@ -7,7 +7,9 @@ var moment = require('moment');
 var apiKey = "";
 module.exports.init = function(b) {
 	b.getConfig("google.json", function(err, conf) {
-		apiKey = conf.apiKey
+		if(!err) {
+			apiKey = conf.apiKey
+		}
 	});
 };
 
