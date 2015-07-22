@@ -22,6 +22,7 @@ module.exports.run = function(rem, parts, reply, command, from, to, text, raw) {
 
   scrollbackModule.getFormattedScrollbackLinesFromRanges(to, parts, function(err, res) {
     if(err) return reply(err);
+    if(res.match(/(pls|#)noquo/)) return reply("don't be a deck, betch");
 
     requestify.post(conf.baseUrl + '/api/quote', {
       quote: res,

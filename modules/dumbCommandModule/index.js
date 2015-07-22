@@ -1,3 +1,5 @@
+var _ = require('underscore');
+
 var bot;
 
 var commandDict = null;
@@ -22,6 +24,16 @@ module.exports.init = function(b) {
         console.log("Corrupted commands.json file! Resetting dict...");
         commandDict = {};
       }
+
+      // Convert to new db format
+      if(_.size(commandDict) > 0 && !_.values(commandDict)[0].hasOwnProperty('blame')) {
+        commandDict = _.mapObject(commandDict, function(val, key) {
+          var data = {};
+          data.command = val;
+          data.blame = 'jruby'; // blame merr
+          return data;
+        });
+      }
     }
     writeCommands();
   });
@@ -35,24 +47,31 @@ module.exports.init = function(b) {
 
 
 module.exports.any_command = function(remainder, parts, reply, command) {
-  if(commandDict[command]) reply(commandDict[command]);
+  if(commandDict[command]) reply(commandDict[command].command);
 };
 
 module.exports.commands = {
   dumbcommand: {
     _default: function(x,y,reply) {
-      reply("Usage: dumbcommand [<add>|<remove>|<list>] <command> [<text>]");
+      reply("Usage: dumbcommand [<add>|<remove>|<list>|<blame>] <command> [<text>]");
     },
-    add: function(r, parts, reply) {
+    add: function(r, parts, reply, command, from) {
       if(parts.length !== 2) return reply("add must have *exactly* two arguments");
       if(!allowCmds && parts[1].charAt(0) === '!') return reply ("You are an asshole");
       var exists = commandDict[parts[0]];
-      commandDict[parts[0]] = parts[1];
+      commandDict[parts[0]] = {};
+      commandDict[parts[0]].command = parts[1];
+      commandDict[parts[0]].blame = from;
 
       if(exists) reply("Overwrite command " + parts[0]);
       else reply("Added command " + parts[0]);
 
       writeCommands();
+    },
+    blame: function(r, parts, reply) {
+      if(parts.length === 0) return reply("please specify a command to blame");
+      if(typeof commandDict[parts[0]] === 'undefined') return reply("No such command");
+      reply("Blame " + commandDict[parts[0]].blame + " for this");
     },
     remove: function(r, parts, reply) {
       if(parts.length !== 1) return reply("remove must have *exactly* one argument");
@@ -69,7 +88,7 @@ module.exports.commands = {
         reply("Commands: " + Object.keys(commandDict).join(","));
       } else {
         reply(parts.map(function(key) { return commandDict[key] ? key + " -> " + commandDict[key] : ''; })
-        .filter(function(item) { return item.length > 0; }).join(" | "));
+            .filter(function(item) { return item.length > 0; }).join(" | "));
       }
     }
   }

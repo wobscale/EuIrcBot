@@ -55,7 +55,8 @@ module.exports.run = function(r, parts, reply, command, from, to) {
 
   scrollbackModule.getFormattedScrollbackLinesFromRanges(to, parts, function(err, res) {
     if(err) return reply(err);
-
+    if(res.match(/(pls|#)noquo/)) return reply("don't be a deck, betch");
+    
     t.post('statuses/update', {status: res}, function(err, data) {
       if(err) return reply(err);
       reply(tConf.baseUrl + 'status/' + data.id_str);
