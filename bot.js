@@ -219,23 +219,21 @@ bot.initClient = function(cb) {
     } else {
       moduleMan.callModuleFn('ctcp', [text, type, from, to, raw]);
     }
-
-    if(raw.args && raw.args[1] && /^\u0001ACTION.*\u0001$/.test(raw.args[1])) {
-      if(/^ACTION /.test(text)) text = text.substring("ACTION ".length);
-
-      var primaryFrom = (to == bot.client.nick) ? from : to;
-      moduleMan.callModuleFn('action', [text, from, to, bot.getActionReply(primaryFrom), raw]);
-      if(to == bot.client.nick) {
-        moduleMan.callModuleFn('pmaction', [text, from, bot.getActionReply(primaryFrom), raw]);
-      } else {
-        moduleMan.callModuleFn('chanaction', [text, to, from, bot.getActionReply(primaryFrom), raw]);
-      }
-    }
   });
 
   bot.client.on('ping', function() {
     bot.lastPing = (new Date).getTime();
   } );
+
+  bot.client.on('action', function(from, to, text, type, raw) {
+    var primaryFrom = (to == bot.client.nick) ? from : to;
+    moduleMan.callModuleFn('action', [text, from, to, bot.getActionReply(primaryFrom), raw]);
+    if(to == bot.client.nick) {
+      moduleMan.callModuleFn('pmaction', [text, from, bot.getActionReply(primaryFrom), raw]);
+    } else {
+      moduleMan.callModuleFn('chanaction', [text, to, from, bot.getActionReply(primaryFrom), raw]);
+    }
+  });
 
   cb();
 };
