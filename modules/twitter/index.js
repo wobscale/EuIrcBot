@@ -1,5 +1,6 @@
 var Twit = require('twit');
 var ent = require('ent');
+var req = require('request');
 
 var t = null;
 var tConf = null;
@@ -41,6 +42,35 @@ module.exports.url = function(url, reply) {
     }
   }
 };
+
+module.exports.run_tweet = function(r, parts, reply) {
+  if(parts.length === 0) {
+    reply('Usage: !tweet post <status> | imgpost <img url> <status> | del <id>');
+  }
+  else if(parts[0] === 'post') {
+    t.post('statuses/update', { status: parts.slice(1).join('') }, function(err, data) {
+      if(err) return reply(err);
+      reply(tConf.baseUrl + 'status/' + data.id_str);
+    });
+  }
+  else if(parts[0] === 'imgpost') {
+    req({url: parts[1], encoding: 'base64'}, function(error, response, body) {
+      if(error) return reply(error);
+      t.post('media/upload', {media_data: body }, function(err, data) {
+        t.post('statuses/update', {status: parts.slice(2).join(''), media_ids: data.media_id_string}, function(err, data) {
+          if(err) return reply(err);
+          reply(tConf.baseUrl + 'status/' + data.id_str);
+        });
+      });
+    });
+  }
+  else if(parts[0] === 'del') {
+    t.post('statuses/destroy/:id', {id : parts[1] }, function(err, data) {
+      if(err) return reply(err);
+      reply('Deleted "' + data.text + '"');
+    });
+  }
+}
 
 
 module.exports.commands = ['quo', 'quoth'];
