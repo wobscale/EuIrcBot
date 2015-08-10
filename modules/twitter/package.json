@@ -5,8 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "twit": "latest",
-    "ent": "latest",
-    "request": "latest"
+    "ent": "latest"
   },
   "author": "EuanK",
   "license": "MIT"
