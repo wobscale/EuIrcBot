@@ -6,7 +6,9 @@
   "dependencies": {
     "async": "latest",
     "irc": "git+https://github.com/LinuxMercedes/node-irc.git#bleeding",
-    "underscore": "latest"
+    "underscore": "latest",
+    "request": "latest",
+    "jsdom": "3.x"
   },
   "devDependencies": {},
   "repository": {
