@@ -6,7 +6,8 @@
   "dependencies": {
     "request": "latest",
     "jsdom": "3.x",
-    "tough-cookie": "latest"
+    "tough-cookie": "latest",
+    "URIjs": "latest"
   },
   "author": "brhoades",
   "license": "MIT"

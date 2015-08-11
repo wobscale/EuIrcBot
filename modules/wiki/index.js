@@ -21,7 +21,6 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 {
   var requrl = config.base + "?do=search&id="
                + parts.map(encodeURIComponent).join('+');
-  reply(requrl);
   // auth
   // This logs us in.....
   request.post({ url: config.base,
