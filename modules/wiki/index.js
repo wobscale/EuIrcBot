@@ -19,6 +19,9 @@ module.exports.commands = ["wi", "wiki"];
 
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw, regex)
 {
+  var requrl = config.base + "?do=search&id="
+               + parts.map(encodeURIComponent).join('+');
+  reply(requrl);
   // auth
   // This logs us in.....
   request.post({ url: config.base,
@@ -31,13 +34,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
       followAllRedirects: true,
       jar: true,
   }, function (err, httpResponse, body) {
-    request({ url: config.base,
-      qs: {
-        do: 'search',
-        id: parts.map(encodeURIComponent).join('&')
-      },
-      jar: true
-    },
+    request({ url: requrl, jar: true},
     function (err, httpResponse, body) {
       processWikiContent(reply, parts, body);
     });
@@ -54,7 +51,7 @@ var processWikiContent = function(reply, parts, body)
     if(results.length > 1)
     {
       reply(results.length + " results: " + config.base 
-            + "?do=search&id=" + parts.map(encodeURIComponent));
+            + "?do=search&id=" + parts.map(encodeURIComponent).join("+"));
     }
     else if(results.length == 0)
     {
