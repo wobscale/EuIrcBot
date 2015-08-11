@@ -22,7 +22,9 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
   var requrl = config.base + "?do=search&id="
                + parts.map(encodeURIComponent).join('+');
   console.log("COMMAND: " + command);
-  if(command == "wikis" || command == "ws" || command == "wis"
+
+  // !wikis <term> | !wiki s <term> | !wiki search <term> | !wis <term>
+  if(command == "wikis" || command == "wis"
       || (command == "wiki" && parts.length > 1 && (parts[0] == "s" || parts[0] == "search" || parts[0] == "url")))
   {
     if(parts[0] == "s" || parts[0] == "search")
