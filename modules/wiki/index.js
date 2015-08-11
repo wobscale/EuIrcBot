@@ -21,27 +21,35 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 {
   var requrl = config.base + "?do=search&id="
                + parts.map(encodeURIComponent).join('+');
-  // auth
-  // This logs us in.....
-  request.post({ url: config.base,
-      'form': {
-        id: 'start',
-        u: config.user,
-        do: 'login',
-        p: config.pass,
-      },
-      followAllRedirects: true,
-      jar: true,
-  }, function (err, httpResponse, body) {
-    request({ url: requrl, jar: true},
-    function (err, httpResponse, body) {
-      processWikiContent(reply, parts, body);
-    });
-});
 
+  getContent(reply, parts, requrl, searchWiki);
 };
 
-var processWikiContent = function(reply, parts, body)
+var getContent = function (reply, parts, page, callback)
+{
+  request.post({ url: config.base, // logs us in
+        'form': {
+          id: 'start',
+          u: config.user,
+          do: 'login',
+          p: config.pass,
+        },
+        followAllRedirects: true,
+        jar: true, //cookies
+      }, 
+      function (err, httpResponse, body)
+      {
+        request({ url: page, jar: true}, // gets the page
+          function (err, httpResponse, body)
+          {
+            callback(reply, parts, body);
+          }
+        );
+      }
+  );
+};
+
+var searchWiki = function(reply, parts, body)
 {
   jsdom.env(body, ["http://code.jquery.com/jquery.js"], function (err, window) {
     var $ = window.$;
