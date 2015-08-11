@@ -5,7 +5,8 @@
   "main": "index.js",
   "dependencies": {
     "request": "latest",
-    "jsdom": "3.x"
+    "jsdom": "3.x",
+    "tough-cookie": "latest"
   },
   "author": "brhoades",
   "license": "MIT"

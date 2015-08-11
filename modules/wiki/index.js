@@ -1,6 +1,8 @@
 var config;
 var request = require("request");
 var jsdom = require('jsdom');
+var util = require('util');
+var URI = require('URIjs');
 
 module.exports.init = function(bot) {
   bot.getConfig( "wiki.json", function( err, conf ) {
@@ -17,28 +19,53 @@ module.exports.commands = ["wi", "wiki"];
 
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw, regex)
 {
-  var wikisearchurl = "https://wiki.mst.edu/deskinst/start?do=search&id=";
-  reply("Unencoded parts", parts.join(', '));
+  // auth
+  // This logs us in.....
+  request.post({ url: config.base,
+      'form': {
+        id: 'start',
+        u: config.user,
+        do: 'login',
+        p: config.pass,
+      },
+      followAllRedirects: true,
+      jar: true,
+  }, function (err, httpResponse, body) {
+    request({ url: config.base,
+      qs: {
+        do: 'search',
+        id: parts.map(encodeURIComponent).join('&')
+      },
+      jar: true
+    },
+    function (err, httpResponse, body) {
+      processWikiContent(reply, parts, body);
+    });
+});
 
-  // Encode our part(s)
-  parts.map(encodeURIComponent);
-  reply("Encoded parts", parts.join(', '));
+};
 
-  // Do a search
-  request.get(wikisearchurl + parts.join('&'), {
-    'auth': {
-      'user': config.user,
-      'pass': config.pass,
-      'sendImmediately': config.sendImmediately
+var processWikiContent = function(reply, parts, body)
+{
+  jsdom.env(body, ["http://code.jquery.com/jquery.js"], function (err, window) {
+    var $ = window.$;
+    var results = $(".search_quickhits > li");
+
+    if(results.length > 1)
+    {
+      reply(results.length + " results: " + config.base 
+            + "?do=search&id=" + parts.map(encodeURIComponent));
     }
-  },
-  function process(err, httpResponse, body)
-  {
-    console.log("URL Retrieved: " + wikisearchurl + parts.join('+'));
-    console.log("HTTP Error Code: " + httpResponse);
-    //console.log(body);
-  }
-  
-  );
+    else if(results.length == 0)
+    {
+      reply("No results");
+    }
+    else
+    {
+      var uri = URI(config.base);
+      var match = $(".search_quickhits > li:nth-child(1) > a:nth-child(1)");
+      reply(uri.protocol() + "://" + uri.hostname() + match.attr("href"));
+    }
+  });
 
 };
