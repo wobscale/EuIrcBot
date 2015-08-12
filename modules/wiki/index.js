@@ -114,8 +114,38 @@ var createWikiURL = function(href)
 
 var help = function(remainder, parts, reply, command)
 {
-  reply("Usage: wi[ki] [<s(earch)>|<a(lias)>|<h(elp)>] [args]");
-  reply("  !wiki help <command> for more details");
+  if(parts.length == 0 )
+  {
+    reply("Usage: wi[ki] [<s(earch)>|<a(lias)>|<h(elp)>] [args]");
+    reply("  !wiki help <command> for more details");
+
+    return;
+  }
+  
+  switch(parts[0])
+  {
+    case "s":
+    case "search":
+      reply("Usage: !wi[ki] (s[earch]|f[ind]) <search query>");
+      reply("  Search query can be several parts, separated with spaces. This function will return an exact match if there is one, otherwise a match count and a search link.");
+      break;
+
+    case "a":
+    case "alias":
+      reply("Usage: !wi[ki] a[lias] [<add>|<remove>|<list>] <name> <link>");
+      reply("  Allows alias definitions for !wiki <alias> and overrides for !wiki search <alias>."); 
+      break;
+
+    case "":
+    case "h":
+    case "help":
+      reply("I hate you.");
+      break;
+
+    default:
+      reply("Unknown command: \"" + parts[0] + "\".");
+      break;
+  }
 };
 
 
