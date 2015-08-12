@@ -32,7 +32,7 @@ module.exports.init = function(b) {
         aliasDict = {};
       }
     }
-    writeCommands();
+    writeAliases();
   });
 };
 module.exports.name = "sirc-wiki";
@@ -112,6 +112,68 @@ var createWikiURL = function(href)
   return(uri.protocol() + "://" + uri.hostname() + href);
 };
 
+var alias = function(remainder, parts, reply, command, from)
+{
+  // Remove alias subcommand
+  var arg = parts[0];
+  parts = parts.slice(1,parts.length);
+  switch(arg)
+  {
+    case "a":
+    case "new":
+    case "n":
+    case "add":
+      if(parts.length !== 2) return reply("add must have *exactly* two arguments");
+      for(var key in Object.keys(aliasMap))
+      {
+        if(key === parts[0])
+          return reply("Go to hell.");
+
+        for(var alias in aliasMap[key])
+        {
+          if(alias == parts[0])
+            return reply("You're an asshole.");
+        }
+      }
+      var exists = aliasDict[parts[0]];
+      aliasDict[parts[0]] = {};
+      aliasDict[parts[0]].alias = parts[1];
+      aliasDict[parts[0]].blame = from;
+
+      if(exists) reply("Overwrite alias " + parts[0]);
+      else reply("Added alias " + parts[0]);
+
+      writeAliases();
+      break;
+
+    case "d":
+    case "delete":
+    case "r":
+    case "remove":
+      if(parts.length !== 1) return reply("remove must have *exactly* one argument");
+
+      if(typeof aliasDict[parts[0]] === 'undefined') return reply("No such alias");
+
+      delete aliasDict[parts[0]];
+      reply("Removed alias " + parts[0]);
+
+      writeAliases();
+      break;
+
+    case "l":
+    case "list":
+    case "show":
+    case "s":
+      if(parts.length === 0) {
+        reply("Aliases: " + Object.keys(aliasDict).join(","));
+      } else {
+        reply(parts.map(function(key) { return aliasDict[key] ? key + " -> " + aliasDict[key] : ''; })
+            .filter(function(item) { return item.length > 0; }).join(" | "));
+      }
+    break;
+  }
+};
+
 var help = function(remainder, parts, reply, command)
 {
   if(parts.length == 0 )
@@ -141,16 +203,19 @@ var help = function(remainder, parts, reply, command)
     case "help":
       reply("I hate you.");
       break;
-
+    
     default:
-      reply("Unknown command: \"" + parts[0] + "\".");
+      parts = parts.slice(1,parts.length);
+      if(aliasDict[parts.join(" ")])
+        reply(aliasDict[parts.join(" ")]);
+      else
+        reply("Unknown alias \"" + parts.join(" ") + "\".");
       break;
   }
 };
 
-
 // === Dict functions ===
-function writeCommands() {
+function writeAliases() {
   bot.writeDataFile(aliasFile, JSON.stringify(aliasDict), function(err) {
     if(err) console.log("Error writing command file: " + err);
   });
@@ -163,16 +228,15 @@ module.exports.commands = {
     _default: help, 
     help: help,
     search: search,
-    test: function(x,y,reply) {
-      reply("Hello!");
-    }
-  },
+    alias: alias
+  }
 };
 
 // subcommand alias hash
 var aliasMap = { 
   help: ['h', '?'],
-  search: ['s', 'f', 'find']
+  search: ['s', 'f', 'find'],
+  alias: ['a']
 };
 
 Object.keys(aliasMap).map(function (orig) {
