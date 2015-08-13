@@ -38,13 +38,22 @@ module.exports.init = function(b) {
 module.exports.name = "sirc-wiki";
 
 // Funtionality
-var search = function(remainder, parts, reply)
+
+// Eventually this will let you do cool stuff like grab the nth item
+// callback should take reply, result, and $
+var query = function(remainder, parts, reply, callback)
 {
   var requrl = config.base + "?do=search&id="
                + parts.map(encodeURIComponent).join('+');
 
-  getContent(reply, parts, requrl, searchWiki);
+  handleContent(reply, parts, requrl, callback);
 };
+
+var search = function(remainder, parts, reply)
+{
+  query(reply, parts, requrl, searchReply);
+};
+
 
 var getContent = function(reply, parts, page, callback)
 {
@@ -70,41 +79,47 @@ var getContent = function(reply, parts, page, callback)
   );
 };
 
-var searchWiki = function(reply, parts, body)
+var searchReply = function(reply, parts, $)
+{
+  var pageresults = $(".search_quickhits > li");
+  var contentresults = $(".search_results > dt");
+
+  // Exact page match, return it
+  if(pageresults.length == 1)
+  {
+    var match = $(".search_quickhits > li:nth-child(1) > a:nth-child(1)");
+    reply(createWikiURL(match.attr("href")));
+  }
+  else if(pageresults.length > 1)
+  {
+    reply(pageresults.length + " page results: " + config.base 
+          + "?do=search&id=" + parts.join("+"));
+  }
+  else if(contentresults.length == 1)
+  {
+    var match = $(".search_results > dt:nth-child(1) > a:nth-child(1)");
+    reply(createWikiURL(match.attr("href")));
+  }
+  else if(contentresults.length > 1)
+  {
+    reply(contentresults.length + " content results: " + config.base 
+          + "?do=search&id=" + parts.join("+"));
+  }
+  else
+  {
+    reply("No results");
+  }
+};
+
+//callback takes reply, parts, and $
+var handleContent = function(reply, parts, body, callback)
 {
   jsdom.env(body, ["http://code.jquery.com/jquery.js"], function (err, window) {
-    var $ = window.$;
-    var pageresults = $(".search_quickhits > li");
-    var contentresults = $(".search_results > dt");
 
-    // Exact page match, return it
-    if(pageresults.length == 1)
-    {
-      var match = $(".search_quickhits > li:nth-child(1) > a:nth-child(1)");
-      reply(createWikiURL(match.attr("href")));
-    }
-    else if(pageresults.length > 1)
-    {
-      reply(pageresults.length + " page results: " + config.base 
-            + "?do=search&id=" + parts.join("+"));
-    }
-    else if(contentresults.length == 1)
-    {
-      var match = $(".search_results > dt:nth-child(1) > a:nth-child(1)");
-      reply(createWikiURL(match.attr("href")));
-    }
-    else if(contentresults.length > 1)
-    {
-      reply(contentresults.length + " content results: " + config.base 
-            + "?do=search&id=" + parts.join("+"));
-    }
-    else
-    {
-      reply("No results");
-    }
+    callback(reply, parts, window.$);
   }
   );
-};
+}
 
 var createWikiURL = function(href)
 {
@@ -123,25 +138,33 @@ var alias = function(remainder, parts, reply, command, from)
     case "new":
     case "n":
     case "add":
-      if(parts.length !== 2) return reply("add must have *exactly* two arguments");
+      if(parts.length < 2) return reply("add must have two or more args!);
+      var alias = parts[0];
+      var query = parts.slice(1,parts.length);
+
       for(var key in Object.keys(aliasMap))
       {
-        if(key === parts[0])
+        if(key === alias)
           return reply("Go to hell.");
 
-        for(var alias in aliasMap[key])
+        for(var hardalias in aliasMap[key])
         {
-          if(alias == parts[0])
+          if(alias == hardalias)
             return reply("You're an asshole.");
         }
       }
-      var exists = aliasDict[parts[0]];
-      aliasDict[parts[0]] = {};
-      aliasDict[parts[0]].alias = parts[1];
-      aliasDict[parts[0]].blame = from;
+      var exists = aliasDict[alias];
+      aliasDict[alias] = {};
 
-      if(exists) reply("Overwrite alias " + parts[0]);
-      else reply("Added alias " + parts[0]);
+      query(remainder, parts, reply, function(reply, result, $) {
+          aliasDict[alias].alias = ;
+        }
+      );
+      aliasDict[alias].blame = from;
+
+      if(exists) reply("Overwring alias " + alias);
+      else       reply("Added alias " + alias);
+      reply("Evaluates to: " + aliasDict[alias].alias); 
 
       writeAliases();
       break;
@@ -194,8 +217,9 @@ var help = function(remainder, parts, reply, command)
 
     case "a":
     case "alias":
-      reply("Usage: !wi[ki] a[lias] [<add>|<remove>|<list>] <name> <link>");
-      reply("  Allows alias definitions for !wiki <alias> and overrides for !wiki search <alias>."); 
+      reply("Usage: !wi[ki] a[lias] [<add>|<remove>|<list>] <name> <query>");
+      reply("  Allows alias definitions for !wiki <alias> and overrides for !wiki search <alias>."
+            + " <query> should be a search-compatible query. The query's result is cached and returned."); 
       break;
 
     case "":
@@ -214,6 +238,15 @@ var help = function(remainder, parts, reply, command)
   }
 };
 
+
+var aliasHandler = function(remainder, parts, reply, command)
+{
+  console.log("Alias lookup: " + parts.join(" "));
+  if(aliasDict[parts.join(" ")])
+     reply(commandDict[command].command);
+
+};
+
 // === Dict functions ===
 function writeAliases() {
   bot.writeDataFile(aliasFile, JSON.stringify(aliasDict), function(err) {
@@ -225,7 +258,7 @@ function writeAliases() {
 
 module.exports.commands = {
   wiki: {
-    _default: help, 
+    _default: aliasHandler, 
     help: help,
     search: search,
     alias: alias
