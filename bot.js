@@ -128,7 +128,10 @@ bot.loadConfig = function(cb) { //sync
   var conf;
   try {
     var default_config = JSON.parse(fs.readFileSync("./config.example.json"));
-    conf = JSON.parse(fs.readFileSync('./config.json'));
+    if(process.argv.length > 2)
+      conf = JSON.parse(fs.readFileSync(process.argv[2]));
+    else
+      conf = JSON.parse(fs.readFileSync('./config.json'));
     var def_keys = Object.keys(default_config);
     _.each(default_config, function(value, key) {
       if(typeof conf[key] === 'undefined') {
