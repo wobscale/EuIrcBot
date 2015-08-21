@@ -138,7 +138,7 @@ var alias = function(remainder, parts, reply, command, from)
     case "new":
     case "n":
     case "add":
-      if(parts.length < 2) return reply("add must have two or more args!);
+      if(parts.length < 2) return reply("add must have two or more args!");
       var alias = parts[0];
       var query = parts.slice(1,parts.length);
 
