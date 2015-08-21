@@ -53,7 +53,7 @@ function getStock(p, reply) {
   exchange = aliases.exchange[exchange] || exchange;
   stock = aliases.stock[stock] || stock;
 
-  ss.stockscraper(exchange, stock, function(err,res) {
+  ss.scrape(exchange, stock, function(err,res) {
     if(err) {
       reply('Error getting stock data');
       return;
