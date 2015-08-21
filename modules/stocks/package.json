@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "",
   "dependencies": {
-    "stockscraper": "latest"
+    "stockscraper": "git://github.com/brhoades/stockscraper#master"
   },
   "main": "index.js",
   "author": "",
