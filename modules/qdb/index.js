@@ -1,6 +1,5 @@
 var http = require('http'),
     requestify = require('requestify');
-module.exports.commands = ['quo', 'qudb', 'quodb', 'qdb'];
 
 var bot;
 var conf = null;
@@ -12,6 +11,8 @@ module.exports.init = function(b) {
     else conf = co;
   });
 };
+
+module.exports.commands = ['quo', 'qudb', 'quodb', 'qdb'];
 
 module.exports.run = function(rem, parts, reply, command, from, to, text, raw) {
   if(to[0] != '#' && to[0] != '&') return; // only allow this in channels.
@@ -28,17 +29,11 @@ module.exports.run = function(rem, parts, reply, command, from, to, text, raw) {
       quote: res,
       source: conf.source + to
     }).then(function(response) {
-      // Success
-      var id = 'unknown';
-      try {
-        id = JSON.parse(response.body).id;
-			} catch(e){
-				return reply("Could not get an id from response: " + response.body);
-			}
+      var id = JSON.parse(response.body).id;
       reply(conf.baseUrl + "/#/quote/" + id);
-		}).error(function(err) {
-			reply("Something went wrong: " + err);
-		});
+    }).fail(function(err) {
+      reply("Something went wrong: " + err);
+    });
   });
 };
 
