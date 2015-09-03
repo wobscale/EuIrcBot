@@ -14,6 +14,10 @@ var REEscape = function(s) {
       return s.replace(/[\-\/\\^\$\*\+\?\.\(\)\|\[\]{}]/g, '\\$&');
 };
 
+// custom symbols
+mathjs.epsilon = 8.854187817*Math.pow(10,-12);
+mathjs.k = 8.987551787368*Math.pow(10,9);
+
 var mathKeysToGet = Object.getOwnPropertyNames(mathjs);
 var mathItems = {};
 for(var i=0;i<mathKeysToGet.length;i++) {
