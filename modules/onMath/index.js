@@ -30,11 +30,13 @@ var mathSymbols = ".,*+-/()%=";
 var onlySymbols = new RC("^[\\s" + REEscape(mathSymbols) + "]*$");
 var onlyNumbers = new RC(/^[\.\s\d]*$/);
 var onlyKeys = new RC("^\\s*((" + mathKeys.join(")|(") + "))+\\s*$");
+var onlyTime = new RC(/^\s*([0-9]+:?)+\s*$/);
 var onlyQuote = new RC(/^".+"$/);
 var funnyFractions = new RC(/^\s*(([0-9][0]?|11)\s*\/\s*(10|5|100))\s*$/);
 var plusN = new RC(/^\s*\++\d+\s*$/);
 
-var ignoreRe = onlySymbols.or(onlyNumbers).or(funnyFractions).or(onlyKeys).or(plusN).or(onlyQuote);
+var ignoreRe = onlySymbols.or(onlyNumbers).or(funnyFractions).or(onlyKeys).or(plusN)
+               .or(onlyQuote).or(onlyTime);
 
 
 module.exports.msg = function(text, from, reply, raw) {
