@@ -8,13 +8,13 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'Weedmaps', 'SnapChat', 'drones', 'WordPress', 'Napster', 'Tumblr', 'AirBnB',
     'cloud storage', 'a jQuery plugin', 'Reddit', 'Cash4Gold', 'Flickr', 'dongs',
     'Wikipedia', 'eHarmony', 'Amazon', 'Adult Friend Finder', 'EC2', 'S3',
-    '4chan', 'Blogger', 'Pinterest', 'The PS3', 'The XBOX', 'Craigslist', 'XHamster',
-    'CNN', 'A new Programming language', 'A Webbrowser', 'Ads', 'The Pirate Bay', 'Ebay',
-    'Deviant Art', 'Mail order bombs', 'Crowdsourced retirement funding', 'Siri',
-    'A personal assistant', 'Robot replacements', 'Fingerboxes', 'Concealed weaponry',
-    'An iPhone app', 'Complaint management', 'Easy blogging', 'A pyramid scheme'
+    '4chan', 'Blogger', 'Pinterest', 'the PS3', 'the XBOX', 'Craigslist', 'XHamster',
+    'CNN', 'a new programming language', 'a webbrowser', 'ads', 'The Pirate Bay', 'Ebay',
+    'Deviant Art', 'mail order bombs', 'crowdsourced retirement funding', 'Siri',
+    'a personal assistant', 'robot replacements', 'fingerboxes', 'concealed weaponry',
+    'an iPhone app', 'complaint management', 'easy blogging', 'a pyramid scheme', 'fleshlights',
+    'Farmlogs', 'Red Nova Labs', 'Threat Stack', 'graduate school', 'suscd\'s birthday'
   ];
-  
   var markets = [
     'finance', 'music', 'movies', 'pictures', 'gifs', 'pirated content', 'education',
     'hairstyling', 'red wine', 'literature', 'adult dancers', 'food', 'math',
@@ -31,18 +31,37 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'people like reed', 'snipers', 'devoted Christians', 'atheists', 'cats',
     'the unemployed', 'the 1%', 'business purposes', 'amputees', 'panda lovers',
     'recipes', 'writers', 'dogs', 'birds', 'anime', 'the POTUS', 'sick horses',
-    'girls that look like brigid', "people who can't read good", 'family photos'
-    
+    'girls that look like brigid', "people who can't read good", 'family photos',
+		'suscd\'s birthday', 'academia'
+  ];
+  
+  var startup_pitches = [
+    '-service- for -market-',
+    '-service- for -market-',
+    '-service- for -market-',
+    '-service- for -market-',
+    '-service- for -market-', // yolo 50% x for y
+    '-market- as a -service-',
+    '-service- for -market-, but like -service-',
+    '-service- for -market-, in the style of -service-',
+    '-service- for -market-, marketed at -market-',
+    '-service- to combine -market- with -market-',
+    '-service- as a service',
+    'a method for performing -service- using a computer'
   ];
 
-	var prefixless_markets = [
-		'as a service'
-	];
-
-	var market_idx = Math.floor(Math.random() * (markets.length + prefixless_markets.length));
-  var chosen_service = services[Math.floor(Math.random() * services.length)],
-      chosen_market  = (markets.concat(prefixless_markets))[market_idx];
+  var pitch = startup_pitches[Math.floor(Math.random() * startup_pitches.length)];
   
-  reply('Random startup idea: ' + chosen_service + (market_idx < markets.length? ' for ' : ' ') + chosen_market);
+  while (pitch.indexOf('-service-') > -1) {
+  	var random_service = services[Math.floor(Math.random() * services.length)];
+  	pitch = pitch.replace('-service-', random_service);
+  }
+  
+  while (pitch.indexOf('-market-') > -1) {
+  	var random_market = markets[Math.floor(Math.random() * markets.length)];
+  	pitch = pitch.replace('-market-', random_market);
+  }
+  
+  reply('Random startup idea: ' + pitch);
 };
 

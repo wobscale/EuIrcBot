@@ -310,9 +310,9 @@ module.exports.init = function(b) {
 
 
 var USER_REGEX = /https?:\/\/(?:www\.)?github\.com\/((?:\w|-)+)\/?/,
-    REPO_REGEX = /https?:\/\/(?:www\.)?github\.com\/((?:\w|-)+)\/((?:\w|-)+)\/?/,
-    COMMIT_REGEX = /https?:\/\/(?:www\.)?github\.com\/((?:\w|-)+)\/((?:\w|-)+)\/commit\/(\w+)\/?/,
-    ISSUE_REGEX = /https?:\/\/(?:www\.)?github\.com\/((?:\w|-)+)\/((?:\w|-)+)\/issues\/(\d+)\/?/,
+    REPO_REGEX = /https?:\/\/(?:www\.)?github\.com\/((?:\w|-)+)\/((?:\w|-|\.)+)\/?/,
+    COMMIT_REGEX = /https?:\/\/(?:www\.)?github\.com\/((?:\w|-)+)\/((?:\w|-|\.)+)\/commit\/(\w+)\/?/,
+    ISSUE_REGEX = /https?:\/\/(?:www\.)?github\.com\/((?:\w|-)+)\/((?:\w|-|\.)+)\/issues\/(\d+)\/?/,
     IO_PAGE_REGEX = /https?:\/\/(?:www\.)?((?:\w|-)+)\.github\.io\/((?:\w|-)+)\/?/;
 
 

@@ -1,0 +1,14 @@
+{
+  "name": "sirc-wiki",
+  "version": "0.0.0",
+  "description": "Deskinst Wiki module",
+  "main": "index.js",
+  "dependencies": {
+    "request": "latest",
+    "jsdom": "3.x",
+    "tough-cookie": "latest",
+    "URIjs": "latest"
+  },
+  "author": "brhoades",
+  "license": "MIT"
+}

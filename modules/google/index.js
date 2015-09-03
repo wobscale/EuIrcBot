@@ -1,4 +1,5 @@
 var google = require('google'),
+    googleimgs = require('google-images'),
     humanize = require('humanize');
 
 var b;
@@ -28,3 +29,16 @@ module.exports.run_goognum = function(r, p, reply) {
     return reply(humanize.numberFormat(num,0) + " results");
   });
 };
+
+var firstimg = function(r, p, reply) {
+	googleimgs.search(r, function(err, imgs) {
+		if(err) return reply("Couldn't find jack, yo: " + err);
+		if(imgs.length == 0) return reply("Couldn't find zip, nadda, nothin'");
+
+		return reply(imgs[0].url);
+	});
+}
+
+module.exports.run_gi = firstimg;
+module.exports.run_gimg = firstimg;
+module.exports.run_gimgs = firstimg;

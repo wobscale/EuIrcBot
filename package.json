@@ -5,8 +5,10 @@
   "main": "bot.js",
   "dependencies": {
     "async": "latest",
-    "irc": "^0.3.7",
-    "underscore": "latest"
+    "irc": "git+https://github.com/LinuxMercedes/node-irc.git#bleeding",
+    "underscore": "latest",
+    "request": "latest",
+    "jsdom": "3.x"
   },
   "devDependencies": {},
   "repository": {
