@@ -4,7 +4,8 @@
   "description": "Math module",
   "main": "index.js",
   "dependencies": {
-    "regex-chain": "latest"
+    "regex-chain": "latest",
+    "mathjs": "latest"
   },
   "author": "EuanK",
   "license": "MIT"
