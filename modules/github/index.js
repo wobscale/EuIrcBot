@@ -9,6 +9,8 @@ var github = new GitHubAPI({
     timeout: 5000
 });
 
+module.exports.name = "github";
+
 // Only auth if auth details given
 github.tryAuthenticate = function() {
     if(typeof config === 'undefined') return false;
@@ -20,7 +22,7 @@ github.tryAuthenticate = function() {
         authed = true;
     }
     return authed;
-}
+};
 
 var config;
 
@@ -68,11 +70,11 @@ function WatchManager() {
                     callback(null, hasChanged);
                 }
             });
-        }
+        };
 
         this.getHTMLUrl = function() {
             return "https://github.com/" + this.user + "/" + this.repo;
-        }
+        };
 
         this.generateUpdateMessage = function() {
             var self = this;

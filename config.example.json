@@ -17,6 +17,7 @@
   "channelPrefixes": "&#",
   "messageSplit": 512,
   "moduleFolders": ["modules"],
+  "disabledModules": ["github"],
   "datafolder": "data",
   "tmpfolder": "tmp",
   "configfolder": "conf"
