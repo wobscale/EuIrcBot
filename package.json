@@ -5,6 +5,7 @@
   "main": "bot.js",
   "dependencies": {
     "async": "latest",
+    "change-case": "^2.3.0",
     "irc": "git+https://github.com/LinuxMercedes/node-irc.git#bleeding",
     "underscore": "latest"
   },

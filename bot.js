@@ -6,7 +6,8 @@ var irc = require('irc'),
     _ = require('underscore'),
     async = require('async'),
     path = require('path'),
-    moduleMan = require("./node-module-manager");
+    moduleMan = require("./node-module-manager"),
+    changeCase = require('change-case');
 
 
 var reEscape = function(s) {
@@ -126,20 +127,33 @@ bot.callCommandFn = function(command, args) {
 
 bot.loadConfig = function(cb) { //sync
   var conf;
+  var default_config = JSON.parse(fs.readFileSync("./config.example.json"));
   try {
-    var default_config = JSON.parse(fs.readFileSync("./config.example.json"));
     conf = JSON.parse(fs.readFileSync('./config.json'));
-    var def_keys = Object.keys(default_config);
-    _.each(default_config, function(value, key) {
-      if(typeof conf[key] === 'undefined') {
-        console.log("Setting: ", key, " to ", value);
-        conf[key] = value;
-      }
-    });
-  } catch(e) {
-    console.log("Error reading config:", e);
+  } catch(ex) {
+    console.log("Error reading config file: ", e);
     conf = default_config;
   }
+
+  _.each(default_config, function(value, key) {
+    var envKey = changeCase.constantCase(key);
+    // Load environment variable approximations of each config key and let them override
+    if(typeof process.env[envKey] !== 'undefined') {
+      try {
+        conf[key] = JSON.parse(process.env[envKey]);
+      } catch(ex) {
+        console.log("Could not load key: " + envKey + " because it was not valid json");
+      }
+    }
+  });
+
+  var def_keys = Object.keys(default_config);
+  _.each(default_config, function(value, key) {
+    if(typeof conf[key] === 'undefined') {
+      console.log("Setting: ", key, " to ", value);
+      conf[key] = value;
+    }
+  });
   return conf;
 };
 
