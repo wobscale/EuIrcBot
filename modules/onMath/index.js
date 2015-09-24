@@ -24,6 +24,9 @@ for(var i=0;i<mathKeysToGet.length;i++) {
   mathItems[mathKeysToGet[i]] = mathjs[mathKeysToGet[i]];
 }
 
+//
+// INPUT FULTERS
+// 
 var mathKeys = Object.keys(mathItems);
 var mathSymbols = ".,*+-/()%=";
 
@@ -38,6 +41,11 @@ var plusN = new RC(/^\s*\++\d+\s*$/);
 var ignoreRe = onlySymbols.or(onlyNumbers).or(funnyFractions).or(onlyKeys).or(plusN)
                .or(onlyQuote).or(onlyTime);
 
+//
+// OUTPUT FILTERS
+//
+var javascript = new RC("function|{|}|return|arguments|length"); // This is by no means "good"
+
 
 module.exports.msg = function(text, from, reply, raw) {
   if(ignoreRe.test(text)) {
@@ -48,6 +56,11 @@ module.exports.msg = function(text, from, reply, raw) {
 
   // If res just echos our input, filter it
   if(res == text) {
+    return;
+  }
+
+  // If the response is javascript
+  if(javascript.test(res)) {
     return;
   }
 
