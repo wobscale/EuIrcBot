@@ -55,3 +55,12 @@ module.exports.msg = function(text, from, reply, raw) {
     reply(res);
   }
 };
+
+module.exports.command = "reset";
+
+module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
+  // Create a new scope
+  mathParser = mathjs.parser();
+  reply("Parser reinitialized");
+};
+
