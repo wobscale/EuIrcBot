@@ -1,10 +1,10 @@
 var mathjs = require('mathjs');
+var mathParser = mathjs.parser();
 var RC = require('regex-chain');
 
 function MathScopeEval(str) {
   try {
-    var result = mathjs.eval(str);
-    return mathjs.eval(str);
+    return mathParser.eval(str);
   } catch(ex) {
     return null;
   }
