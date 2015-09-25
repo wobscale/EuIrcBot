@@ -51,7 +51,7 @@ var query = function(remainder, parts, reply, callback)
 
 var search = function(remainder, parts, reply)
 {
-  query(reply, parts, requrl, searchReply);
+  query(remainder, parts, reply, searchReply);
 };
 
 
@@ -157,7 +157,7 @@ var alias = function(remainder, parts, reply, command, from)
       aliasDict[alias] = {};
 
       query(remainder, parts, reply, function(reply, result, $) {
-          aliasDict[alias].alias = ;
+          aliasDict[alias].alias = result;
         }
       );
       aliasDict[alias].blame = from;
