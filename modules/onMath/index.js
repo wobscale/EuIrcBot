@@ -1,6 +1,8 @@
 var mathjs = require('mathjs');
-var mathParser = mathjs.parser();
 var RC = require('regex-chain');
+
+var bot = null;
+var mathParser = mathjs.parser();
 
 function MathScopeEval(str) {
   try {
@@ -46,6 +48,9 @@ var ignoreRe = onlySymbols.or(onlyNumbers).or(funnyFractions).or(onlyKeys).or(pl
 //
 var javascript = new RC("function|{|}|return|arguments|length"); // This is by no means "good"
 
+module.exports.init = function(b) {
+  bot = b;
+}
 
 module.exports.msg = function(text, from, reply, raw) {
   if(ignoreRe.test(text)) {
@@ -54,24 +59,31 @@ module.exports.msg = function(text, from, reply, raw) {
 
   var res = MathScopeEval(text);
 
-  // If res just echos our input, filter it
-  if(res == text) {
+  // If res is null or just echos our input, filter it
+  if(res === null || res == text) {
     return;
   }
+
+  res = res.toString();
 
   // If the response is javascript
   if(javascript.test(res)) {
     return;
   }
 
-  if(res !== null) {
+  // Truncate our responses (reckless-irc-exec)
+  if(res.length < 400) {
     reply(res);
+  }
+  else {
+    reply(res.substring(0,396) + " ...");
+    bot.sayTo(from, 'All of your command output: ' + res);
   }
 };
 
 module.exports.command = "reset";
 
-module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
+module.exports.run = function(remainder, parts, reply) {
   // Create a new scope
   mathParser = mathjs.parser();
   reply("Parser reinitialized");
