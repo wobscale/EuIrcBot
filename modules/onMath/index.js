@@ -34,11 +34,11 @@ var mathSymbols = ".,*+-/()%=";
 
 var onlySymbols = new RC("^[\\s" + REEscape(mathSymbols) + "]*$");
 var onlyNumbers = new RC(/^[\.\s\d]*$/);
-var onlyKeys = new RC("^\\s*((" + mathKeys.join(")|(") + "))+\\s*$");
-var onlyTime = new RC(/^\s*(:?[0-9]+:?)+\s*$/);
+var onlyKeys = new RC("^((" + mathKeys.join(")|(") + "))+$");
+var onlyTime = new RC(/^(:?[0-9]+:?)+$/);
 var onlyQuote = new RC(/^".+"$/);
-var funnyFractions = new RC(/^\s*(([0-9][0]?|11)\s*\/\s*(10|5|100))\s*$/);
-var plusN = new RC(/^\s*\++\d+\s*$/);
+var funnyFractions = new RC(/^(([0-9][0]?|11)\s*\/\s*(10|5|100))$/);
+var plusN = new RC(/^\++\d+$/);
 
 var ignoreRe = onlySymbols.or(onlyNumbers).or(funnyFractions).or(onlyKeys).or(plusN)
                .or(onlyQuote).or(onlyTime);
@@ -53,6 +53,8 @@ module.exports.init = function(b) {
 }
 
 module.exports.msg = function(text, from, reply, raw) {
+  text = text.trim();
+
   if(ignoreRe.test(text)) {
     return;
   }
