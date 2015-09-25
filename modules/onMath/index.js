@@ -61,12 +61,20 @@ module.exports.msg = function(text, from, reply, raw) {
 
   var res = MathScopeEval(text);
 
-  // If res is null or just echos our input, filter it
-  if(res === null || res == text) {
+  if(res == null) {
     return;
   }
 
   res = res.toString();
+
+  var resclean = res.replace(/\s/g, '');
+  var textclean = text.replace(/\s/g, '');
+
+  // If res parrots our input, filter it
+  if( res == text || resclean == text || res == textclean 
+      || resclean == textclean ) {
+    return;
+  }
 
   // If the response is javascript
   if(javascript.test(res)) {
