@@ -83,7 +83,7 @@ module.exports.msg = function(text, from, reply, raw) {
 
 module.exports.command = "reset";
 
-module.exports.run = function(remainder, parts, reply) {
+module.exports.run_reset = function(remainder, parts, reply) {
   // Create a new scope
   mathParser = mathjs.parser();
   reply("Parser reinitialized");
