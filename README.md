@@ -1,13 +1,17 @@
-EuIrcBot
-========
+# EuIrcBot
 
 A featureful nodejs irc bot
 
-TODO
-=====
+This contains a large number of modules in the modules folder, and almost no documentation.
 
-Figure out a good way to handle per-module configurations
-At present they are merely stored in the same folder as the package.json and it
-is up to the user to deal with that.
+The code is the documentation, right?
 
-Better logging too
+## Status
+
+A rewrite is in process which uses RPC to be polyglot. It's backwards compatible with these modules already via an adapter module manager (one of many), but isn't out there yet... still needs more polish.
+
+In the meantime, this is still supported.
+
+## License
+
+MIT
