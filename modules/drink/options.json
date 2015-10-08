@@ -1,0 +1,60 @@
+{
+  "shake": [
+    "bases": [
+      "Vanilla",
+      "Strawberry",
+      "Peanut Butter",
+      "Hot Fudge",
+      "Chocolate",
+      "Fresh Banana",
+      "Caramel",
+      "Pineapple",
+
+      "Peanut Butter Fudge",
+      "Strawberry Banana",
+      "Strawberry Cheesecake",
+      "Coconut Cream Pie",
+      "Banana Cream Pie",
+      "Cheesecake",
+      "OREO® Peanut Butter",
+      "OREO® Chocolate",
+      "OREO® Cheesecake",
+
+      "Banana Split"
+    ],
+
+    "addinsavg": 0,
+    "addinsstddiv": 0
+  ],
+
+  "ice cream slush": [
+    "bases": [
+    ],
+
+    "addinsavg": 1,
+    "addinsstddiv": 0
+  ],
+
+  "float": [
+    "bases": "soda",
+    "addinsavg": 0,
+    "addinsstddiv": 1
+  ],
+
+  "soda": [
+    "CocaCola",
+    "Diet Coke",
+    "CocaCola Zero",
+    "Dr Pepper",
+    "Diet Dr Pepper",
+    "Barq's Root Beer",
+    "Mello Yello",
+    "Sprite",
+    "Sprite Zero",
+    "Orange Fanta",
+    "Powerade",
+    "HiC Fruit Punch",
+    "Minute Maid Lemonade"
+  ]
+
+}
