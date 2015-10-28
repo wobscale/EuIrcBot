@@ -7,6 +7,7 @@
     "async": "latest",
     "change-case": "^2.3.0",
     "irc": "git+https://github.com/LinuxMercedes/node-irc.git#bleeding",
+    "snailescape.js": "^2.0.1",
     "underscore": "latest"
   },
   "devDependencies": {},

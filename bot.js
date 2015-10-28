@@ -7,7 +7,8 @@ var irc = require('irc'),
     async = require('async'),
     path = require('path'),
     moduleMan = require("./node-module-manager"),
-    changeCase = require('change-case');
+    changeCase = require('change-case'),
+    SnailEscape = require('snailescape.js');
 
 
 var reEscape = function(s) {
@@ -17,39 +18,6 @@ var reEscape = function(s) {
 var bot = {};
 
 bot.util = {}; //Util functions
-
-/* splits a string into parts respecting
- * quote marks and escaped quotes
- *
- * Example:
- *   quotedSplit('"arg 1" arg\ 2 "arg\\"3\\""') -> ['arg 1', 'arg 2', 'arg"3"']
- */
-bot.util.quotedSplit = function(str) {
-  var res = [];
-  var currentStr = '';
-  var inQuotes = false;
-  for(var i=0;i<str.length;i++) {
-    if(inQuotes && str[i] === '"') {
-      res.push(currentStr);
-      inQuotes = false;
-      currentStr = '';
-    } else if(str[i] === '"' && !inQuotes) {
-      inQuotes = true;
-      if(currentStr !== '') res.push(currentStr);
-      currentStr = '';
-    } else if(str[i] === ' ' && !inQuotes) {
-      if(currentStr !== '') res.push(currentStr);
-      currentStr = '';
-    } else if(str[i] === "\\") {
-      i++;
-      currentStr += str[i];
-    } else {
-      currentStr += str[i];
-    }
-  }
-  if(currentStr !== '') res.push(currentStr);
-  return res;
-};
 
 bot.init = function(cb) {
   bot.configfolder = bot.config.configfolder;
@@ -176,6 +144,9 @@ bot.initClient = function(cb) {
     channelPrefixes: conf.channelPrefixes,
     messageSplit: conf.messageSplit
   });
+
+  var quoteSplit = new SnailEscape();
+
   bot.client.on('error', function(err) { console.log(err);});
 
 
@@ -220,8 +191,9 @@ bot.initClient = function(cb) {
       var remainder = rem.length == 3 ? rem[2] : "";
       var respTo = (bot.client.nick == to) ? from : to;
 
-      bot.callModuleFn("any_command", [remainder, bot.util.quotedSplit(remainder), bot.getReply(respTo), command, from, to, text, raw]);
-      bot.callCommandFn(command, [remainder, bot.util.quotedSplit(remainder), bot.getReply(respTo), command, from, to, text, raw]);
+      var parts = quoteSplit.parse(remainder).parts || remainder.split(" ");
+      bot.callModuleFn("any_command", [remainder, parts, bot.getReply(respTo), command, from, to, text, raw]);
+      bot.callCommandFn(command, [remainder, parts, bot.getReply(respTo), command, from, to, text, raw]);
     }
   });
 
@@ -236,7 +208,7 @@ bot.initClient = function(cb) {
   });
 
   bot.client.on('ping', function() {
-    bot.lastPing = (new Date).getTime();
+    bot.lastPing = (new Date()).getTime();
   } );
 
   bot.client.on('action', function(from, to, text, type, raw) {
