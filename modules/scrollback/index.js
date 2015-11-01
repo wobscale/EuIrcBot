@@ -21,12 +21,30 @@ function strl(obj){
 }
 
 function logObject(channel, obj) {
-  if(!cache[channel]) cache[channel] = [];
-  cache[channel].push(obj);
-
-  while(cache[channel].length > cacheSize) cache[channel].shift();
+  getCache(channel, function(cache) {
+    cache.push(obj);
+    while(cache.length > cacheSize) cache.shift();
+  });
 
   bot.appendDataFile(channel + '-complete.log', strl(obj), logErr);
+}
+
+function getCache(channel, cb) {
+  if(cache[channel]) return cb(cache[channel]);
+
+  // Really should be named '-cache' tbh
+  bot.readDataFile(channel + '-complete.log', function(err, res) {
+    if(err) return cb([]);
+    // in case someone else read it while our diskio was happening; whatev
+    if(cache[channel]) return cb(cache[channel]);
+
+    var lines = res.toString().split("\n").filter(function(line){return line.length > 0;}).map(function(line) {
+      return JSON.parse(line);
+    });
+
+    cache[channel] = lines.slice(-cacheSize);
+    return cb(cache[channel]);
+  });
 }
 
 module.exports.chansay = function(from, chan, text) {
@@ -83,41 +101,6 @@ module.exports.chanaction = function(text, to, from, reply, raw) {
 };
 
 
-module.exports.getChannelScrollback = function(channel, cb) {
-  bot.readDataFile(channel + '-complete.log', function(err, res) {
-    if(err) return cb(err);
-    //I love nodejs. Do async operation to read file, then sync json.parsing
-    //the whole darn thing. And this is gonna get big too. Really big. mistakes
-    //were made.
-    var lines = res.toString().split("\n").reverse().filter(function(line){return line.length > 0;}).map(function(line) {
-      return JSON.parse(line);
-    });
-    cb(null, lines);
-  });
-};
-
-module.exports.getChannelScrollbackLines = function(channel, numLines, cb) {
-  if(cache[channel] && cache[channel].length > numLines) {
-    cb(null, cache[channel].slice().reverse().slice(0, numLines));
-  } else {
-    module.exports.getChannelScrollback(channel, function(err, res) {
-      if(err) return cb(err);
-      else cb(null, res.slice(0, numLines));
-    });
-  }
-};
-module.exports.getChannelScrollbackLinesm1 = function(channel, numLines, cb) {
-  if(cache[channel] && cache[channel].length > numLines) {
-    cb(null, cache[channel].slice().reverse().slice(1, numLines));
-  } else {
-    module.exports.getChannelScrollback(channel, function(err, res) {
-      if(err) return cb(err);
-      else cb(null, res.slice(1, numLines));
-    });
-  }
-
-};
-
 module.exports.formatLine = function(line) {
   if(line.type == 'notice') {
     return '-' + line.from + '- ' + line.text;
@@ -128,140 +111,14 @@ module.exports.formatLine = function(line) {
   }
 };
 
-module.exports.getFormattedScrollbackLines = function(channel, lineNums, cb) {
-  var numNeeded = _.max(lineNums) + 1; //Better safe than sorry with off by one even though I'm darn sure that's not needed
-
-  module.exports.getChannelScrollbackLines(channel, numNeeded, function(err, lines) {
-    if(err) return cb(err);
-
-    var out = lineNums.map(function(num) {
-      return lines[num-1];
-    }).map(function(line) {
-      return module.exports.formatLine(line);
-    });
-    cb(null, out.join('\n'));
-  });
-};
-
-module.exports.getFormattedScrollbackLinesm1 = function(channel, lineNums, cb) {
-  var numNeeded = _.max(lineNums) + 1;
-
-  module.exports.getChannelScrollbackLinesm1(channel, numNeeded, function(err, lines) {
-    if(err) return cb(err);
-
-    var out = lineNums.map(function(num) {
-      return lines[num-1];
-    }).map(function(line) {
-      return module.exports.formatLine(line);
-    });
-    cb(null, out.join('\n'));
-  });
-};
-
-module.exports.getFormattedScrollbackLinesByNick = function(channel, nick, lineNums, cb) {
-  // Now here's a tricky problem; we don't know how many lines we actually need to get that many lines for a nick.
-  // We arbitrarily scale it by 2 until we get enough
-  var maxNum = _.max(lineNums);
-  var numToGet = maxNum * 2;
-  var linesByNick;
-
-  var scrollbackLinesGot = 0;
-
-  async.doUntil(function(innerCb) {
-    module.exports.getChannelScrollbackLines(channel, numToGet, function(err, lines) {
-      if(err) return innerCb(err);
-
-      if(scrollbackLinesGot == lines.length) return innerCb("Ran out of lines without finding enough");
-      scrollbackLinesGot = lines.length;
-
-      linesByNick = lines.filter(function(line) {
-        return line.from == nick;
-      });
-
-      return innerCb(null);
-    });
-  }, function() {
-    if(linesByNick.length >= maxNum) return true;
-    numToGet *= 2;
-    return false;
-  }, function(err) {
-    if(err) return cb(err);
-
-    var out = lineNums.map(function(num) {
-      return module.exports.formatLine(linesByNick[num-1]);
-    });
-    return cb(null, out.join('\n'));
-  });
-};
-
-module.exports.getFormattedScrollbackLinesByNickm1 = function(channel, nick, lineNums, cb) {
-  // Now here's a tricky problem; we don't know how many lines we actually need to get that many lines for a nick.
-  // We arbitrarily scale it by 2 until we get enough
-  var maxNum = _.max(lineNums);
-  var numToGet = maxNum * 2;
-  var linesByNick;
-
-  var scrollbackLinesGot = 0;
-
-  async.doUntil(function(innerCb) {
-    module.exports.getChannelScrollbackLinesm1(channel, numToGet, function(err, lines) {
-      if(err) return innerCb(err);
-
-      if(scrollbackLinesGot == lines.length) return innerCb("Ran out of lines without finding enough");
-      scrollbackLinesGot = lines.length;
-
-      linesByNick = lines.filter(function(line) {
-        return line.from == nick;
-      });
-
-      return innerCb(null);
-    });
-  }, function() {
-    if(linesByNick.length >= maxNum) return true;
-    numToGet *= 2;
-    return false;
-  }, function(err) {
-    if(err) return cb(err);
-
-    var out = lineNums.map(function(num) {
-      return module.exports.formatLine(linesByNick[num-1]);
-    });
-    return cb(null, out.join('\n'));
-  });
-};
-
-// obj = array of format [[1, 2], {from: nick, lines: [1,2]}] meaning 1 line ago, 2 lines ago, and the last thing nick said
-module.exports.getFormattedScrollbackLinesByObj = function(channel, obj, cb) {
-  async.map(obj, function(item, mcb) {
-    if(Array.isArray(item)) {
-      module.exports.getFormattedScrollbackLines(channel, item, mcb);
-    } else {
-      module.exports.getFormattedScrollbackLinesByNick(channel, item.from, item.lines, mcb);
-    }
-  }, function(err, results) {
-    if(err) return cb(err);
-    cb(null, results.join('\n'));
-  });
-};
-module.exports.getFormattedScrollbackLinesByObjMinusOne = function(channel, obj, cb) {
-  async.map(obj, function(item, mcb) {
-    if(Array.isArray(item)) {
-      module.exports.getFormattedScrollbackLinesm1(channel, item, mcb);
-    } else {
-      module.exports.getFormattedScrollbackLinesByNickm1(channel, item.from, item.lines, mcb);
-    }
-  }, function(err, results) {
-    if(err) return cb(err);
-    cb(null, results.join('\n'));
-  });
-};
-
 
 module.exports.getFormattedScrollbackLinesFromRanges = function(channel, ranges, cb) {
   var linesToGet = [];
   var parts = ranges;
 
-  for(var i=0;i<parts.length;i++) {
+  var i;
+
+  for(i=0;i<parts.length;i++) {
     if(/^(-|\d)/.test(parts[i])) {
       // Starts with a - or number, can't be a nick
       linesToGet.push(rangeParser.parse(parts[i]));
@@ -280,7 +137,41 @@ module.exports.getFormattedScrollbackLinesFromRanges = function(channel, ranges,
     }
   }
 
-  var output = '';
+  var result = [];
+  getCache(channel, function(cache) {
+    var revCache = cache.slice(0);
+    revCache.reverse();
+    // Remove the first element; it's the command that triggered a request for
+    // scrollback for all current callers. TODO, let the caller tell us this
+    revCache = revCache.slice(1);
 
-  module.exports.getFormattedScrollbackLinesByObjMinusOne(channel, linesToGet, cb);
+    for(var i=0; i < linesToGet.length; i++) {
+      var obj = linesToGet[i];
+      if(Array.isArray(obj)) {
+        for(var j=0;j < obj.length; j++) {
+          var offset = obj[j];
+          if(offset > revCache.length || offset === 0) {
+            return cb("Cannot get line " + offset + " ago; only have " + revCache.length + " of context");
+          }
+          result.push(revCache[offset-1]);
+        }
+      } else {
+        // It's a nick
+        var nick = obj.from;
+        var nickCache = revCache.filter(function(el) {
+          return el.from == nick;
+        });
+
+        for(var j=0; j < obj.lines.length; j++) {
+          var offset = obj.lines[j];
+          if(offset > nickCache.length || offset === 0) {
+            return cb("Cannot get line " + nick + " " + offset + " ago; only have " + nickCache.length + " of context for " + nick);
+          }
+
+          result.push(nickCache[offset-1]);
+        }
+      }
+    }
+    cb(null, result.map(function(l) { return module.exports.formatLine(l); }).join("\n"));
+  });
 };

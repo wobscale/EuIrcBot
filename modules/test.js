@@ -23,3 +23,11 @@ module.exports.runTest5 = function(r, p, reply) {
 module.exports.run_test6 = function(r,p,reply) {
   reply("My name is " + this.name);
 };
+
+module.exports.run_testscrollback = function(r, p, reply, command, from, to) {
+  var scrollbackModule = this.modules['sirc-scrollback'];
+
+  scrollbackModule.getFormattedScrollbackLinesFromRanges(to, p, function(err, res) {
+    reply(err, JSON.stringify(res));
+  });
+};
