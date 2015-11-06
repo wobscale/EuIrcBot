@@ -5,8 +5,9 @@ var bot;
 var schedules = [];
 
 function writeSchedule(data) {
-  bot.writeDataFile("later.json", JSON.stringify(data), function(err) {
-    if(err) console.log("Error writing command file: " + err);
+  bot.writeDataFile("later.json", 
+      JSON.stringify({'data': data}), function(err) {
+        if(err) console.log("Error writing command file: " + err);
   });
 }
 
@@ -68,19 +69,25 @@ module.exports.init = function(b) {
     if(err) {
       console.log("Initializing later.json");
       schedules = [];
+      writeSchedule(schedules);
     } else {
       try {
         console.log("Parsing later.json...");
-        console.log(data.toString());
-        schedules = JSON.parse(data);
+        schedules = JSON.parse(data)['data'];
+
+        // process schedules
+        schedules.forEach(function(e, i, d) {
+          registerCommand(e);
+        });
       } catch(ex) {
+        console.log("Error parsing: " + ex);
         console.log("Corrupted later.json for schedule! Resetting file...");
         schedules = [];
+        writeSchedule(schedules);
       }
     }
   });
 
-  writeSchedule(schedules);
 };
 
 //  bot.getConfig("dumbcommand.json", function(err, conf) {
