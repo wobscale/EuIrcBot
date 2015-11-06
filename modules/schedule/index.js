@@ -5,13 +5,6 @@ var bot;
 var schedules = [];
 
 function writeSchedule(data) {
-  // create serialized copy
-  //data = schedules;
-
-  //data.map(function(c,i,d) {
-  //  c = JSON.stringify(c);
-  //});
-  
   bot.writeDataFile("later.json", JSON.stringify(data), function(err) {
     if(err) console.log("Error writing command file: " + err);
   });
@@ -32,13 +25,40 @@ function newSchedule(data) {
   if( s == 0 )
     return "Provided schedule query doesn't parse.";
   
+  data['schedule'] = s;
+
   // check frequency is below some minimum
   
   // check valid command
   
-  data['schedule'] = s;
+
+  registerCommand(data);
+
   schedules.push(data);
   writeSchedule(schedules);
+}
+
+function registerCommand(data)
+{
+  var command;
+
+  //If it's a command, emulate being sent a command. Otherwise say it.
+  if( data['command'].match(/^!/) )
+  {
+    command = function() {
+      //FIXME: Properly implement raw.
+      bot.client.emit('message', data['blame'], data['channel'], 
+        data['command'], data['command']);
+    };
+  }
+  else
+  {
+    command = function() {
+      bot.sayTo(data['channel'], data['command']);
+    };
+  }
+
+  later.setInterval(command, data['schedule']);
 }
 
 module.exports.init = function(b) {
@@ -56,10 +76,11 @@ module.exports.init = function(b) {
       } catch(ex) {
         console.log("Corrupted later.json for schedule! Resetting file...");
         schedules = [];
-        writeSchedule(schedules);
       }
     }
   });
+
+  writeSchedule(schedules);
 };
 
 //  bot.getConfig("dumbcommand.json", function(err, conf) {
@@ -74,7 +95,7 @@ module.exports.commands = {
     _default: function(x,y,reply) {
       reply("Usage: schedule [<add>|<remove>|<list>|<blame>] \"<schedule>\" \"<command>\"");
     },
-    add: function(r, parts, reply, command, from) {
+    add: function(r, parts, reply, command, from, to, text, raw) {
       if(parts.length !== 2) return reply("add must have *exactly* two arguments");
 
       // check and add schedule
@@ -82,7 +103,8 @@ module.exports.commands = {
         'blame': from,
         'created': new Date(),
         'schedule': parts[0],
-        'command': parts[1]
+        'command': parts[1],
+        'channel': to
       });
 
       if( err )
