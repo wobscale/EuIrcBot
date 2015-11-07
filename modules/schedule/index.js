@@ -77,6 +77,7 @@ module.exports.init = function(b) {
 
         // process schedules
         schedules.forEach(function(e, i, d) {
+          e['created'] = new Date(Date.parse(e['created']));
           registerCommand(e);
         });
       } catch(ex) {
@@ -157,7 +158,7 @@ module.exports.commands = {
 
       message += (offset+count) + " of " + schedules.length;
       bot.sayTo(from, message);
-    }
+    },
 
     /*
     blame: function(r, parts, reply) {
@@ -167,6 +168,9 @@ module.exports.commands = {
     },
     remove: function(r, parts, reply) {
       if(parts.length !== 1) return reply("remove must have *exactly* one argument");
+      // ideally, we'd use a hash to look up the appropriate schedule
+      // but the time I'd spend imlpementing / recreating that hash (and making this comment)
+      // exceeds the total time saved by using it.
 
       if(typeof commandDict[parts[0]] === 'undefined') return reply("No such command");
 
