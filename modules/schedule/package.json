@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "later": "latest"
+    "later": "latest",
+    "json-hash": "latest"
   },
   "author": "brodes",
   "license": "MIT"

@@ -1,4 +1,5 @@
 var later = require('later');
+var hash = require('json-hash');
 
 var bot;
 
@@ -118,6 +119,43 @@ module.exports.commands = {
         reply(err);
       else
         reply("Added");
+    },
+    list: function(x, parts, reply, command, from, to) {
+      var offset = 0;
+      var oi = offset;
+      var count  = 5;
+      var ci     = count;
+
+      if(parts.length > 1)
+        oi = offset = parts[0];
+
+      schedules.forEach( function(e,i,d) {
+        if( oi != 0 )
+          oi -= 1;
+        else if( ci > 0 )
+        {
+          var message = hash.digest(e).substr(0,8);
+          message += "     " + e["blame"] + "     " + e["created"];
+          message += "     " + e["channel"];
+          bot.sayTo(from, message);
+
+          message =  "     ";
+          if( e["command"].match(/^!/) )
+            message += "command: " + e["command"];
+          else
+            message += "say: " + e["command"];
+          bot.sayTo(from, message);
+
+          ci -= 1;
+        }
+      });
+
+      var message = "Displayed schedules " + (offset+1) + "-";
+      if( count > schedules.length )
+        count = schedules.length-1;
+
+      message += (count+1) + " of " + schedules.length;
+      bot.sayTo(from, message);
     }
 
     /*
@@ -136,13 +174,7 @@ module.exports.commands = {
 
       writeSchedule();
     },
-    list: function(x,parts,reply) {
-      if(parts.length === 0) {
-        reply("Commands: " + Object.keys(commandDict).join(","));
-      } else {
-        reply(parts.map(function(key) { return commandDict[key] ? key + " -> " + commandDict[key] : ''; })
-            .filter(function(item) { return item.length > 0; }).join(" | "));
-      }
     */
+
   }
 };
