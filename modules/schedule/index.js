@@ -102,7 +102,24 @@ module.exports.init = function(b) {
 module.exports.commands = {
   schedule: {
     _default: function(x,y,reply) {
-      reply("Usage: schedule [<add>|<remove>|<list>] \"<schedule>\" \"<command>\"");
+      reply("Usage: !schedule [<add>|<remove>|<list>|<help>] [arguments]");
+      reply("       Also see !schedule help <subcommand> for more details");
+    },
+    help: {
+      _default: null, // to be aliased later to ^
+      add: function(x,y,reply) {
+        reply("Usage: !schedule add \"timeframe\" \"command or text\"");
+        reply("       Timeframe syntax is here: http://bunkat.github.io/later/parsers.html#text");
+        reply("       If a valid command isn't specified, it is treated as text to print.");
+      },
+      remove: function(x,y,reply) {
+        reply("Usage: !schedule remove [hash|LAST]");
+        reply("       Removes the schedule specified by the hash or the LAST one added.");
+      },
+      list: function(x,y,reply) {
+        reply("Usage: !schedule list [offset=0]");
+        reply("       Provides a list of schedules, in pages, from the specified offset of 0.");
+      },
     },
     add: function(r, parts, reply, command, from, to, text, raw) {
       if(parts.length !== 2) return reply("add must have *exactly* two arguments");
@@ -190,3 +207,6 @@ module.exports.commands = {
 
   }
 };
+// alias default for help to default
+module.exports.commands["schedule"]["help"]["_default"] 
+  = module.exports.commands["schedule"]["_default"];
