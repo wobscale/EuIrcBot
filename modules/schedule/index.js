@@ -31,9 +31,6 @@ function newSchedule(data) {
   data['schedule'] = s;
 
   // check frequency is below some minimum
-  
-  // check valid command
-  data['iscommand'] = bot.commandExists(data['command']);
 
   registerCommand(data);
 
@@ -45,20 +42,12 @@ function registerCommand(data) {
   var command;
 
   //If it's a command, emulate being sent a command. Otherwise say it.
-  if( data['iscommand'] )
-  {
-    command = function() {
-      //FIXME: Properly implement raw.
-      bot.client.emit('message', data['blame'], data['channel'], 
-        data['command'], data['command']);
-    };
-  }
-  else
-  {
-    command = function() {
-      bot.sayTo(data['channel'], data['command']);
-    };
-  }
+  command = function() {
+    //FIXME: Properly implement raw.
+    bot.sayTo(data['channel'], data['command']); // say to channel even for own commands
+    bot.client.emit('message', data['blame'], data['channel'], 
+      data['command'], data['command']);
+  };
 
   timers[hash.digest(data)] = later.setInterval(command, data['schedule']);
 }
