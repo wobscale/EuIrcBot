@@ -2,9 +2,12 @@ var later  = require('later');
 var hash   = require('json-hash');
 var moment = require('moment');
 
+require("moment-duration-format");
+
 var bot;
 
-var minimumInterval = 0; 
+var minimumCreationDelay = 0; 
+var minimumInterval = 60; 
 var noCommands = false;
 
 //FIXME: this is gross vv
@@ -38,27 +41,40 @@ function newSchedule(data) {
   //   - doesn't call schedule
   //   - doesn't call a dumbcommand which calls schedule
   //     * checked via perceived caller
-  // check frequency is below some minimum (config)
+  //   - isn't too close to last call
+  // check execution frequency is below some minimum (config)
   
   if(noCommands && data.command.substring(0, bot.config.commandPrefix.length) 
       == bot.config.commandPrefix) 
     return "Commands are disabled";
 
   if(data['command'].match(/^!schedule/))
-    return "Fuck you"; // FIXME: personalize
-
-  if(data['blame'] == bot.client.nick)
-    return "Cannot call scheduler recursively.";
+    return data['blame'] + ": fuck you"; 
   
-  if(minimumInterval > 0 && schedules.length > 0 
-      && moment().diff(schedules.slice(-1)[0].created, 'seconds') <= minimumInterval)
-    return "Schedule creation is rate limited. Please wait at least " + minimumInterval
+  if(data['blame'] == bot.client.nick)
+    return "Cannot call schedule recursively.";
+  
+  if(minimumCreationDelay > 0 && schedules.length > 0 
+      && moment().diff(schedules.slice(-1)[0].created, 'seconds') <= minimumCreationDelay)
+    return "Schedule creation is rate limited. Please wait at least " + minimumCreationDelay
            + " seconds between schedule creation.";
+
+  //s.range should be the range, in seconds, between schedule calls...
+  //but it's undefined.
+  //
+  //FIXME: functions
+  var next = later.schedule(s).next(4);
+  var futureRange = moment.duration(moment(next[3]).diff(moment(next[2])), "milliseconds");
+  if(minimumInterval > 0 && range.format("s") < minimumInterval)
+    return "Parsed frequency of " + range.format() + " is below the minimum "
+           + "interval of " + minimumInterval + " seconds";
 
   registerCommand(data);
 
   schedules.push(data);
   writeSchedule(schedules);
+  
+  return "Created, the first execution is in " + range.format({precision: 2}) + ".";
 }
 
 function registerCommand(data) {
@@ -104,8 +120,9 @@ module.exports.init = function(b) {
 
   bot.getConfig("schedule.json", function(err, conf) {
     if(!err) {
-      minimumInterval = conf.minimum_interval;
-      noCommands = conf.no_commands;
+      minimumInterval      = conf.minimum_interval;
+      minimumCreationDelay = conf.minimum_creation_delay;
+      noCommands           = conf.no_commands;
     }
   });
 };
@@ -136,18 +153,13 @@ module.exports.commands = {
       if(parts.length !== 2) return reply("add must have *exactly* two arguments");
 
       // check and add schedule
-      var err = newSchedule({
+      reply(newSchedule({
         'blame': from,
         'created': new moment(),
         'schedule': parts[0],
         'command': parts[1],
         'channel': to
-      });
-
-      if(err)
-        reply(err);
-      else
-        reply("Added");
+      }));
     },
     list: function(x, parts, reply, command, from, to) {
       var offset = 0;

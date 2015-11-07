@@ -6,7 +6,8 @@
   "dependencies": {
     "later": "latest",
     "json-hash": "latest",
-    "moment": "latest"
+    "moment": "latest",
+    "moment-duration-format": "latest"
   },
   "author": "brodes",
   "license": "MIT"
