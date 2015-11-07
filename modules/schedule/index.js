@@ -4,6 +4,7 @@ var hash = require('json-hash');
 var bot;
 
 var schedules = [];
+var timers = {};
 
 function writeSchedule(data) {
   bot.writeDataFile("later.json", 
@@ -59,7 +60,7 @@ function registerCommand(data) {
     };
   }
 
-  later.setInterval(command, data['schedule']);
+  timers[hash.digest(data)] = later.setInterval(command, data['schedule']);
 }
 
 module.exports.init = function(b) {
@@ -160,26 +161,31 @@ module.exports.commands = {
       bot.sayTo(from, message);
     },
 
-    /*
-    blame: function(r, parts, reply) {
-      if(parts.length === 0) return reply("please specify a command to blame");
-      if(typeof commandDict[parts[0]] === 'undefined') return reply("No such command");
-      reply("Blame " + commandDict[parts[0]].blame + " for this");
-    },
     remove: function(r, parts, reply) {
       if(parts.length !== 1) return reply("remove must have *exactly* one argument");
-      // ideally, we'd use a hash to look up the appropriate schedule
-      // but the time I'd spend imlpementing / recreating that hash (and making this comment)
-      // exceeds the total time saved by using it.
+      //FIXME: Do a hash lookup here instead of a linear search
+      
+      var index = null;
+      var hmatch = null;
 
-      if(typeof commandDict[parts[0]] === 'undefined') return reply("No such command");
+      schedules.forEach(function(e,i,d) {
+        var h = hash.digest(e);
+        if(h.substr(0,8) == parts[0])
+        {
+          index = i;
+          hmatch = h;
+        }
+      });
 
-      delete commandDict[parts[0]];
-      reply("Removed command " + parts[0]);
+      if( index == null )
+        return reply("Unknown hash provided.");
 
-      writeSchedule();
+      delete schedules[index];
+      timers[hmatch].clear();
+      writeSchedule(schedules);
+
+      reply("Removed schedule " + parts[0]);
     },
-    */
 
   }
 };
