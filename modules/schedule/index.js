@@ -16,9 +16,7 @@ function writeSchedule(data) {
 function newSchedule(data) {
   //keys: 'schedule', 'created', 'from', 'command'
   
-  // check that this is a valid schedule
   var s;
-
   try {
     s = later.parse.text(data['schedule']);
   } catch (ex) {
@@ -30,7 +28,17 @@ function newSchedule(data) {
   
   data['schedule'] = s;
 
-  // check frequency is below some minimum
+  // check that command is valid
+  //   - doesn't call schedule
+  //   - doesn't call a dumbcommand which calls schedule
+  //     * checked via perceived caller
+  // check frequency is below some minimum (config)
+  
+  if(data['command'].match(/^!schedule/))
+    return "Fuck you";
+
+  if(data['blame'] == bot.client.nick)
+    return "Cannot call scheduler recursively.";
 
   registerCommand(data);
 
@@ -43,9 +51,9 @@ function registerCommand(data) {
 
   //If it's a command, emulate being sent a command. Otherwise say it.
   command = function() {
-    //FIXME: Properly implement raw.
+    //FIXME: Properly emulate raw.
     bot.sayTo(data['channel'], data['command']); // say to channel even for own commands
-    bot.client.emit('message', data['blame'], data['channel'], 
+    bot.client.emit('message', bot.client.nick, data['channel'], 
       data['command'], data['command']);
   };
 
