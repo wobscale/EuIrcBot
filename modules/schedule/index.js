@@ -40,8 +40,7 @@ function newSchedule(data) {
   writeSchedule(schedules);
 }
 
-function registerCommand(data)
-{
+function registerCommand(data) {
   var command;
 
   //If it's a command, emulate being sent a command. Otherwise say it.
@@ -126,8 +125,8 @@ module.exports.commands = {
       var count  = 5;
       var ci     = count;
 
-      if(parts.length > 1)
-        oi = offset = parts[0];
+      if(parts.length >= 1)
+        oi = offset = parseInt(parts[0]);
 
       schedules.forEach( function(e,i,d) {
         if( oi != 0 )
@@ -151,10 +150,12 @@ module.exports.commands = {
       });
 
       var message = "Displayed schedules " + (offset+1) + "-";
-      if( count > schedules.length )
-        count = schedules.length-1;
+      if( count+offset > schedules.length )
+      {
+        count = schedules.length-offset;
+      }
 
-      message += (count+1) + " of " + schedules.length;
+      message += (offset+count) + " of " + schedules.length;
       bot.sayTo(from, message);
     }
 
