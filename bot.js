@@ -96,10 +96,26 @@ bot.callCommandFn = function(command, args) {
 bot.commandExists = function(command) {
   var ret = false;
 
+  // command shouldn't lead with ! or have args
+  command = command.replace(/^!/, '').replace(/\s.+/, '');
+
+  // check against both e[0] and e[1]["module"]["commands"]
   moduleMan.getAllCommandFns().string.forEach(function(e,i,d) {
-    var r = '^!?'+e[0]+'(\s.+)?$';
-    if(command.match(new RegExp(r)))
+    if(command == e[0])
       ret = true;
+    
+    if(e[1]["module"]["commands"] != undefined
+        && typeof(e[1]["module"]["commands"]) == "array") //because commandTree
+    {
+      e[1]["module"]["commands"].forEach(function(v,i,d) {
+        if(command == v)
+          ret = true;
+      });
+    }
+    if(e[1]["module"]["command"] != undefined 
+        && command == e[1]["module"]["command"])
+      ret = true;
+
   });
 
   return ret;
