@@ -164,8 +164,9 @@ module.exports.commands = {
         else if(ci > 0)
         {
           var message = hash.digest(e).substr(0,8);
-          message += "     " + e["blame"] + "     " + e["created"];
-          message += "     " + e["channel"];
+          message += "     " + e["blame"] + "     " 
+                  + e["created"].format("ddd MM/DD/YY HH:mm:ss Z");
+                  + "     " + e["channel"];
           bot.sayTo(from, message);
 
           message =  "     ";
