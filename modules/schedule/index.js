@@ -50,7 +50,8 @@ function newSchedule(data) {
   if(data['blame'] == bot.client.nick)
     return "Cannot call scheduler recursively.";
   
-  if(moment().diff(schedules.slice(-1)[0].created, 'seconds') <= minimumInterval)
+  if(minimumInterval > 0 && schedules.length > 0 
+      && moment().diff(schedules.slice(-1)[0].created, 'seconds') <= minimumInterval)
     return "Schedule creation is rate limited. Please wait at least " + minimumInterval
            + " seconds between schedule creation.";
 
@@ -89,7 +90,6 @@ module.exports.init = function(b) {
 
         // process schedules
         schedules.forEach(function(e, i, d) {
-          //FIXME: Do I need to parse the date manually?
           e['created'] = moment(e['created']);
           registerCommand(e);
         });
@@ -144,7 +144,7 @@ module.exports.commands = {
         'channel': to
       });
 
-      if( err )
+      if(err)
         reply(err);
       else
         reply("Added");
@@ -159,9 +159,9 @@ module.exports.commands = {
         oi = offset = parseInt(parts[0]);
 
       schedules.forEach( function(e,i,d) {
-        if( oi != 0 )
+        if(oi != 0)
           oi -= 1;
-        else if( ci > 0 )
+        else if(ci > 0)
         {
           var message = hash.digest(e).substr(0,8);
           message += "     " + e["blame"] + "     " + e["created"];
@@ -180,7 +180,7 @@ module.exports.commands = {
       });
 
       var message = "Displayed schedules " + (offset+1) + "-";
-      if( count+offset > schedules.length )
+      if(count+offset > schedules.length)
       {
         count = schedules.length-offset;
       }
@@ -192,28 +192,42 @@ module.exports.commands = {
     remove: function(r, parts, reply) {
       if(parts.length !== 1) return reply("remove must have *exactly* one argument");
       //FIXME: Do a hash lookup here instead of a linear search
-      //FIXME: add LAST
+      //FIXME: Switch to indicies
       
       var index = null;
       var hmatch = null;
 
-      schedules.forEach(function(e,i,d) {
-        var h = hash.digest(e);
-        if(h.substr(0,8) == parts[0])
-        {
-          index = i;
-          hmatch = h;
-        }
-      });
+      if(schedules.length == 0)
+        return reply("There are no schedules to delete.");
 
-      if( index == null )
-        return reply("Unknown hash provided.");
+      if(parts[0].match(/^LAST$/i))
+      {
+        index  = schedules.length-1;
+        hmatch = hash.digest(schedules[index]);
+      }
+      else
+      {
+        schedules.forEach(function(e,i,d) {
+          var h = hash.digest(e);
+          if(h.substr(0,8) == parts[0])
+          {
+            index = i;
+            hmatch = h;
+          }
+        });
 
-      delete schedules[index];
+        if(index == null)
+          return reply("Unknown hash provided.");
+      }
+
+      schedules.splice(index, 1);
       timers[hmatch].clear();
       writeSchedule(schedules);
 
-      reply("Removed schedule " + parts[0]);
+      if(!parts[0].match(/^LAST/i))
+        reply("Removed schedule " + parts[0]);
+      else
+        reply("Removed last schedule");
     },
 
   }
