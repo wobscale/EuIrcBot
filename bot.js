@@ -93,6 +93,19 @@ bot.callCommandFn = function(command, args) {
 };
 
 
+bot.commandExists = function(command) {
+  var ret = false;
+
+  moduleMan.getAllCommandFns().string.forEach(function(e,i,d) {
+    var r = '^!?'+e[0]+'(\s.+)?$';
+    if(command.match(new RegExp(r)))
+      ret = true;
+  });
+
+  return ret;
+}
+
+
 bot.loadConfig = function(cb) { //sync
   var conf;
   var default_config = JSON.parse(fs.readFileSync("./config.example.json"));

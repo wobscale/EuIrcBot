@@ -33,7 +33,7 @@ function newSchedule(data) {
   // check frequency is below some minimum
   
   // check valid command
-  
+  data['iscommand'] = bot.commandExists(data['command']);
 
   registerCommand(data);
 
@@ -45,7 +45,7 @@ function registerCommand(data) {
   var command;
 
   //If it's a command, emulate being sent a command. Otherwise say it.
-  if( data['command'].match(/^!/) )
+  if( data['iscommand'] )
   {
     command = function() {
       //FIXME: Properly implement raw.
@@ -102,7 +102,7 @@ module.exports.init = function(b) {
 module.exports.commands = {
   schedule: {
     _default: function(x,y,reply) {
-      reply("Usage: schedule [<add>|<remove>|<list>|<blame>] \"<schedule>\" \"<command>\"");
+      reply("Usage: schedule [<add>|<remove>|<list>] \"<schedule>\" \"<command>\"");
     },
     add: function(r, parts, reply, command, from, to, text, raw) {
       if(parts.length !== 2) return reply("add must have *exactly* two arguments");
@@ -164,6 +164,7 @@ module.exports.commands = {
     remove: function(r, parts, reply) {
       if(parts.length !== 1) return reply("remove must have *exactly* one argument");
       //FIXME: Do a hash lookup here instead of a linear search
+      //FIXME: add LAST
       
       var index = null;
       var hmatch = null;
