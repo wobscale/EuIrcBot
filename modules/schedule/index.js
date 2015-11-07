@@ -1,8 +1,13 @@
-var later = require('later');
-var hash = require('json-hash');
+var later  = require('later');
+var hash   = require('json-hash');
+var moment = require('moment');
 
 var bot;
 
+var minimumInterval = 0; 
+var noCommands = false;
+
+//FIXME: this is gross vv
 var schedules = [];
 var timers = {};
 
@@ -14,31 +19,40 @@ function writeSchedule(data) {
 }
 
 function newSchedule(data) {
-  //keys: 'schedule', 'created', 'from', 'command'
-  
   var s;
+
   try {
     s = later.parse.text(data['schedule']);
   } catch (ex) {
     return ex;
   }
 
+  // FIXME: change to > -1, @ char #
   if( s == 0 )
     return "Provided schedule query doesn't parse.";
   
   data['schedule'] = s;
 
   // check that command is valid
+  //   - check if commands are disabled
   //   - doesn't call schedule
   //   - doesn't call a dumbcommand which calls schedule
   //     * checked via perceived caller
   // check frequency is below some minimum (config)
   
+  if(noCommands && data.command.substring(0, bot.config.commandPrefix.length) 
+      == bot.config.commandPrefix) 
+    return "Commands are disabled";
+
   if(data['command'].match(/^!schedule/))
-    return "Fuck you";
+    return "Fuck you"; // FIXME: personalize
 
   if(data['blame'] == bot.client.nick)
     return "Cannot call scheduler recursively.";
+  
+  if(moment().diff(schedules.slice(-1)[0].created, 'seconds') <= minimumInterval)
+    return "Schedule creation is rate limited. Please wait at least " + minimumInterval
+           + " seconds between schedule creation.";
 
   registerCommand(data);
 
@@ -75,7 +89,8 @@ module.exports.init = function(b) {
 
         // process schedules
         schedules.forEach(function(e, i, d) {
-          e['created'] = new Date(Date.parse(e['created']));
+          //FIXME: Do I need to parse the date manually?
+          e['created'] = moment(e['created']);
           registerCommand(e);
         });
       } catch(ex) {
@@ -87,14 +102,13 @@ module.exports.init = function(b) {
     }
   });
 
+  bot.getConfig("schedule.json", function(err, conf) {
+    if(!err) {
+      minimumInterval = conf.minimum_interval;
+      noCommands = conf.no_commands;
+    }
+  });
 };
-
-//  bot.getConfig("dumbcommand.json", function(err, conf) {
-//    if(!err) {
-//      allowCmds = conf['allow_commands'];
-//    }
-//  });
-
 
 module.exports.commands = {
   schedule: {
@@ -124,7 +138,7 @@ module.exports.commands = {
       // check and add schedule
       var err = newSchedule({
         'blame': from,
-        'created': new Date(),
+        'created': new moment(),
         'schedule': parts[0],
         'command': parts[1],
         'channel': to

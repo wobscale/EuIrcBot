@@ -5,7 +5,8 @@
   "main": "index.js",
   "dependencies": {
     "later": "latest",
-    "json-hash": "latest"
+    "json-hash": "latest",
+    "moment": "latest"
   },
   "author": "brodes",
   "license": "MIT"
