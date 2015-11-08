@@ -102,14 +102,15 @@ function newSchedule(data) {
   if(data.channel == bot.client.nick)
     data.channel = data.blame;
 
+  // FIXME: This is awful. Asynchronous shit makes this a baaad idea.
+  schedules.push(data);
   registerCommand(data);
 
-  schedules.push(data);
   writeSchedule(schedules);
   
   var next = getDifference(later.schedule(s).next(1), moment()).format();
   if(next.match(/^\d+$/))
-    next = next + " seconds";
+    next = next + " seconds"; //FIXME: vv breaks
 
   if(next == "0") //FIXME: this usually isn't true. It may say now, but it never makes it.
     return "Created, first execution is now.";
@@ -120,12 +121,36 @@ function newSchedule(data) {
 function registerCommand(data) {
   var command;
 
-  //If it's a command, emulate being sent a command. Otherwise say it.
+  if(data.calls == 0)
+  {
+    //see FIXME below
+    timers.push(undefined);
+    return;
+  }
+
   command = function() {
-    //FIXME: Properly emulate raw.
-    bot.sayTo(data['channel'], data['command']); // say to channel even for own commands
+     // deactivate command
+    if(data.calls == 0)
+    {
+      var i = schedules.indexOf(data);
+
+      //FIXME: this is awful, and will lead to a large array
+      //       can't splice as schedules indices match this
+      timers[i].clear();
+      return; // command expired
+    }
+
+   bot.sayTo(data['channel'], data['command']); // say to channel even for own commands
     bot.client.emit('message', bot.client.nick, data['channel'], 
       data['command'], data['command']);
+
+    if(data.calls != -1)
+    {
+      data.calls -= 1;
+
+      // write changes
+      writeSchedule(schedules);
+    }
   };
 
   timers.push(later.setInterval(command, data['schedule']));
@@ -168,6 +193,40 @@ module.exports.init = function(b) {
 };
 
 module.exports.commands = {
+  remindme: null, // alias for remind with target from
+  remind: function(r, parts, reply, command, from, to, text, raw) {
+            if(parts.length < 2)
+            {
+              reply("Usage: !remind ([target]) \"timeframe\" \"text\"");
+              reply("       Optional target defaults no one (channel wide).");
+              return;
+            }
+            
+            var schedule, command;
+
+            if(parts.length == 2)
+            {
+              schedule = parts[0];
+              command  = parts[1];
+            }
+            else
+            {
+              schedule = parts[1];
+              command  = parts[0] + ":\n" + parts[2]; // ping then command/message
+            }
+
+            // massage schedule from a human query to a later query
+            schedule = schedule.replace(/^(in|after)/, "every"); // this makes in 4 minutes mean at the next 4 minute interval
+
+            reply(newSchedule({
+              'blame': from,
+              'created': new moment(),
+              'schedule': schedule,
+              'command': command,
+              'channel': to,
+              'calls': 1
+            }));
+          },
   schedule: {
     _default: function(x,y,reply) {
       reply("Usage: !schedule [<add>|<remove>|<list>|<help>] [arguments]");
@@ -197,7 +256,8 @@ module.exports.commands = {
         'created': new moment(),
         'schedule': parts[0],
         'command': parts[1],
-        'channel': to
+        'channel': to,
+        'calls': -1
       }));
     },
     list: function(x, parts, reply, command, from, to) {
@@ -208,6 +268,9 @@ module.exports.commands = {
       if(parts.length >= 1)
         oi = offset = parseInt(parts[0]);
 
+      if(offset > count)
+        bot.sayTo(from, "There are only " + count + " schedules");
+
       if(count+offset > schedules.length)
         count = schedules.length-offset;
 
@@ -216,7 +279,7 @@ module.exports.commands = {
         var e = schedules[i];
         var channel = e.channel;
 
-        if(!channel.match(/^#/))
+        if(!channel.match(/^(#|&)/))
           channel = "@"+channel;
 
         bot.sayTo(from, (i+1) + "     " + e.blame + "     " 
@@ -253,8 +316,9 @@ module.exports.commands = {
 
       timers[index].clear();
 
+      if(schedules[index].calls != 0)
+        timers.splice(index, 1);
       schedules.splice(index, 1);
-      timers.splice(index, 1);
       writeSchedule(schedules);
 
       if(!parts[0].match(/^LAST/i))
@@ -266,5 +330,12 @@ module.exports.commands = {
   }
 };
 // alias default for help to default
-module.exports.commands["schedule"]["help"]["_default"] 
-  = module.exports.commands["schedule"]["_default"];
+module.exports.commands.schedule.help._default 
+  = module.exports.commands.schedule._default;
+
+// remindme is just remind with our name in the first part
+module.exports.commands.remindme
+  = function(r, parts, reply, command, from, to, text, raw) {
+    parts.unshift(from);
+    module.exports.commands.remind(r, parts, reply, command, from, to, text, raw);
+  };
