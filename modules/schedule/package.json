@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "later": "latest"
+    "later": "latest",
+    "json-hash": "latest",
+    "moment": "latest",
+    "moment-duration-format": "latest"
   },
   "author": "brodes",
   "license": "MIT"
