@@ -14,6 +14,33 @@ var noCommands = false;
 var schedules = [];
 var timers = {};
 
+// m1 - m2 so pass in backwards for positive
+function getDifference(m1,m2) {
+  return moment.duration(moment(m1).diff(moment(m2), "milliseconds"));
+}
+
+function getAverageInterval(s) {
+  var numSamples = 5;
+  var next = later.schedule(s).next(numSamples+2); // skip NEXT occurrence
+  var totalSeconds = 0;
+
+  // catch for schedules that don't execute
+  // FIXME: this includes "every weekday in January" for some reason
+  console.log(next);
+  console.log(typeof(next));
+
+  next.forEach(function(e,i,d) {
+    e = moment(e);
+  });
+  
+  for(i=1; i<=numSamples; i++)
+  {
+    totalSeconds += parseInt(getDifference(next[i+1], next[i]).format("s"));
+  }
+
+  return totalSeconds/numSamples;
+}
+
 function writeSchedule(data) {
   bot.writeDataFile("later.json", 
       JSON.stringify({'data': data}), function(err) {
@@ -62,11 +89,9 @@ function newSchedule(data) {
   //s.range should be the range, in seconds, between schedule calls...
   //but it's undefined.
   //
-  //FIXME: functions
-  var next = later.schedule(s).next(4);
-  var futureRange = moment.duration(moment(next[3]).diff(moment(next[2])), "milliseconds");
-  if(minimumInterval > 0 && range.format("s") < minimumInterval)
-    return "Parsed frequency of " + range.format() + " is below the minimum "
+  var interval = getAverageInterval(s);
+  if(minimumInterval > 0 && interval < minimumInterval)
+    return "Parsed average frequency of " + moment.duration(interval, "seconds").format() + " is below the minimum "
            + "interval of " + minimumInterval + " seconds";
 
   registerCommand(data);
@@ -74,7 +99,15 @@ function newSchedule(data) {
   schedules.push(data);
   writeSchedule(schedules);
   
-  return "Created, the first execution is in " + range.format({precision: 2}) + ".";
+  var next = getDifference(later.schedule(s).next(1), moment()).format();
+  if(next.match(/^\d+$/))
+    next = next + " seconds";
+
+  if(next == "0") //FIXME: this usually isn't true. It may say now, but it never makes it.
+    return "Created, first execution is now.";
+  else
+    return "Created, the first execution is in " + next + ".";
+  return
 }
 
 function registerCommand(data) {
