@@ -6,6 +6,10 @@ This contains a large number of modules in the modules folder, and almost no doc
 
 The code is the documentation, right?
 
+## Installation
+
+`npm install`
+
 ## Status
 
 A rewrite is in process which uses RPC to be polyglot. It's backwards compatible with these modules already via an adapter module manager (one of many), but isn't out there yet... still needs more polish.

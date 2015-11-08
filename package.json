@@ -11,6 +11,10 @@
     "underscore": "latest"
   },
   "devDependencies": {},
+  "scripts": {
+    "start": "node bot.js",
+    "install": "./installModules.sh"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/euank/EuIrcBot.git"
