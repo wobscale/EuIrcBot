@@ -92,6 +92,7 @@ bot.callCommandFn = function(command, args) {
   return moduleMan.callCommandFn(command, args);
 };
 
+
 bot.loadConfig = function(cb) { //sync
   var conf;
   var default_config = JSON.parse(fs.readFileSync("./config.example.json"));
