@@ -130,27 +130,30 @@ function registerCommand(data) {
 
   command = function() {
      // deactivate command
-    if(data.calls == 0)
-    {
-      var i = schedules.indexOf(data);
+     if(data.calls == 0)
+     {
+       var i = schedules.indexOf(data);
 
-      //FIXME: this is awful, and will lead to a large array
-      //       can't splice as schedules indices match this
-      timers[i].clear();
-      return; // command expired
-    }
+       //FIXME: this is awful, and will lead to a large array
+       //       can't splice as schedules indices match this
+       timers[i].clear();
+       return; // command expired
+     }
 
-   bot.sayTo(data['channel'], data['command']); // say to channel even for own commands
-    bot.client.emit('message', bot.client.nick, data['channel'], 
-      data['command'], data['command']);
+     if(data.target != undefined)
+       bot.sayTo(data['channel'], data['target'] + ': ' + data['command']);
+     else
+       bot.sayTo(data['channel'], data['command']);
+     bot.client.emit('message', bot.client.nick, data['channel'],
+       data['command'], data['command']);
 
-    if(data.calls != -1)
-    {
-      data.calls -= 1;
+     if(data.calls != -1)
+     {
+       data.calls -= 1;
 
-      // write changes
-      writeSchedule(schedules);
-    }
+       // write changes
+       writeSchedule(schedules);
+     }
   };
 
   timers.push(later.setInterval(command, data['schedule']));
@@ -202,7 +205,7 @@ module.exports.commands = {
               return;
             }
             
-            var schedule, command;
+            var target, schedule, command;
 
             if(parts.length == 2)
             {
@@ -211,8 +214,9 @@ module.exports.commands = {
             }
             else
             {
+              target   = parts[0];
               schedule = parts[1];
-              command  = parts[0] + ":\n" + parts[2]; // ping then command/message
+              command  = parts[2];
             }
 
             // massage schedule from a human query to a later query
@@ -224,7 +228,8 @@ module.exports.commands = {
               'schedule': schedule,
               'command': command,
               'channel': to,
-              'calls': 1
+              'calls': 1,
+              'target': target
             }));
           },
   schedule: {
@@ -316,8 +321,7 @@ module.exports.commands = {
 
       timers[index].clear();
 
-      if(schedules[index].calls != 0)
-        timers.splice(index, 1);
+      timers.splice(index, 1);
       schedules.splice(index, 1);
       writeSchedule(schedules);
 
