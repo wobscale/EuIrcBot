@@ -1,5 +1,4 @@
 var later  = require('later');
-var hash   = require('json-hash');
 var moment = require('moment');
 
 require("moment-duration-format");
@@ -12,7 +11,7 @@ var noCommands = false;
 
 //FIXME: this is gross vv
 var schedules = [];
-var timers = {};
+var timers = [];
 
 // m1 - m2 so pass in backwards for positive
 function getDifference(m1,m2) {
@@ -94,7 +93,6 @@ function newSchedule(data) {
 
   //s.range should be the range, in seconds, between schedule calls...
   //but it's undefined.
-  //
   var interval = getAverageInterval(s);
   if(minimumInterval > 0 && interval < minimumInterval)
     return "Parsed average frequency of " + moment.duration(interval, "seconds").format() + " is below the minimum "
@@ -113,7 +111,6 @@ function newSchedule(data) {
     return "Created, first execution is now.";
   else
     return "Created, the first execution is in " + next + ".";
-  return
 }
 
 function registerCommand(data) {
@@ -127,7 +124,7 @@ function registerCommand(data) {
       data['command'], data['command']);
   };
 
-  timers[hash.digest(data)] = later.setInterval(command, data['schedule']);
+  timers.push(later.setInterval(command, data['schedule']));
 }
 
 module.exports.init = function(b) {
@@ -180,8 +177,8 @@ module.exports.commands = {
         reply("       If a valid command isn't specified, it is treated as text to print.");
       },
       remove: function(x,y,reply) {
-        reply("Usage: !schedule remove [hash|LAST]");
-        reply("       Removes the schedule specified by the hash or the LAST one added.");
+        reply("Usage: !schedule remove [index|LAST]");
+        reply("       Removes the schedule specified by the index or the LAST one added.");
       },
       list: function(x,y,reply) {
         reply("Usage: !schedule list [offset=0]");
@@ -191,6 +188,7 @@ module.exports.commands = {
     add: function(r, parts, reply, command, from, to, text, raw) {
       if(parts.length !== 2) return reply("add must have *exactly* two arguments");
 
+      //FIXME: handle add on private message
       // check and add schedule
       reply(newSchedule({
         'blame': from,
@@ -202,40 +200,32 @@ module.exports.commands = {
     },
     list: function(x, parts, reply, command, from, to) {
       var offset = 0;
-      var oi = offset;
       var count  = 5;
       var ci     = count;
 
       if(parts.length >= 1)
         oi = offset = parseInt(parts[0]);
 
-      schedules.forEach( function(e,i,d) {
-        if(oi != 0)
-          oi -= 1;
-        else if(ci > 0)
-        {
-          var message = hash.digest(e).substr(0,8);
-          message += "     " + e["blame"] + "     " 
-                  + e["created"].format("ddd MM/DD/YY HH:mm:ss Z");
-                  + "     " + e["channel"];
-          bot.sayTo(from, message);
+      if(count+offset > schedules.length)
+        count = schedules.length-offset;
 
-          message =  "     ";
-          if( e["command"].match(/^!/) )
-            message += "command: " + e["command"];
-          else
-            message += "say: " + e["command"];
-          bot.sayTo(from, message);
+      for(i=offset; i<offset+count; i++)
+      {
+        var e = schedules[i];
 
-          ci -= 1;
-        }
-      });
+        bot.sayTo(from, (i+1) + "     " + e.blame + "     " 
+                + e.created.format("ddd MM/DD/YY HH:mm:ss Z")
+                + "     " + e.channel);
+
+        var message =  "     ";
+        if( e.command.match(/^!/) )
+          message += "command: " + e.command;
+        else
+          message += "say: " + e.command;
+        bot.sayTo(from, message);
+      }
 
       var message = "Displayed schedules " + (offset+1) + "-";
-      if(count+offset > schedules.length)
-      {
-        count = schedules.length-offset;
-      }
 
       message += (offset+count) + " of " + schedules.length;
       bot.sayTo(from, message);
@@ -243,41 +233,26 @@ module.exports.commands = {
 
     remove: function(r, parts, reply) {
       if(parts.length !== 1) return reply("remove must have *exactly* one argument");
-      //FIXME: Do a hash lookup here instead of a linear search
-      //FIXME: Switch to indicies
       
-      var index = null;
-      var hmatch = null;
+      var index = parseInt(parts[0]) - 1;
 
       if(schedules.length == 0)
         return reply("There are no schedules to delete.");
 
       if(parts[0].match(/^LAST$/i))
-      {
         index  = schedules.length-1;
-        hmatch = hash.digest(schedules[index]);
-      }
-      else
-      {
-        schedules.forEach(function(e,i,d) {
-          var h = hash.digest(e);
-          if(h.substr(0,8) == parts[0])
-          {
-            index = i;
-            hmatch = h;
-          }
-        });
 
-        if(index == null)
-          return reply("Unknown hash provided.");
-      }
+      if(index >= schedules.length || index < 0)
+        return reply("Invalid schedule index provided.");
+
+      timers[index].clear();
 
       schedules.splice(index, 1);
-      timers[hmatch].clear();
+      timers.splice(index, 1);
       writeSchedule(schedules);
 
       if(!parts[0].match(/^LAST/i))
-        reply("Removed schedule " + parts[0]);
+        reply("Removed schedule at index " + (parseInt(index) + 1));
       else
         reply("Removed last schedule");
     },
