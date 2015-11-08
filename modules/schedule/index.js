@@ -9,7 +9,6 @@ var minimumCreationDelay = 0;
 var minimumInterval = 60; 
 var noCommands = false;
 
-//FIXME: this is gross vv
 var schedules = [];
 var timers = [];
 
@@ -97,6 +96,11 @@ function newSchedule(data) {
   if(minimumInterval > 0 && interval < minimumInterval)
     return "Parsed average frequency of " + moment.duration(interval, "seconds").format() + " is below the minimum "
            + "interval of " + minimumInterval + " seconds";
+
+  // Handle private message schedules. These show as channel being us--- it should
+  // be them.
+  if(data.channel == bot.client.nick)
+    data.channel = data.blame;
 
   registerCommand(data);
 
@@ -188,8 +192,6 @@ module.exports.commands = {
     add: function(r, parts, reply, command, from, to, text, raw) {
       if(parts.length !== 2) return reply("add must have *exactly* two arguments");
 
-      //FIXME: handle add on private message
-      // check and add schedule
       reply(newSchedule({
         'blame': from,
         'created': new moment(),
@@ -212,10 +214,14 @@ module.exports.commands = {
       for(i=offset; i<offset+count; i++)
       {
         var e = schedules[i];
+        var channel = e.channel;
+
+        if(!channel.match(/^#/))
+          channel = "@"+channel;
 
         bot.sayTo(from, (i+1) + "     " + e.blame + "     " 
                 + e.created.format("ddd MM/DD/YY HH:mm:ss Z")
-                + "     " + e.channel);
+                + "     " + channel);
 
         var message =  "     ";
         if( e.command.match(/^!/) )
