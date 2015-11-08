@@ -24,11 +24,6 @@ function getAverageInterval(s) {
   var next = later.schedule(s).next(numSamples+2); // skip NEXT occurrence
   var totalSeconds = 0;
 
-  // catch for schedules that don't execute
-  // FIXME: this includes "every weekday in January" for some reason
-  console.log(next);
-  console.log(typeof(next));
-
   next.forEach(function(e,i,d) {
     e = moment(e);
   });
@@ -57,9 +52,20 @@ function newSchedule(data) {
     return ex;
   }
 
-  // FIXME: change to > -1, @ char #
-  if( s == 0 )
-    return "Provided schedule query doesn't parse.";
+  if(typeof(s) == "number" || s.error >= 0 )
+  {
+    var m = "Provided schedule query doesn't parse:\n";
+    var offset = 0;
+
+    if( typeof(s) == "number")
+      offset = s;
+    else
+      offset = s.error;
+    
+    m += "    " + data['schedule'].slice(0,offset) + '\u032D' 
+         + data['schedule'].slice(offset,data['schedule'].length);
+    return m;
+  }
   
   data['schedule'] = s;
 
