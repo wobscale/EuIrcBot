@@ -7,7 +7,8 @@
     "later": "latest",
     "moment": "latest",
     "moment-duration-format": "latest",
-    "sugar": "latest"
+    "sugar": "latest",
+    "json-hash": "latest"
   },
   "author": "brodes",
   "license": "MIT"

@@ -1,6 +1,7 @@
 var later  = require('later');
 var moment = require('moment');
 var sugar  = require('sugar');
+var hash = require('json-hash'); 
 
 require("moment-duration-format");
 
@@ -10,8 +11,17 @@ var minimumCreationDelay = 0;
 var minimumInterval = 60; 
 var noCommands = false;
 
-var schedules = [];
-var timers = [];
+// digest -> schedule
+var schedules = {};
+// { 'id': <digest of data before adding timer and stuff>,
+//   'created': <created timestamp>,
+//   'schedule:' <later schedule>,
+//   'blame': <owner>,
+//   'calls': <number of calls left>,
+//   'channel': <channel to print in>,
+//   'command': <what to say / execute>,
+//   'timer': <our timer instance if any>
+//
 
 // m1 - m2 so pass in backwards for positive
 function getDifference(m1,m2) {
@@ -37,7 +47,7 @@ function getAverageInterval(s) {
 
 function writeSchedule(data) {
   bot.writeDataFile("later.json", 
-      JSON.stringify({'data': data}), function(err) {
+      JSON.stringify(schedules), function(err) {
         if(err) console.log("Error writing command file: " + err);
   });
 }
@@ -113,10 +123,14 @@ function newSchedule(data) {
   if(data.channel == bot.client.nick)
     data.channel = data.blame;
 
-  // FIXME: This is awful. Asynchronous shit makes this a baaad idea.
-  schedules.push(data);
-  registerCommand(data);
+  // get digest for our data
+  var digest = hash.digest(data);
+  data.id = digest;
+  data.timer = null;
+  //FIXME: store by configurable digest length, keep full
+  schedules[digest] = data;
 
+  registerCommand(data);
   writeSchedule(schedules);
   
   var next = getDifference(later.schedule(s).next(1), moment()).format();
@@ -124,50 +138,45 @@ function newSchedule(data) {
     next = next + " seconds"; //FIXME: vv breaks
 
   if(next == "0") //FIXME: this usually isn't true. It may say now, but it never makes it.
-    return "Created, first execution is now.";
+    return "Created " + digest.substr(0,8) + ", first execution is now.";
   else
-    return "Created, the first execution is in " + next + ".";
+    return "Created " + digest.substr(0,8) + ", the first execution is in " + next + ".";
 }
 
 function registerCommand(data) {
   var command;
 
-  if(data.calls == 0)
-  {
-    //see FIXME below
-    timers.push(undefined);
-    return;
-  }
-
   command = function() {
-     // deactivate command
-     if(data.calls == 0)
-     {
-       var i = schedules.indexOf(data);
+    var s = schedules[data.id];
 
-       //FIXME: this is awful, and will lead to a large array
-       //       can't splice as schedules indices match this
-       timers[i].clear();
-       return; // command expired
-     }
+    // deactivate and delete command
+    if(data.calls == 0)
+    {
+      if(s.timer != null)
+        s.timer.clear();
+       
+      delete schedules[data.id];
+      writeSchedule(schedules);
+      return; // command expired
+    }
 
-     if(data.target != undefined)
-       bot.sayTo(data.channel, data.target + ': ' + data.command);
-     else
-       bot.sayTo(data.channel, data.command);
-     bot.client.emit('message', bot.client.nick, data.channel,
-       data.command, data.command);
+    if(data.target != undefined)
+      bot.sayTo(data.channel, data.target + ': ' + data.command);
+    else
+      bot.sayTo(data.channel, data.command);
+    bot.client.emit('message', bot.client.nick, data.channel,
+      data.command, data.command);
 
-     if(data.calls != -1)
-     {
-       data.calls -= 1;
+    if(s.calls != -1)
+    {
+      s.calls -= 1;
 
-       // write changes
-       writeSchedule(schedules);
-     }
+      // write changes
+      writeSchedule(schedules);
+    }
   };
 
-  timers.push(later.setInterval(command, data.schedule));
+  schedules[data.id].timer = later.setInterval(command, data.schedule);
 }
 
 module.exports.init = function(b) {
@@ -176,22 +185,25 @@ module.exports.init = function(b) {
     console.log("Read data file w/ error '" + err + "'");
     if(err) {
       console.log("Initializing later.json");
-      schedules = [];
+      schedules = {};
       writeSchedule(schedules);
     } else {
       try {
         console.log("Parsing later.json...");
-        schedules = JSON.parse(data).data;
+        schedules = JSON.parse(data);
 
         // process schedules
-        schedules.forEach(function(e, i, d) {
+        Object.keys(schedules).forEach(function(i) {
+          var e = schedules[i];
+
           e.created = moment(e.created);
+          e.timer = null;
           registerCommand(e);
         });
       } catch(ex) {
         console.log("Error parsing: " + ex);
         console.log("Corrupted later.json for schedule! Resetting file...");
-        schedules = [];
+        schedules = {};
         writeSchedule(schedules);
       }
     }
@@ -290,25 +302,39 @@ module.exports.commands = {
       var offset = 0;
       var count  = 5;
       var ci     = count;
+      var oi = offset;
+      var size = Object.keys(schedules).length;
 
       if(parts.length >= 1)
         oi = offset = parseInt(parts[0]);
 
-      if(offset > count)
-        bot.sayTo(from, "There are only " + count + " schedules");
+      oi -= 1;
 
-      if(count+offset > schedules.length)
-        count = schedules.length-offset;
+      if(offset > size)
+        return bot.sayTo(from, "There are only " + size + " schedules");
 
-      for(i=offset; i<offset+count; i++)
-      {
+      if(count+offset > size)
+        count = size-offset;
+
+      // count and pick
+      Object.keys(schedules).forEach(function(i) {
+        if(offset > 0)
+        {
+          offset -= 1;
+          return;
+        }
+
+        if(ci == 0)
+          return;
+
         var e = schedules[i];
         var channel = e.channel;
 
         if(!channel.match(/^(#|&)/))
           channel = "@"+channel;
 
-        bot.sayTo(from, (i+1) + "     " + e.blame + "     " 
+        // FIXME: Make digest length a config option
+        bot.sayTo(from, i.substr(0,8) + "     " + e.blame + "     " 
                 + e.created.format("ddd MM/DD/YY HH:mm:ss Z")
                 + "     " + channel);
 
@@ -318,38 +344,44 @@ module.exports.commands = {
         else
           message += "say: " + e.command;
         bot.sayTo(from, message);
-      }
+
+        if(ci > 0)
+          ci -= 1;
+      });
 
       var message = "Displayed schedules " + (offset+1) + "-";
 
-      message += (offset+count) + " of " + schedules.length;
+      message += (offset+count) + " of " + size;
       bot.sayTo(from, message);
     },
 
     remove: function(r, parts, reply) {
       if(parts.length !== 1) return reply("remove must have *exactly* one argument");
       
-      var index = parseInt(parts[0]) - 1;
+      var digest = parts[0];
+      var realDigest;
 
       if(schedules.length == 0)
         return reply("There are no schedules to delete.");
 
-      if(parts[0].match(/^LAST$/i))
-        index  = schedules.length-1;
+      // bleh
+      Object.keys(schedules).forEach(function(i) {
+        if(schedules[i].digest.substr(0,8) == digest)
+          realDigest = schedules[i].digest;
+      });
 
-      if(index >= schedules.length || index < 0)
-        return reply("Invalid schedule index provided.");
+      if(realDigest == undefined)
+        return reply("There is no schedule for " + digest);
 
-      timers[index].clear();
+      var s = schedules[realDigest];
 
-      timers.splice(index, 1);
-      schedules.splice(index, 1);
+      if(s.timer != null)
+        s.timer.clear();
+
+      reply("Removed schedule by \"" + s.blame + "\" which runs \"" + s.command + "\"" );
+
+      delete schedules[realDigest];
       writeSchedule(schedules);
-
-      if(!parts[0].match(/^LAST/i))
-        reply("Removed schedule at index " + (parseInt(index) + 1));
-      else
-        reply("Removed last schedule");
     },
 
   }
