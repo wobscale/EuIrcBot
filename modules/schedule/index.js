@@ -1,5 +1,6 @@
 var later  = require('later');
 var moment = require('moment');
+var sugar  = require('sugar');
 
 require("moment-duration-format");
 
@@ -44,28 +45,35 @@ function writeSchedule(data) {
 function newSchedule(data) {
   var s;
 
-  try {
-    s = later.parse.text(data.schedule);
-  } catch (ex) {
-    return ex;
-  }
-
-  if(typeof(s) == "number" || s.error >= 0 )
+  // reminders use cron
+  if(data['calls'] == -1)
   {
-    var m = "Provided schedule query doesn't parse:\n";
-    var offset = 0;
+    try {
+      s = later.parse.text(data.schedule);
+    } catch (ex) {
+      return ex;
+    }
 
-    if( typeof(s) == "number")
-      offset = s;
-    else
-      offset = s.error;
+    if(typeof(s) == "number" || s.error >= 0 )
+    {
+      var m = "Provided schedule query doesn't parse:\n";
+      var offset = 0;
+
+      if( typeof(s) == "number")
+        offset = s;
+      else
+        offset = s.error;
+      
+      m += "    " + data.schedule.slice(0,offset) + '\u032D' 
+           + data.schedule.slice(offset,data.schedule.length);
+      return m;
+    }
     
-    m += "    " + data.schedule.slice(0,offset) + '\u032D' 
-         + data.schedule.slice(offset,data.schedule.length);
-    return m;
+    data.schedule = s;
   }
-  
-  data.schedule = s;
+  else
+    s = data.schedule = later.parse.cron(data.schedule);
+
 
   // check that command is valid
   //   - check if commands are disabled
@@ -90,12 +98,15 @@ function newSchedule(data) {
     return "Schedule creation is rate limited. Please wait at least " + minimumCreationDelay
            + " seconds between schedule creation.";
 
-  //s.range should be the range, in seconds, between schedule calls...
-  //but it's undefined.
-  var interval = getAverageInterval(s);
-  if(minimumInterval > 0 && interval < minimumInterval)
-    return "Parsed average frequency of " + moment.duration(interval, "seconds").format() + " is below the minimum "
-           + "interval of " + minimumInterval + " seconds";
+  if(data.calls >= 5 || data.calls == -1)
+  {
+    //s.range should be the range, in seconds, between schedule calls...
+    //but it's undefined.
+    var interval = getAverageInterval(s);
+    if(minimumInterval > 0 && interval < minimumInterval)
+      return "Parsed average frequency of " + moment.duration(interval, "seconds").format() + " is below the minimum "
+             + "interval of " + minimumInterval + " seconds";
+  }
 
   // Handle private message schedules. These show as channel being us--- it should
   // be them.
@@ -219,8 +230,18 @@ module.exports.commands = {
               command  = parts[2];
             }
 
-            // massage schedule from a human query to a later query
-            schedule = schedule.replace(/^(in|after)/, "every"); // this makes in 4 minutes mean at the next 4 minute interval
+            if(schedule.match(/in|at|after|tomorrow|next|from/i))
+            {
+              // use sugar to handle relative dates--- moment/later sucks at this
+              var s = Date.create(schedule);
+              if(!s.isValid())
+                return reply("Invalid relative date provided.");
+              if(!s.isFuture())
+                return reply("Cannot make reminders for past dates/times.");
+
+              // massage into a cron format
+              schedule = s.format('{mm} {hh} {dd} {mm} *');
+            }
 
             reply(newSchedule({
               'blame': from,

@@ -6,7 +6,8 @@
   "dependencies": {
     "later": "latest",
     "moment": "latest",
-    "moment-duration-format": "latest"
+    "moment-duration-format": "latest",
+    "sugar": "latest"
   },
   "author": "brodes",
   "license": "MIT"
