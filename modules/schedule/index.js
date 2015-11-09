@@ -45,7 +45,7 @@ function newSchedule(data) {
   var s;
 
   try {
-    s = later.parse.text(data['schedule']);
+    s = later.parse.text(data.schedule);
   } catch (ex) {
     return ex;
   }
@@ -60,12 +60,12 @@ function newSchedule(data) {
     else
       offset = s.error;
     
-    m += "    " + data['schedule'].slice(0,offset) + '\u032D' 
-         + data['schedule'].slice(offset,data['schedule'].length);
+    m += "    " + data.schedule.slice(0,offset) + '\u032D' 
+         + data.schedule.slice(offset,data.schedule.length);
     return m;
   }
   
-  data['schedule'] = s;
+  data.schedule = s;
 
   // check that command is valid
   //   - check if commands are disabled
@@ -79,10 +79,10 @@ function newSchedule(data) {
       == bot.config.commandPrefix) 
     return "Commands are disabled";
 
-  if(data['command'].match(/^!schedule/))
-    return data['blame'] + ": fuck you"; 
+  if(data.command.match(/^!schedule/))
+    return data.blame + ": fuck you"; 
   
-  if(data['blame'] == bot.client.nick)
+  if(data.blame == bot.client.nick)
     return "Cannot call schedule recursively.";
   
   if(minimumCreationDelay > 0 && schedules.length > 0 
@@ -141,11 +141,11 @@ function registerCommand(data) {
      }
 
      if(data.target != undefined)
-       bot.sayTo(data['channel'], data['target'] + ': ' + data['command']);
+       bot.sayTo(data.channel, data.target + ': ' + data.command);
      else
-       bot.sayTo(data['channel'], data['command']);
-     bot.client.emit('message', bot.client.nick, data['channel'],
-       data['command'], data['command']);
+       bot.sayTo(data.channel, data.command);
+     bot.client.emit('message', bot.client.nick, data.channel,
+       data.command, data.command);
 
      if(data.calls != -1)
      {
@@ -156,7 +156,7 @@ function registerCommand(data) {
      }
   };
 
-  timers.push(later.setInterval(command, data['schedule']));
+  timers.push(later.setInterval(command, data.schedule));
 }
 
 module.exports.init = function(b) {
@@ -170,11 +170,11 @@ module.exports.init = function(b) {
     } else {
       try {
         console.log("Parsing later.json...");
-        schedules = JSON.parse(data)['data'];
+        schedules = JSON.parse(data).data;
 
         // process schedules
         schedules.forEach(function(e, i, d) {
-          e['created'] = moment(e['created']);
+          e.created = moment(e.created);
           registerCommand(e);
         });
       } catch(ex) {
