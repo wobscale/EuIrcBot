@@ -136,7 +136,9 @@ function newSchedule(data) {
   registerCommand(data);
   writeSchedule(schedules);
   
+  console.log(later.schedule(s).next(2));
   var next = getDifference(later.schedule(s).next(1), moment()).format();
+  console.log(next)
   if(next == "0")
     next = getDifference(later.schedule(s).next(2)[1], moment()).format();
 
@@ -256,7 +258,8 @@ module.exports.commands = {
                 return reply("Cannot make reminders for past dates/times.");
 
               // massage into a cron format
-              schedule = s.format('{mm} {hh} {dd} {mm} *');
+              schedule = s.utc().format('{m} {H} {d} {M} *');
+              console.log(schedule)
             }
 
             reply(newSchedule({
