@@ -58,7 +58,7 @@ function newSchedule(data) {
   var s;
 
   // reminders use cron
-  if(data['calls'] == -1)
+  if(data.calls == -1)
   {
     try {
       s = later.parse.text(data.schedule);
