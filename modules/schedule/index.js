@@ -136,9 +136,7 @@ function newSchedule(data) {
   registerCommand(data);
   writeSchedule(schedules);
   
-  console.log(later.schedule(s).next(2));
   var next = getDifference(later.schedule(s).next(1), moment()).format();
-  console.log(next)
   if(next == "0")
     next = getDifference(later.schedule(s).next(2)[1], moment()).format();
 
@@ -259,7 +257,6 @@ module.exports.commands = {
 
               // massage into a cron format
               schedule = s.utc().format('{m} {H} {d} {M} *');
-              console.log(schedule)
             }
 
             reply(newSchedule({
@@ -314,6 +311,9 @@ module.exports.commands = {
 
       if(parts.length >= 1)
         oi = offset = parseInt(parts[0]);
+
+      if(offset < 0)
+        oi = offset = size + offset;
 
       if(offset >= size)
         return bot.sayTo(from, "There are only " + size + " schedules");
