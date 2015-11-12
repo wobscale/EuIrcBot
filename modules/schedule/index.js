@@ -10,6 +10,7 @@ var bot;
 var minimumCreationDelay = 0; 
 var minimumInterval = 60; 
 var noCommands = false;
+var digestLength = 8;
 
 // digest -> schedule
 var schedules = {};
@@ -124,10 +125,9 @@ function newSchedule(data) {
     data.channel = data.blame;
 
   // get digest for our data
-  var digest = hash.digest(data);
+  var digest = hash.digest(data).substr(0,digestLength);
   data.id = digest;
   data.timer = null;
-  //FIXME: store by configurable digest length, keep full
   schedules[digest] = data;
 
   registerCommand(data);
@@ -214,6 +214,7 @@ module.exports.init = function(b) {
       minimumInterval      = conf.minimum_interval;
       minimumCreationDelay = conf.minimum_creation_delay;
       noCommands           = conf.no_commands;
+      digestLength         = conf.digest_length;
     }
   });
 };
@@ -278,8 +279,8 @@ module.exports.commands = {
         reply("       If a valid command isn't specified, it is treated as text to print.");
       },
       remove: function(x,y,reply) {
-        reply("Usage: !schedule remove [index|LAST]");
-        reply("       Removes the schedule specified by the index or the LAST one added.");
+        reply("Usage: !schedule remove [digest]");
+        reply("       Removes the schedule specified by the digest.");
       },
       list: function(x,y,reply) {
         reply("Usage: !schedule list [offset=0]");
@@ -317,7 +318,7 @@ module.exports.commands = {
         count = size-offset;
 
       // count and pick
-      Object.keys(schedules).forEach(function(i) {
+      Object.keys(schedules).forEach(function(digest) {
         if(offset > 0)
         {
           offset -= 1;
@@ -327,14 +328,13 @@ module.exports.commands = {
         if(ci == 0)
           return;
 
-        var e = schedules[i];
+        var e = schedules[digest];
         var channel = e.channel;
 
         if(!channel.match(/^(#|&)/))
           channel = "@"+channel;
 
-        // FIXME: Make digest length a config option
-        bot.sayTo(from, i.substr(0,8) + "     " + e.blame + "     " 
+        bot.sayTo(from, digest + "     " + e.blame + "     " 
                 + e.created.format("ddd MM/DD/YY HH:mm:ss Z")
                 + "     " + channel);
 
@@ -359,28 +359,21 @@ module.exports.commands = {
       if(parts.length !== 1) return reply("remove must have *exactly* one argument");
       
       var digest = parts[0];
-      var realDigest;
 
       if(schedules.length == 0)
         return reply("There are no schedules to delete.");
 
-      // bleh
-      Object.keys(schedules).forEach(function(i) {
-        if(schedules[i].digest.substr(0,8) == digest)
-          realDigest = schedules[i].digest;
-      });
-
-      if(realDigest == undefined)
+      if(schedules[digest] == undefined)
         return reply("There is no schedule for " + digest);
 
-      var s = schedules[realDigest];
+      var s = schedules[digest];
 
       if(s.timer != null)
         s.timer.clear();
 
       reply("Removed schedule by \"" + s.blame + "\" which runs \"" + s.command + "\"" );
 
-      delete schedules[realDigest];
+      delete schedules[digest];
       writeSchedule(schedules);
     },
 
