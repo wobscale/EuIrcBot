@@ -14,6 +14,7 @@ var digestLength = 8;
 
 // digest -> schedule
 var schedules = {};
+var lastSchedule = null;
 // { 'id': <digest of data before adding timer and stuff>,
 //   'created': <created timestamp>,
 //   'schedule:' <later schedule>,
@@ -104,8 +105,8 @@ function newSchedule(data) {
   if(data.blame == bot.client.nick)
     return "Cannot call schedule recursively.";
   
-  if(minimumCreationDelay > 0 && schedules.length > 0 
-      && moment().diff(schedules.slice(-1)[0].created, 'seconds') <= minimumCreationDelay)
+  if(minimumCreationDelay > 0 && schedules.length > 0 && lastSchedule != 0
+      && moment().diff(schedules[lastSchedule].created, 'seconds') <= minimumCreationDelay)
     return "Schedule creation is rate limited. Please wait at least " + minimumCreationDelay
            + " seconds between schedule creation.";
 
@@ -130,17 +131,19 @@ function newSchedule(data) {
   data.timer = null;
   schedules[digest] = data;
 
+  lasSchedule = digest;
+
   registerCommand(data);
   writeSchedule(schedules);
   
   var next = getDifference(later.schedule(s).next(1), moment()).format();
-  if(next.match(/^\d+$/))
-    next = next + " seconds"; //FIXME: vv breaks
+  if(next == "0")
+    next = getDifference(later.schedule(s).next(2)[1], moment()).format();
 
-  if(next == "0") //FIXME: this usually isn't true. It may say now, but it never makes it.
-    return "Created " + digest.substr(0,8) + ", first execution is now.";
-  else
-    return "Created " + digest.substr(0,8) + ", the first execution is in " + next + ".";
+  if(next.match(/^\d+$/))
+    next = next + " seconds";
+
+  return "Created " + digest + ", the first execution is in " + next + ".";
 }
 
 function registerCommand(data) {
