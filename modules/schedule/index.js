@@ -303,25 +303,26 @@ module.exports.commands = {
       var offset = 0;
       var count  = 5;
       var ci     = count;
-      var oi = offset;
+      var oi     = 0;
       var size = Object.keys(schedules).length;
 
       if(parts.length >= 1)
         oi = offset = parseInt(parts[0]);
 
-      oi -= 1;
-
-      if(offset > size)
+      if(offset >= size)
         return bot.sayTo(from, "There are only " + size + " schedules");
+      
+      if(size == 0)
+        return bot.sayTo(from, "There are no schedules.");
 
       if(count+offset > size)
         count = size-offset;
 
       // count and pick
       Object.keys(schedules).forEach(function(digest) {
-        if(offset > 0)
+        if(oi > 0)
         {
-          offset -= 1;
+          oi -= 1;
           return;
         }
 
@@ -350,8 +351,8 @@ module.exports.commands = {
       });
 
       var message = "Displayed schedules " + (offset+1) + "-";
-
       message += (offset+count) + " of " + size;
+
       bot.sayTo(from, message);
     },
 
