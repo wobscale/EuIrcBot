@@ -185,14 +185,12 @@ function registerCommand(data) {
 module.exports.init = function(b) {
   bot = b;
   bot.readDataFile("later.json", function(err, data) {
-    console.log("Read data file w/ error '" + err + "'");
     if(err) {
       console.log("Initializing later.json");
       schedules = {};
       writeSchedule(schedules);
     } else {
       try {
-        console.log("Parsing later.json...");
         schedules = JSON.parse(data);
 
         // process schedules
