@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "later": "latest",
-    "moment": "latest",
-    "moment-duration-format": "latest",
-    "sugar": "latest",
-    "json-hash": "latest"
+    "json-hash": "^1.1.0",
+    "later": "^1.2.0",
+    "moment": "^2.10.6",
+    "moment-duration-format": "^1.3.0",
+    "sugar": "^1.4.1"
   },
   "author": "brodes",
   "license": "MIT"
