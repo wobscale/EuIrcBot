@@ -101,8 +101,11 @@ function newSchedule(data) {
       == bot.config.commandPrefix) 
     return "Commands are disabled";
 
-  if(data.command.match(/^!schedule/))
+  if(/^!schedule/.test(data.command))
     return data.blame + ": fuck you"; 
+
+  if(/^\s*/.test(data.command))
+    return "Must specify something for command/message";
   
   if(data.blame == bot.client.nick)
     return "Cannot call schedule recursively.";
