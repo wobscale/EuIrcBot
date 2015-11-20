@@ -305,15 +305,13 @@ module.exports.commands = {
     list: function(x, parts, reply, command, from, to) {
       var offset = 0;
       var count  = 5;
-      var ci     = count;
-      var oi     = 0;
       var size = Object.keys(schedules).length;
 
       if(parts.length >= 1)
-        oi = offset = parseInt(parts[0]);
+        offset = parseInt(parts[0]);
 
       if(offset < 0)
-        oi = offset = size + offset;
+        offset = size + offset;
 
       if(offset >= size)
         return bot.sayTo(from, "There are only " + size + " schedules");
@@ -324,30 +322,23 @@ module.exports.commands = {
       if(count+offset > size)
         count = size-offset;
 
-      //FIXME:kill me
-      Object.keys(schedules).sort(function(a, b) {
-        if(a.created > b.created)
+      sorted_schedules = Object.keys(schedules).sort(function(a, b) {
+        if(schedules[a].created > schedules[b].created)
           return 1;
-        if(a.created < b.created)
+        if(schedules[a].created < schedules[b].created)
           return -1;
         return 0;
-      }).forEach(function(digest) {
-        if(oi > 0)
-        {
-          oi -= 1;
-          return;
-        }
+      });
 
-        if(ci == 0)
-          return;
-
-        var e = schedules[digest];
+      for(i=offset; i<offset+count; i++)
+      {
+        var e = schedules[sorted_schedules[i]];
         var channel = e.channel;
 
         if(!bot.config.channelPrefixes.includes(channel[0])) 
           channel = "@"+channel;
 
-        bot.sayTo(from, digest + "     " + e.blame + "     " 
+        bot.sayTo(from, sorted_schedules[i] + "     " + e.blame + "     " 
                 + e.created.format("ddd MM/DD/YY HH:mm:ss Z")
                 + "     " + channel);
 
@@ -357,10 +348,7 @@ module.exports.commands = {
         else
           message += "say: " + e.command;
         bot.sayTo(from, message);
-
-        if(ci > 0)
-          ci -= 1;
-      });
+      }
 
       var message = "Displayed schedules " + (offset+1) + "-";
       message += (offset+count) + " of " + size;
