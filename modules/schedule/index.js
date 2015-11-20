@@ -104,7 +104,7 @@ function newSchedule(data) {
   if(/^!schedule/.test(data.command))
     return data.blame + ": fuck you"; 
 
-  if(/^\s*/.test(data.command))
+  if(/^\s*$/.test(data.command))
     return "Must specify something for command/message";
   
   if(data.blame == bot.client.nick)
