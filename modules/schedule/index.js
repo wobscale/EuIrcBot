@@ -25,7 +25,7 @@ var lastSchedule = null;
 //   'channel': <channel to print in>,
 //   'command': <what to say / execute>,
 //   'timer': <our timer instance if any>
-//
+// }
 
 // m1 - m2 so pass in backwards for positive
 function getDifference(m1,m2) {
@@ -324,8 +324,14 @@ module.exports.commands = {
       if(count+offset > size)
         count = size-offset;
 
-      // count and pick
-      Object.keys(schedules).forEach(function(digest) {
+      //FIXME:kill me
+      Object.keys(schedules).sort(function(a, b) {
+        if(a.created > b.created)
+          return 1;
+        if(a.created < b.created)
+          return -1;
+        return 0;
+      }).forEach(function(digest) {
         if(oi > 0)
         {
           oi -= 1;
