@@ -344,7 +344,7 @@ module.exports.commands = {
         var e = schedules[digest];
         var channel = e.channel;
 
-        if(bot.config.channelPrefixes.includes(channel[0])) 
+        if(!bot.config.channelPrefixes.includes(channel[0])) 
           channel = "@"+channel;
 
         bot.sayTo(from, digest + "     " + e.blame + "     " 
