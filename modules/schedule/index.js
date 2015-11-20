@@ -246,7 +246,7 @@ module.exports.commands = {
               command  = parts[2];
             }
 
-            if(schedule.match(/in|at|after|tomorrow|next|from/i))
+            if(/in|at|after|tomorrow|next|from/i.test(schedule))
             {
               // use sugar to handle relative dates--- moment/later sucks at this
               var s = Date.create(schedule);
@@ -344,7 +344,7 @@ module.exports.commands = {
         var e = schedules[digest];
         var channel = e.channel;
 
-        if(!channel.match(/^(#|&)/))
+        if(bot.config.channelPrefixes.includes(channel[0])) 
           channel = "@"+channel;
 
         bot.sayTo(from, digest + "     " + e.blame + "     " 
@@ -352,7 +352,7 @@ module.exports.commands = {
                 + "     " + channel);
 
         var message =  "     ";
-        if( e.command.match(/^!/) )
+        if(e.command[0] == bot.config.commandPrefix)
           message += "command: " + e.command;
         else
           message += "say: " + e.command;
