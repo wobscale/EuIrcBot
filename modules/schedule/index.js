@@ -13,7 +13,9 @@ var noCommands = false;
 var digestLength = 8;
 
 // digest -> schedule
+//TODO: make schedules a proper object w/ .length support
 var schedules = {};
+//FIXME: vv is dumb
 var lastSchedule = null;
 // { 'id': <digest of data before adding timer and stuff>,
 //   'created': <created timestamp>,
@@ -105,7 +107,7 @@ function newSchedule(data) {
   if(data.blame == bot.client.nick)
     return "Cannot call schedule recursively.";
   
-  if(minimumCreationDelay > 0 && schedules.length > 0 && lastSchedule != 0
+  if(minimumCreationDelay > 0 && Object.keys(schedules).length > 0 && lastSchedule != 0
       && moment().diff(schedules[lastSchedule].created, 'seconds') <= minimumCreationDelay)
     return "Schedule creation is rate limited. Please wait at least " + minimumCreationDelay
            + " seconds between schedule creation.";
@@ -365,7 +367,7 @@ module.exports.commands = {
       
       var digest = parts[0];
 
-      if(schedules.length == 0)
+      if(Object.keys(schedules).length == 0)
         return reply("There are no schedules to delete.");
 
       if(schedules[digest] == undefined)
