@@ -48,7 +48,6 @@ function getCache(channel, cb) {
 }
 
 module.exports.chansay = function(from, chan, text) {
-  console.log(text);
   logObject(chan, {
     type: 'msg',
     text: text,
@@ -119,8 +118,6 @@ module.exports.getFormattedScrollbackLinesFromRanges = function(channel, ranges,
     parts = ["1"];
   }
 
-  console.log(parts);
-
   var i;
 
   for(i=0;i<parts.length;i++) {
@@ -141,10 +138,10 @@ module.exports.getFormattedScrollbackLinesFromRanges = function(channel, ranges,
       var lineObj = {
         from: parts[i]
       };
-      if(/^(-|\d)/.test(parts[i+1])) {
-        lineObj.lines = rangeParser.parse(parts[i+1]);
-        i++; // We handled it :D
-      } else if(/^\/.*\/$/.test(parts[i+1])) {
+      i++;
+      if(/^(-|\d)/.test(parts[i])) {
+        lineObj.lines = rangeParser.parse(parts[i]);
+      } else if(/^\/.*\/$/.test(parts[i])) {
         // sandwitched between '/'s, it's a regex
         try {
           var regex = new RegExp(parts[i].substring(1, parts[i].length - 1));
@@ -152,15 +149,14 @@ module.exports.getFormattedScrollbackLinesFromRanges = function(channel, ranges,
         } catch(ex) {
           return cb("Could not parse regex: " + parts[i] + ", " + ex.toString());
         }
-        i++;
       } else {
         lineObj.lines = [1];
+        i--;
+        // Backtrack, nick not followed by anything it turns out
       }
       linesToGet.push(lineObj);
     }
   }
-
-  console.log(linesToGet);
 
   var result = [];
   getCache(channel, function(cache) {
@@ -189,7 +185,7 @@ module.exports.getFormattedScrollbackLinesFromRanges = function(channel, ranges,
         }
         result.push(matches[0]);
       } else {
-        // It's a nick
+        // It's a nick + offset or regex object
         var nick = obj.from;
         var nickCache = revCache.filter(function(el) {
           return el.from == nick;
