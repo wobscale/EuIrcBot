@@ -1,11 +1,32 @@
 var google = require('google'),
-    googleimgs = require('google-images'),
+    googleimages = require('google-images'),
     humanize = require('humanize');
 
 var b;
+var config;
+
+var googleimgs;
 
 module.exports.init = function(bot) {
+  // See instructions at https://github.com/vdemedes/google-images#google-images for how to set this mess up
   b = bot;
+  b.getConfig("google.json", function(err, googConf) {
+    if(err) {
+      console.log(err);
+      return;
+    }
+    b.getConfig("googleimgs.json", function(err, imgsConf) {
+      if(err) {
+        console.log(err);
+        return;
+      }
+      if(imgsConf.cseID === "") {
+        console.log("cseID (googleimgs.json) not configured, required for google image search");
+        return;
+      }
+      googleimgs = googleimages(imgsConf.cseID, googConf.apiKey);
+    });
+  });
 };
 
 module.exports.commands = ['g', 'google'];
@@ -31,13 +52,17 @@ module.exports.run_goognum = function(r, p, reply) {
 };
 
 var firstimg = function(r, p, reply) {
-	googleimgs.search(r, function(err, imgs) {
-		if(err) return reply("Couldn't find jack, yo: " + err);
-		if(imgs.length == 0) return reply("Couldn't find zip, nadda, nothin'");
+  if(!googleimgs) {
+    console.error("Google images not configured correctly on this bot");
+    return;
+  }
+  googleimgs.search(r)
+  .then(function(imgs) {
+    if(imgs.length === 0) return reply("Couldn't find zip, nadda, nothin'");
 
-		return reply(imgs[0].url);
-	});
-}
+    return reply(imgs[0].url);
+  });
+};
 
 module.exports.run_gi = firstimg;
 module.exports.run_gimg = firstimg;
