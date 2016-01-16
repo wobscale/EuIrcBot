@@ -1,0 +1,6 @@
+{
+  "minimum_interval": 60,
+  "minimum_creation_delay": 15,
+  "no_commands": false,
+  "digest_length": 8
+}
