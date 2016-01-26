@@ -28,7 +28,7 @@ for(var i=0;i<mathKeysToGet.length;i++) {
 
 //
 // INPUT FULTERS
-// 
+//
 var mathKeys = Object.keys(mathItems);
 var mathSymbols = ".,*+-/()%=";
 
@@ -39,9 +39,10 @@ var onlyTime = new RC(/^(:?[0-9]+:?)+$/);
 var onlyQuote = new RC(/^".+"$/);
 var funnyFractions = new RC(/^(([0-9][0]?|11)\s*\/\s*(10|5|100))$/);
 var plusN = new RC(/^\++\d+$/);
+var webscaleQualityInputs = new RC(/^[a-zA-Z ]+$/);
 
 var ignoreRe = onlySymbols.or(onlyNumbers).or(funnyFractions).or(onlyKeys).or(plusN)
-               .or(onlyQuote).or(onlyTime);
+               .or(onlyQuote).or(onlyTime).or(webscaleQualityInputs);
 
 //
 // OUTPUT FILTERS
