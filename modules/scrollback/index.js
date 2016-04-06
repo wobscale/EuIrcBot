@@ -126,7 +126,19 @@ module.exports.formatLine = function(line) {
 /* Get lines from scrollback using various range specifications
  *
  * There are three possible range specifiers: nick (N), regex (R), and line number (L).
- * In general, a range specification looks like:
+ * The formal grammar for these specifications:
+ *   All = Spec | All Spec | All, Spec
+ *   Spec = Nickopt Regexopt Lineopt
+ *   Nickopt = e | Nicks
+ *   Regexopt = e | Regexes
+ *   Lineopt = e | Lines
+ *   Nicks = N | Nicks,N
+ *   Regexes = R | Regexes,R
+ *   Lines = L | L-L | L..L | L...L | Lines,Lines
+ *
+ * Line parsing is handled by https://github.com/euank/node-parse-numeric-range
+ *
+ * In general, a range specification after being parsed by numeric-range looks like:
  *   [N1[,N2][,N3]...[,Ni]] [R1[,R2][,R3]...[,Rj]] [L1[,L2][,L3]...[,Lk]][,]
  * This parses to a cross-product of ranges:
  *   [N1,R1,L1], [N1,R1,L2], ..., [N1,R1,Lk],
