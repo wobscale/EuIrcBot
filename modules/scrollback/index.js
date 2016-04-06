@@ -110,7 +110,50 @@ module.exports.formatLine = function(line) {
   }
 };
 
-
+/* Get lines from scrollback using various range specifications
+ *
+ * There are three possible range specifiers: nick (N), regex (R), and line number (L).
+ * In general, a range specification looks like:
+ *   [N1[,N2][,N3]...[,Ni]] [R1[,R2][,R3]...[,Rj]] [L1[,L2][,L3]...[,Lk]][,]
+ * This parses to a cross-product of ranges:
+ *   [N1,R1,L1], [N1,R1,L2], ..., [N1,R1,Lk],
+ *   [N1,R2,L1], [N1,R2,L2], ..., [N1,R2,Lk],
+ *   ...
+ *   [N1,Rj,L1], ..
+ *   (and so on and so forth for N2,...,Ni).
+ *
+ * If no nick is specified, lines from every nick will be considered;
+ * if no regex is specified, every line will match;
+ * if no line is specified, the first line matching the range is returned.
+ *
+ * Multiple range specs may be concatenated together.
+ * In cases where ambiguity could occur, a trailing , can be used to indicate
+ * where one range ends and the next begins.
+ *
+ * Examples:
+ * joe /dog/ 3
+ * -> Return the third line from user joe matching /dog/
+ *
+ * joe /dog/,/cat/
+ * -> Return the first line from user joe matching /dog/,
+ *    then the first line from joe matching /cat/
+ *
+ * joe /dog/ /cat/
+ * -> Return the first line from user joe matching /dog/,
+ *    then the first line matching /cat/
+ *
+ * joe,bob 3
+ * -> Return the third line from joe, then the third line from bob.
+ *
+ * joe, /dog/, 3
+ * -> Return the first line from joe, then the first line matching /dog/,
+ *    then the third line.
+ *
+ * joe 3 bob /dog/ /cat/ bill, 4
+ * -> Return the third line from joe, then the first line from bob
+ *    matching /dog/, then the first line matching /cat/, then the
+ *    first line from bill, then the fourth line.
+ */
 module.exports.getFormattedScrollbackLinesFromRanges = function(channel, ranges, cb) {
   var linesToGet = [];
   var parts = ranges;
