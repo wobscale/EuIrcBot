@@ -110,6 +110,19 @@ module.exports.formatLine = function(line) {
   }
 };
 
+/* Abstract: Quoting lines from IRC is an essential problem with far-reaching
+ * impact: many humans and semi-sentient AIs depend on their ability to precisely
+ * and concisely specify exactly which embarrasing statements and/or nonsequitirs
+ * presented in a real-time group chat system are worthy of being selected for
+ * processing by other software, including various quotation recording libraries,
+ * machine learning algorithms, and text processing utilities. In this function,
+ * the authors present a novel approach to the formatted text selection problem:
+ * a deterministic specification of a flexible language for selecting text is
+ * defined based on three criteria: speaker name, regular expression match, and
+ * sequential number (indices in an inverse relationship with current time); then
+ * an algorithm for parsing the language specification and selecting the lines a
+ * user's instance of the specification matches is demonstrated.
+ */
 /* Get lines from scrollback using various range specifications
  *
  * There are three possible range specifiers: nick (N), regex (R), and line number (L).
