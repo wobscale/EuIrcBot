@@ -53,7 +53,7 @@ module.exports.run = function(r, parts, reply, command, from, to) {
 
   if(!scrollbackModule) return console.log("No scrollback, can't tweet");
 
-  scrollbackModule.getFormattedScrollbackLinesFromRanges(to, parts, function(err, res) {
+  scrollbackModule.getFormattedScrollbackLinesFromRanges(to, r, function(err, res) {
     if(err) return reply(err);
     if(res.match(/(pls|#)noquo/)) return reply("don't be a deck, betch");
     

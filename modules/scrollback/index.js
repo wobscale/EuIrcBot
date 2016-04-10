@@ -414,17 +414,15 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
   }
 }
 
-module.exports.getFormattedScrollbackLinesFromRanges = function(channel, ranges, cb) {
-  var linesToGet = [];
-  var parts = ranges;
-  if(parts.length === 0 || parts.length === 1 && parts[1] === "") {
-    parts = ["1"];
+module.exports.getFormattedScrollbackLinesFromRanges = function(channel, input, cb) {
+  var lines = [];
+
+  var specs = module.exports.parseSpecs(input);
+
+  if(specs.length === 0) {
+    specs = [{nicks: [], regexes: [], lines: [1]}];
   }
-  // Regex parsing
 
-  var i;
-
-  var result = [];
   getCache(channel, function(cache) {
     var revCache = cache.slice(0);
     revCache.reverse();
@@ -432,52 +430,79 @@ module.exports.getFormattedScrollbackLinesFromRanges = function(channel, ranges,
     // scrollback for all current callers. TODO, let the caller tell us this
     revCache = revCache.slice(1);
 
-    for(var i=0; i < linesToGet.length; i++) {
-      var obj = linesToGet[i];
-      if(Array.isArray(obj)) {
-        for(var j=0;j < obj.length; j++) {
-          var offset = obj[j];
-          if(offset > revCache.length || offset === 0) {
-            return cb("Cannot get line " + offset + " ago; only have " + revCache.length + " of context");
-          }
-          result.push(revCache[offset-1]);
-        }
-      } else if(obj instanceof RegExp) {
+    var nickChunks = [];
+    var regexChunks = [];
+
+    for(var i=0; i < specs.length; i++) {
+      var spec = specs[i];
+      if(spec.lines.length == 0) {
+        spec.lines = [1];
+      }
+
+      // Filter Nicks
+      for(var n=0; n < spec.nicks.length; n++) {
+        var nick = spec.nicks[n];
+
         var matches = revCache.filter(function(el) {
-          return obj.test(module.exports.formatLine(el));
-        });
-        if(matches.length === 0) {
-          return cb("Cannot find line matching regex " + obj.toString());
-        }
-        result.push(matches[0]);
-      } else {
-        // It's a nick + offset or regex object
-        var nick = obj.from;
-        var nickCache = revCache.filter(function(el) {
-          return el.from == nick;
+          return el.from == spec.nicks[n];
         });
 
-        if(obj.regex) {
-          var matches = nickCache.filter(function(el) {
-            return obj.regex.test(module.exports.formatLine(el));
+        if(matches.length == 0) {
+          return cb("Cannot find line from " + nick + "; only have " + revCache.length + " of context");
+        }
+        else {
+          nickChunks.push(matches);
+        }
+      }
+
+      if(nickChunks.length == 0) {
+        nickChunks.push(revCache);
+      }
+
+      // Filter regexes
+      for(var r=0; r < spec.regexes.length; r++) {
+        var regex = spec.regexes[r];
+
+        for(var c=0; c < nickChunks.length; c++) {
+          var chunk = nickChunks[c];
+
+          var matches = chunk.filter(function(el) {
+            return regex.test(module.exports.formatLine(el));
           });
-          if(matches.length === 0) {
-            return cb("Cannot find line matching regex " + obj.toString());
+
+          if(matches.length == 0) {
+            //TODO: Guess which nick we got context for
+            return cb("Cannot find line matching regex " + regex.toString() + "; only have " + chunk.length + " of context");
           }
-          result.push(matches[0]);
-          continue;
+          else {
+            regexChunks.push(matches);
+          }
         }
+      }
 
-        for(var j=0; j < obj.lines.length; j++) {
-          var offset = obj.lines[j];
-          if(offset > nickCache.length || offset === 0) {
-            return cb("Cannot get line " + nick + " " + offset + " ago; only have " + nickCache.length + " of context for " + nick);
+      if(regexChunks.length == 0) {
+        regexChunks.push(revCache);
+      }
+
+      // Filter lines
+      for(var l=0; l < spec.lines.length; l++) {
+        var offset = spec.lines[l];
+
+        for(var c=0; c < regexChunks.length; c++) {
+          var chunk = regexChunks[c];
+
+
+          if(offset > chunk.length || offset === 0) {
+            //TODO: Guess which nick and regex we got context for
+            return cb("Cannot get line " + offset + " ago; only have " + chunk.length + " of context");
           }
-
-          result.push(nickCache[offset-1]);
+          else {
+            lines.push(chunk[offset - 1]);
+          }
         }
       }
     }
-    cb(null, result.map(function(l) { return module.exports.formatLine(l); }).join("\n"));
+
+    cb(null, lines.map(function(l) { return module.exports.formatLine(l); }).join("\n"));
   });
 };

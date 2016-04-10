@@ -21,7 +21,7 @@ module.exports.run = function(rem, parts, reply, command, from, to, text, raw) {
   var scrollbackModule = bot.modules['sirc-scrollback'];
   if(!scrollbackModule) return console.log("No scrollback, can't qdb");
 
-  scrollbackModule.getFormattedScrollbackLinesFromRanges(to, parts, function(err, res) {
+  scrollbackModule.getFormattedScrollbackLinesFromRanges(to, r, function(err, res) {
     if(err) return reply(err);
     if(res.match(/(pls|#)noquo/)) return reply("don't be a deck, betch");
 
