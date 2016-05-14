@@ -1,7 +1,6 @@
 var _ = require('underscore');
 var rangeParser = require('parse-numeric-range');
 var async = require('async');
-module.exports.command = 'title';
 
 var bot;
 
@@ -110,55 +109,320 @@ module.exports.formatLine = function(line) {
   }
 };
 
+/* Abstract: Quoting lines from IRC is an essential problem with far-reaching
+ * impact: many humans and semi-sentient AIs depend on their ability to precisely
+ * and concisely specify exactly which embarrasing statements and/or nonsequitirs
+ * presented in a real-time group chat system are worthy of being selected for
+ * processing by other software, including various quotation recording libraries,
+ * machine learning algorithms, and text processing utilities. In this function,
+ * the authors present a novel approach to the formatted text selection problem:
+ * a deterministic specification of a flexible language for selecting text is
+ * defined based on three criteria: speaker name, regular expression match, and
+ * sequential number (indices in an inverse relationship with current time); then
+ * an algorithm for parsing the language specification and selecting the lines a
+ * user's instance of the specification matches is demonstrated.
+ */
+/* Get lines from scrollback using various range specifications
+ *
+ * There are three possible range specifiers: nick (N), regex (R), and line number (L).
+ * The formal grammar for these specifications:
+ *   All = Spec | All Spec | All, Spec
+ *   Spec = Nickopt Regexopt Lineopt
+ *   Nickopt = e | Nicks
+ *   Regexopt = e | Regexes
+ *   Lineopt = e | Lines
+ *   Nicks = N | Nicks,N
+ *   Regexes = R | Regexes,R
+ *   Lines = L | L-L | L..L | L...L | Lines,Lines
+ *
+ * Line parsing is handled by https://github.com/euank/node-parse-numeric-range
+ *
+ * In general, a range specification after being parsed by numeric-range looks like:
+ *   [N1[,N2][,N3]...[,Ni]] [R1[,R2][,R3]...[,Rj]] [L1[,L2][,L3]...[,Lk]][,]
+ * This parses to a cross-product of ranges:
+ *   [N1,R1,L1], [N1,R1,L2], ..., [N1,R1,Lk],
+ *   [N1,R2,L1], [N1,R2,L2], ..., [N1,R2,Lk],
+ *   ...
+ *   [N1,Rj,L1], ..
+ *   (and so on and so forth for N2,...,Ni).
+ *
+ * If no nick is specified, lines from every nick will be considered;
+ * if no regex is specified, every line will match;
+ * if no line is specified, the first line matching the range is returned.
+ *
+ * Multiple range specs may be concatenated together.
+ * In cases where ambiguity could occur, a trailing , can be used to indicate
+ * where one range ends and the next begins.
+ *
+ * Examples:
+ * joe /dog/ 3
+ * -> Return the third line from user joe matching /dog/
+ *
+ * joe /dog/,/cat/
+ * -> Return the first line from user joe matching /dog/,
+ *    then the first line from joe matching /cat/
+ *
+ * joe /dog/ /cat/
+ * -> Return the first line from user joe matching /dog/,
+ *    then the first line matching /cat/
+ *
+ * joe,bob 3
+ * -> Return the third line from joe, then the third line from bob.
+ *
+ * joe, /dog/, 3
+ * -> Return the first line from joe, then the first line matching /dog/,
+ *    then the third line.
+ *
+ * joe 3 bob /dog/ /cat/ bill, 4
+ * -> Return the third line from joe, then the first line from bob
+ *    matching /dog/, then the first line matching /cat/, then the
+ *    first line from bill, then the fourth line.
+ */
+var STATES = Object.freeze({
+  NICK: 1,
+  REGEX: 2,
+  LINES: 3,
+  NEW: 4,
+  ERROR: 5
+});
 
-module.exports.getFormattedScrollbackLinesFromRanges = function(channel, ranges, cb) {
-  var linesToGet = [];
-  var parts = ranges;
-  if(parts.length === 0 || parts.length === 1 && parts[1] === "") {
-    parts = ["1"];
+module.exports.parseSpecs = function(input) {
+  var specs = [];
+  var spec = {nicks: [], regexes: [], lines: []};
+
+  // State machine variables
+  var state = undefined;
+
+  var i = 0;
+  var result = findNextState(input, i, state);
+  i = result.index;
+  state = result.state;
+
+  if(state === STATES.NEW) { // Can't start in 'new'
+    return {error: 'Invalid leading characters'};
   }
 
-  var i;
+  // Parse input into tokens
+  while(i < input.length) {
+    if(state === STATES.NICK) {
+      result = parseNick(input, i);
 
-  for(i=0;i<parts.length;i++) {
-    // TODO, there's some serious duplication going on here
-    if(/^(-|\d)/.test(parts[i])) {
-      // Starts with a - or number, can't be a nick
-      linesToGet.push(rangeParser.parse(parts[i]));
-    } else if(/^\/.*\/$/.test(parts[i])) {
-      // sandwitched between '/'s, it's a regex
-      try {
-        var regex = new RegExp(parts[i].substring(1, parts[i].length - 1));
-        linesToGet.push(regex);
-      } catch(ex) {
-        return cb("Could not parse regex: " + parts[i] + ", " + ex.toString());
+      if(i != result.index) { // Got a nick
+        i = result.index;
+        spec.nicks.push(result.result);
       }
-    } else {
-      // This is a nick. If the next one is a number then it's for this nick
-      var lineObj = {
-        from: parts[i]
-      };
-      i++;
-      if(/^(-|\d)/.test(parts[i])) {
-        lineObj.lines = rangeParser.parse(parts[i]);
-      } else if(/^\/.*\/$/.test(parts[i])) {
-        // sandwitched between '/'s, it's a regex
-        try {
-          var regex = new RegExp(parts[i].substring(1, parts[i].length - 1));
-          lineObj.regex = regex;
-        } catch(ex) {
-          return cb("Could not parse regex: " + parts[i] + ", " + ex.toString());
-        }
-      } else {
-        lineObj.lines = [1];
-        i--;
-        // Backtrack, nick not followed by anything it turns out
+
+    }
+    else if(state === STATES.REGEX) {
+      result = parseRegex(input, i);
+
+      if(result.error !== undefined) {
+        return {error: result.error};
       }
-      linesToGet.push(lineObj);
+      else if(i != result.index) { // Got a regex
+        i = result.index;
+        spec.regexes.push(result.result);
+      }
+    }
+    else if(state === STATES.LINES) {
+      result = parseLines(input, i);
+
+      if(result.error !== undefined) {
+        return {error: result.error};
+      }
+      else if(i != result.index) { // Got some lines
+        i = result.index;
+        spec.lines = spec.lines.concat(result.result);
+      }
+    }
+    else if(state === STATES.NEW) {
+      specs.push(spec);
+      spec = {nicks: [], regexes: [], lines: []};
+    }
+
+    // Get next state
+    result = findNextState(input, i, state);
+    i = result.index;
+    state = result.state;
+    if(result.error !== undefined) {
+      return {error: result.error};
     }
   }
 
-  var result = [];
+  specs.push(spec);
+
+  return _.filter(specs, function(spec) {
+    return (spec.nicks.length > 0) ||
+      (spec.regexes.length > 0) ||
+      (spec.lines.length > 0);
+  });
+}
+
+function parseNick(str, idx) {
+  var ret = "";
+
+  while(idx < str.length && !isWhitespace(str[idx]) && str[idx] != ',') {
+    ret += str[idx];
+    idx++;
+  }
+
+  return {result: ret, index: idx};
+}
+
+function parseRegex(str, idx) {
+  var ret = "";
+  var regex;
+
+  idx++; // Eat leading /
+
+  while(idx < str.length && str[idx] != '/') {
+    ret += str[idx];
+    if(idx < str.length-1 && str[idx] === '\\') { // Skip over escapes
+      idx++;
+      ret += str[idx];
+    }
+
+    idx++;
+  }
+
+  if(idx < str.length) { // Catch the trailing /
+    idx++;
+
+    try { // Parse the regex
+      regex = new RegExp(ret);
+      return {result: regex, index: idx};
+    } catch(ex) {
+      return {result: ret, index: idx, error: "Could not parse regex: " + ret + "/, " + ex.toString()};
+    }
+  }
+  else { // Unterminated regex
+    return {result: ret, index: idx, error: "Unterminated regular expression"};
+  }
+}
+
+function parseLines(str, idx) {
+  var ret = "";
+
+  while(idx < str.length && /[0-9\-.,]/.test(str[idx])) {
+    ret += str[idx];
+    idx++;
+  }
+
+  if(str[idx-1] === ',') { // Put back trailing commas
+    idx--;
+    ret = ret.slice(0,-1);
+  }
+
+  var range = rangeParser.parse(ret);
+  if(range === undefined || range.length == 0) {
+    return {result: range, index: idx, error: "Could not parse " + ret};
+  }
+  if(_.every(range, function(num) { return num > 0; })) {
+    return {result: range, index: idx};
+  }
+  else {
+    return {result: range, index: idx, error: "Negative line index"};
+  }
+}
+
+function findNextState(str, idx, state) {
+  var isList = false;
+  var next = {};
+
+  if(state === STATES.ERROR) {
+    return {state: state, index: idx};
+  }
+
+  while(idx < str.length && isWhitespace(str[idx])) { // Consume whitespace
+    idx++;
+  }
+
+  if(idx < str.length-1 && str[idx] == ',') {
+    if(isWhitespace(str[idx+1])) { // ", " condition
+      idx++;
+      return {state: STATES.NEW, index: idx};
+    }
+    else { // ",<thing>" condition
+      isList = true;
+      idx++;
+    }
+  }
+
+  if(/[a-zA-Z\[\]\\`_\^\{\}\|]/.test(str[idx])) {
+    next = {state: STATES.NICK, index: idx};
+  }
+  else if(/\//.test(str[idx])) {
+    next = {state: STATES.REGEX, index: idx};
+  }
+  else if(/[0-9]/.test(str[idx])) {
+    next = {state: STATES.LINES, index: idx};
+  }
+  else {
+    next = {state: STATES.ERROR, index: idx, error: 'Could not parse character ' + str[idx]};
+  }
+
+  //Handle "nick nick" or the like
+  if(!isList && next.state === state) {
+    next.state = STATES.NEW;
+  }
+  // Enforce ordering of specs
+  if(state === STATES.REGEX && next.state === STATES.NICK) {
+    next.state = STATES.NEW;
+  }
+  if(state === STATES.LINES && next.state !== STATES.LINES) {
+    next.state = STATES.NEW;
+  }
+
+  return next;
+}
+
+function isWhitespace(char) {
+	return /[ \t]/.test(char)
+}
+
+/*  Debugging Command
+ *  Shows the sets of nicks, regexes, and lines parsed from one or more specifications.
+ *  Usage: !echo joe bob bill /hillbilly/ 4
+ */
+module.exports.command = 'echo';
+module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
+  var specs = module.exports.parseSpecs(remainder);
+
+  if (specs.error !== undefined) {
+    bot.sayTo(from, specs.error);
+    return;
+  }
+
+  if(specs.length == 0) {
+    bot.sayTo(from, "Parsed nothing!");
+  }
+  for(var i = 0; i < specs.length; i++) {
+    bot.sayTo(from, 'Spec ' + i + ':');
+    bot.sayTo(from, 'Nicks:');
+    for(var j = 0; j < specs[i].nicks.length; j++) {
+      bot.sayTo(from, specs[i].nicks[j]);
+    }
+    bot.sayTo(from, 'Regexes:');
+    for(var j = 0; j < specs[i].regexes.length; j++) {
+      bot.sayTo(from, specs[i].regexes[j]);
+    }
+    bot.sayTo(from, 'Lines:');
+    for(var j = 0; j < specs[i].lines.length; j++) {
+      bot.sayTo(from, specs[i].lines[j]);
+    }
+    bot.sayTo(from, '===');
+  }
+}
+
+module.exports.getFormattedScrollbackLinesFromRanges = function(channel, input, cb) {
+  var lines = [];
+
+  var specs = module.exports.parseSpecs(input);
+
+  if(specs.length === 0) {
+    specs = [{nicks: [], regexes: [], lines: [1]}];
+  }
+
   getCache(channel, function(cache) {
     var revCache = cache.slice(0);
     revCache.reverse();
@@ -166,52 +430,79 @@ module.exports.getFormattedScrollbackLinesFromRanges = function(channel, ranges,
     // scrollback for all current callers. TODO, let the caller tell us this
     revCache = revCache.slice(1);
 
-    for(var i=0; i < linesToGet.length; i++) {
-      var obj = linesToGet[i];
-      if(Array.isArray(obj)) {
-        for(var j=0;j < obj.length; j++) {
-          var offset = obj[j];
-          if(offset > revCache.length || offset === 0) {
-            return cb("Cannot get line " + offset + " ago; only have " + revCache.length + " of context");
-          }
-          result.push(revCache[offset-1]);
-        }
-      } else if(obj instanceof RegExp) {
+    var nickChunks = [];
+    var regexChunks = [];
+
+    for(var i=0; i < specs.length; i++) {
+      var spec = specs[i];
+      if(spec.lines.length == 0) {
+        spec.lines = [1];
+      }
+
+      // Filter Nicks
+      for(var n=0; n < spec.nicks.length; n++) {
+        var nick = spec.nicks[n];
+
         var matches = revCache.filter(function(el) {
-          return obj.test(module.exports.formatLine(el));
-        });
-        if(matches.length === 0) {
-          return cb("Cannot find line matching regex " + obj.toString());
-        }
-        result.push(matches[0]);
-      } else {
-        // It's a nick + offset or regex object
-        var nick = obj.from;
-        var nickCache = revCache.filter(function(el) {
-          return el.from == nick;
+          return el.from == spec.nicks[n];
         });
 
-        if(obj.regex) {
-          var matches = nickCache.filter(function(el) {
-            return obj.regex.test(module.exports.formatLine(el));
+        if(matches.length == 0) {
+          return cb("Cannot find line from " + nick + "; only have " + revCache.length + " of context");
+        }
+        else {
+          nickChunks.push(matches);
+        }
+      }
+
+      if(nickChunks.length == 0) {
+        nickChunks.push(revCache);
+      }
+
+      // Filter regexes
+      for(var r=0; r < spec.regexes.length; r++) {
+        var regex = spec.regexes[r];
+
+        for(var c=0; c < nickChunks.length; c++) {
+          var chunk = nickChunks[c];
+
+          var matches = chunk.filter(function(el) {
+            return regex.test(module.exports.formatLine(el));
           });
-          if(matches.length === 0) {
-            return cb("Cannot find line matching regex " + obj.toString());
+
+          if(matches.length == 0) {
+            //TODO: Guess which nick we got context for
+            return cb("Cannot find line matching regex " + regex.toString() + "; only have " + chunk.length + " of context");
           }
-          result.push(matches[0]);
-          continue;
+          else {
+            regexChunks.push(matches);
+          }
         }
+      }
 
-        for(var j=0; j < obj.lines.length; j++) {
-          var offset = obj.lines[j];
-          if(offset > nickCache.length || offset === 0) {
-            return cb("Cannot get line " + nick + " " + offset + " ago; only have " + nickCache.length + " of context for " + nick);
+      if(regexChunks.length == 0) {
+        regexChunks.push(revCache);
+      }
+
+      // Filter lines
+      for(var l=0; l < spec.lines.length; l++) {
+        var offset = spec.lines[l];
+
+        for(var c=0; c < regexChunks.length; c++) {
+          var chunk = regexChunks[c];
+
+
+          if(offset > chunk.length || offset === 0) {
+            //TODO: Guess which nick and regex we got context for
+            return cb("Cannot get line " + offset + " ago; only have " + chunk.length + " of context");
           }
-
-          result.push(nickCache[offset-1]);
+          else {
+            lines.push(chunk[offset - 1]);
+          }
         }
       }
     }
-    cb(null, result.map(function(l) { return module.exports.formatLine(l); }).join("\n"));
+
+    cb(null, lines.map(function(l) { return module.exports.formatLine(l); }).join("\n"));
   });
 };
