@@ -26,7 +26,7 @@ module.exports.url = function(url, reply) {
         return reply("HackerNews - " + res.title + " - Posted by: " + res.author); //Todo, created-at info
       } else if(res.type == 'comment') {
         var toSay = res.author + " wrote: " + ent.decode(res.text);
-        toSay = S(toSay).stripTags().s;
+        toSay = S(toSay).stripTags().replaceAll('\n',' | ').s;
         if(toSay.length < 500) return reply(toSay);
       }
     });
