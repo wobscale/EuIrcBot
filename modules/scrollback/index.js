@@ -377,7 +377,7 @@ function findNextState(str, idx, state) {
 }
 
 function isWhitespace(char) {
-	return /[ \t]/.test(char)
+  return /[ \t]/.test(char)
 }
 
 /*  Debugging Command
@@ -414,10 +414,22 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
   }
 }
 
-module.exports.getFormattedScrollbackLinesFromRanges = function(channel, input, cb) {
+// Takes in a list of specs produced from parseSpecs() and produces a list of
+// raw scrollback content from a channel and the reason why that content was
+// included.  The result is a list of dicts containing nick, regex, line, spec, and
+// content fields or an error message.
+// For example, [{
+//                nick:'joe',
+//                regex:'/cat/',
+//                line:3,
+//                spec:{nicks:['joe'], regexes:['/cat/'], lines:[3]},
+//                content:{from:'joe', text:'I like cat'}
+//              }]
+// Should a nick or regex not be specified, that element of the result
+// object will not be set (and thus undefined).
+// If a line is not specified, it will be set to 1.
+module.exports.getScrollbackForSpecs = function(channel, specs, cb) {
   var lines = [];
-
-  var specs = module.exports.parseSpecs(input);
 
   if(specs.length === 0) {
     specs = [{nicks: [], regexes: [], lines: [1]}];
@@ -430,33 +442,30 @@ module.exports.getFormattedScrollbackLinesFromRanges = function(channel, input, 
     // scrollback for all current callers. TODO, let the caller tell us this
     revCache = revCache.slice(1);
 
-    var nickChunks = [];
-    var regexChunks = [];
-
     for(var i=0; i < specs.length; i++) {
+      var nickChunks = [];
+      var regexChunks = [];
+
       var spec = specs[i];
-      if(spec.lines.length == 0) {
-        spec.lines = [1];
-      }
 
       // Filter Nicks
       for(var n=0; n < spec.nicks.length; n++) {
         var nick = spec.nicks[n];
 
         var matches = revCache.filter(function(el) {
-          return el.from == spec.nicks[n];
+          return el.from == nick;
         });
 
         if(matches.length == 0) {
-          return cb("Cannot find line from " + nick + "; only have " + revCache.length + " of context");
+          return cb("Cannot find line from " + nick + "; only have " + revCache.length + " lines of context", null);
         }
         else {
-          nickChunks.push(matches);
+          nickChunks.push({nick:nick, contents:matches});
         }
       }
 
-      if(nickChunks.length == 0) {
-        nickChunks.push(revCache);
+      if(spec.nicks.length == 0) { // No nicks specified; match from any nick
+        nickChunks.push({contents:revCache});
       }
 
       // Filter regexes
@@ -466,43 +475,70 @@ module.exports.getFormattedScrollbackLinesFromRanges = function(channel, input, 
         for(var c=0; c < nickChunks.length; c++) {
           var chunk = nickChunks[c];
 
-          var matches = chunk.filter(function(el) {
+          var matches = chunk.contents.filter(function(el) {
             return regex.test(module.exports.formatLine(el));
           });
 
           if(matches.length == 0) {
-            //TODO: Guess which nick we got context for
-            return cb("Cannot find line matching regex " + regex.toString() + "; only have " + chunk.length + " of context");
+            error = "Cannot find line";
+            if(chunk.nick !== undefined) {
+              error += " from " + chunk.nick;
+            }
+            error += " matching regex " + regex.toString() + "; only have " + revCache.length + " lines of context";
+            return cb(error, null);
           }
           else {
-            regexChunks.push(matches);
+            regexChunks.push({nick:chunk.nick, regex:regex, contents:matches});
           }
         }
       }
 
-      if(regexChunks.length == 0) {
-        regexChunks.push(revCache);
+      if(spec.regexes.length == 0) { // No regexes specified; match any line
+        regexChunks = nickChunks;
       }
 
       // Filter lines
+      if(spec.lines.length == 0) { // No line specified; match first line
+        spec.lines = [1];
+      }
+
       for(var l=0; l < spec.lines.length; l++) {
         var offset = spec.lines[l];
 
         for(var c=0; c < regexChunks.length; c++) {
           var chunk = regexChunks[c];
 
-
-          if(offset > chunk.length || offset === 0) {
-            //TODO: Guess which nick and regex we got context for
-            return cb("Cannot get line " + offset + " ago; only have " + chunk.length + " of context");
+          if(offset > chunk.contents.length || offset === 0) {
+            error = "Cannot find line";
+            if(chunk.nick !== undefined) {
+              error += " from " + chunk.nick;
+            }
+            if(chunk.regex !== undefined) {
+              error += " matching regex " + chunk.regex.toString();
+            }
+            error += " " + offset + " ago; only have " + revCache.length + " lines of context";
+            return cb(error, null);
           }
           else {
-            lines.push(chunk[offset - 1]);
+            lines.push({nick:chunk.nick, regex:chunk.regex, line:offset, spec:spec, content:chunk.contents[offset - 1]});
           }
         }
       }
     }
 
-    cb(null, lines.map(function(l) { return module.exports.formatLine(l); }).join("\n"));
+    return cb(null, lines);
   });
 };
+
+module.exports.getFormattedScrollbackLinesFromRanges = function(channel, input, cb) {
+  var specs = module.exports.parseSpecs(input);
+
+  module.exports.getScrollbackForSpecs(channel, specs, function(err, lines) {
+    if(err) {
+      return cb(err);
+    }
+
+    return cb(null, _.map(lines,function(l) { return module.exports.formatLine(l.content); }).join("\n"));
+  });
+}
+
