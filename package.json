@@ -10,10 +10,14 @@
     "snailescape.js": "^2.0.1",
     "underscore": "latest"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^2.5.3"
+  },
   "scripts": {
     "start": "node bot.js",
-    "install": "./installModules.sh"
+    "install": "./installModules.sh",
+    "test": "mocha $(git ls-files | grep -E \"test.js$\")"
   },
   "repository": {
     "type": "git",

@@ -26,6 +26,9 @@ for(var i=0;i<mathKeysToGet.length;i++) {
   mathItems[mathKeysToGet[i]] = mathjs[mathKeysToGet[i]];
 }
 
+// Strings to not match; case insensitive fyi
+var ignoreStrings = ["i'm g"];
+
 //
 // INPUT FULTERS
 //
@@ -51,6 +54,10 @@ var javascript = new RC("function|{|}|return|arguments|length"); // This is by n
 
 module.exports.init = function(b) {
   bot = b;
+};
+
+function justAddsParens(before, after) {
+  return before.toLowerCase().replace(/\(|\)/g, '') === after.toLowerCase().replace(/\(|\)/g, '');
 }
 
 module.exports.msg = function(text, from, reply, raw) {
@@ -60,9 +67,13 @@ module.exports.msg = function(text, from, reply, raw) {
     return;
   }
 
+  if(ignoreStrings.indexOf(text) !== -1) {
+    return;
+  }
+
   var res = MathScopeEval(text);
 
-  if(res == null) {
+  if(res === null) {
     return;
   }
 
@@ -72,8 +83,11 @@ module.exports.msg = function(text, from, reply, raw) {
   var textclean = text.replace(/\s/g, '');
 
   // If res parrots our input, filter it
-  if( res == text || resclean == text || res == textclean 
-      || resclean == textclean ) {
+  if(res == text ||
+     resclean == text ||
+     res == textclean ||
+     resclean == textclean ||
+     justAddsParens(resclean, textclean)) {
     return;
   }
 
