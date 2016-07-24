@@ -11,7 +11,7 @@ function assertResponse(input, output, done) {
 
 function assertNoResponse(input, done) {
   onmath.msg(input, "#test", function(reply) {
-    assert.fail("did not expect response to this");
+    assert.fail(reply, "", "Should not have responded");
   }, "ignored raw");
 
   process.nextTick(done);
@@ -24,7 +24,7 @@ describe('onMath', function() {
       ["1*1", "1"],
     ];
 
-    async.every([["1 + 1", "2"], ["1 * 1", "1"]], function(el, callback) {
+    async.every(simpleMath, function(el, callback) {
       assertResponse(el[0], el[1], function() {
         callback(true);
       });
@@ -41,7 +41,9 @@ describe('onMath', function() {
       "i'm g",
       "9/10",
       "10/10",
+      "11/10",
       "10/100",
+      "(1)",
       // "W 0 B S C A L E", // One can dream
     ];
 

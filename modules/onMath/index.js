@@ -57,7 +57,7 @@ module.exports.init = function(b) {
 };
 
 function justAddsParens(before, after) {
-  return before.toLowerCase().replace(/\(|\)/g, '') === after.toLowerCase().replace(/\(|\)/g, '');
+  return before.toLowerCase().replace(/[()]/g, '') === after.toLowerCase().replace(/[()]/g, '');
 }
 
 module.exports.msg = function(text, from, reply, raw) {
