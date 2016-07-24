@@ -60,6 +60,10 @@ function justAddsParens(before, after) {
   return before.toLowerCase().replace(/[()]/g, '') === after.toLowerCase().replace(/[()]/g, '');
 }
 
+function differsOnlyByLeadingZeros(before, after) {
+  return before.replace(/^0*/, '') === after.replace(/^0*/, '');
+}
+
 module.exports.msg = function(text, from, reply, raw) {
   text = text.trim();
 
@@ -87,6 +91,7 @@ module.exports.msg = function(text, from, reply, raw) {
      resclean == text ||
      res == textclean ||
      resclean == textclean ||
+     differsOnlyByLeadingZeros(resclean, textclean) ||
      justAddsParens(resclean, textclean)) {
     return;
   }
