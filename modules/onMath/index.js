@@ -69,7 +69,7 @@ function differsOnlyByTrailingComment(before, after) {
 }
 
 function cleanText(text) {
-  return text.replace(/\s/g, '');
+  return text.replace(/"|\s/g, '');
 }
 
 module.exports.msg = function(text, from, reply, raw) {
