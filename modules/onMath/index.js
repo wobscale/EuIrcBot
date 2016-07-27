@@ -64,6 +64,14 @@ function differsOnlyByLeadingZeros(before, after) {
   return before.replace(/^0*/, '') === after.replace(/^0*/, '');
 }
 
+function differsOnlyByTrailingComment(before, after) {
+  return cleanText(before.replace(/#.*$/, '')) === cleanText(after.replace(/#.*$/, ''));
+}
+
+function cleanText(text) {
+  return text.replace(/\s/g, '');
+}
+
 module.exports.msg = function(text, from, reply, raw) {
   text = text.trim();
 
@@ -91,8 +99,9 @@ module.exports.msg = function(text, from, reply, raw) {
      resclean == text ||
      res == textclean ||
      resclean == textclean ||
-     differsOnlyByLeadingZeros(resclean, textclean) ||
-     justAddsParens(resclean, textclean)) {
+     differsOnlyByTrailingComment(textclean, resclean) ||
+     differsOnlyByLeadingZeros(textclean, resclean) ||
+     justAddsParens(textclean, resclean)) {
     return;
   }
 

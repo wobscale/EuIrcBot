@@ -45,6 +45,7 @@ describe('onMath', function() {
       "10/100",
       "(1)",
       ".2 bytes / second",
+      '3 #comment',
       // "W 0 B S C A L E", // One can dream
     ];
 
