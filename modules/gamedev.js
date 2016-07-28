@@ -6,12 +6,12 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'shooter', 'first person', 'role playing', 'survival horror', 'farming simulator', 'tycoon simulator',
     'MMO', 'sports', 'platformer', 'beat-em-up', 'adventure', 'stealth', 'text-based', 'visual novel', 
     'roguelike', 'sandbox', 'JRPG', 'life sim', 'dating sim', 'racing', 'real time strategy', 'MOBA', 
-    'tower defense', 'card', 'party', 'logic', 'trivia', 'board', 'idle', 'Christian', 'educational'
+    'tower defense', 'trading card', 'party', 'logic', 'trivia', 'board', 'idle', 'Christian', 'educational'
   ];
   
   var combat_types = [
-    'real-time', 'turn-based', 'card game', 'strategy', 'mini-game', 'reflex', 'random', 'idle', 'sci-fi',
-    'fantasy', 'rock paper scissors', 'abstract', 'nonexistent', 'plentiful', 'Pokemon-esque'
+    'real-time', 'turn-based', 'card game', 'strategy', 'mini-game', 'reflex-based', 'random', 'idle', 'sci-fi',
+    'fantasy', 'rock paper scissors', 'abstract', 'nonexistent', 'argument-based', 'Pokemon-esque'
   ];
   
   var templates = [
