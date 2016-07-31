@@ -1,0 +1,10 @@
+{
+  "name": "que",
+  "version": "0.0.1",
+  "description": "What'd they say?",
+  "main": "index.js",
+  "dependencies": {
+  },
+  "author": "drusepth",
+  "license": "MIT"
+}
