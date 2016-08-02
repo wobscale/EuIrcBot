@@ -13,7 +13,7 @@ module.exports.init = function(b) {
 
 module.exports.commands = ['quo', 'qudb', 'quodb', 'qdb'];
 
-module.exports.run = function(rem, parts, reply, command, from, to, text, raw) {
+module.exports.run = function(r, parts, reply, command, from, to, text, raw) {
   if(to[0] != '#' && to[0] != '&') return; // only allow this in channels.
   if(conf === null) return;
   var url = require('url').parse(conf.baseUrl);
