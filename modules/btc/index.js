@@ -45,7 +45,14 @@ function getTickerData(coin, metric, callback) {
   });
 }
 
-module.exports.commands = ['btc', 'ltc', 'dgc'];
+module.exports.commands = ['btc', 'ltc', 'dgc', 'eth'];
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
   getTickerData(command, remainder, reply);
+};
+
+module.exports.run_cryptoval = function(remainder, parts, reply, command, from, to, text, raw) {
+  if(parts.length > 0) {
+    var cryptoCurrency = parts.shift();
+    getTickerData(cryptoCurrency, parts.join(" "), reply);
+  }
 };
