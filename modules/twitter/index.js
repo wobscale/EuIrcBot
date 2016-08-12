@@ -5,7 +5,7 @@ var t = null;
 var tConf = null;
 var bot = null;
 
-var twitRegex = /^(https?\:\/\/)?(www\.)?twitter\.com\/([a-zA-Z0-9_]+)(\/status(es)?\/(\d+))?/;
+var twitRegex = /^(https?\:\/\/)?(dashboard\.|www\.)?twitter\.com\/([a-zA-Z0-9_]+)(\/status(es)?\/(\d+))?/;
 
 module.exports.init = function(b) {
   bot = b;
