@@ -6,7 +6,7 @@ var tConf = null;
 var bot = null;
 
 var twitRegex = /^(https?\:\/\/)?(dashboard\.|www\.)?twitter\.com\/([a-zA-Z0-9_]+)(\/status(es)?\/(\d+))?/;
-
+var nonUsers = ["search"];
 module.exports.init = function(b) {
   bot = b;
   bot.getConfig("twitter.json", function(err, conf) {
@@ -26,6 +26,9 @@ module.exports.url = function(url, reply) {
   var m;
   if((m = twitRegex.exec(url))) {
     if(m[3] && !m[6]) {
+      if(nonUsers.indexOf(m[3]) !== -1) {
+        return;
+      }
       // User page
       t.get("/users/show", {screen_name: m[3]}, function(err, res) {
         if(err) reply("Error getting user " + m[3]);
