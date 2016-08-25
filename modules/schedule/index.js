@@ -367,7 +367,7 @@ module.exports.commands = {
       if(Object.keys(schedules).length == 0)
         return reply("There are no schedules to delete.");
 
-      if(digest in schedules)
+      if(!(digest in schedules))
         return reply("There is no schedule for " + digest);
 
       var s = schedules[digest];
