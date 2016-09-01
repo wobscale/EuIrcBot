@@ -43,9 +43,10 @@ var onlyQuote = new RC(/^".+"$/);
 var funnyFractions = new RC(/^(([0-9][0]?|11)\s*\/\s*(10|5|100))$/);
 var plusN = new RC(/^\++\d+$/);
 var webscaleQualityInputs = new RC(/^[a-zA-Z ]+$/);
+var notNumeric = new RC(/^\s*not\s+[0-9\.]*$/);
 
 var ignoreRe = onlySymbols.or(onlyNumbers).or(funnyFractions).or(onlyKeys).or(plusN)
-               .or(onlyQuote).or(onlyTime).or(webscaleQualityInputs);
+               .or(onlyQuote).or(onlyTime).or(webscaleQualityInputs).or(notNumeric);
 
 //
 // OUTPUT FILTERS
