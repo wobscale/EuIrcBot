@@ -22,6 +22,7 @@ describe('onMath', function() {
     var simpleMath = [
       ["1+1", "2"],
       ["1*1", "1"],
+      ["not (1 == 10)", "true"],
     ];
 
     async.every(simpleMath, function(el, callback) {
@@ -47,6 +48,8 @@ describe('onMath', function() {
       ".2 bytes / second",
       '3 #comment',
       '"3" #comment',
+      'not 5',
+      // 'not []', // TODO, this is kinda dumb
       // "W 0 B S C A L E", // One can dream
     ];
 
