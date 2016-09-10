@@ -1,4 +1,4 @@
-var wolfram = require('wolfram');
+var wolfram = require('wolfram-alpha');
 var wc = null;
 
 module.exports.init = function(bot) {
@@ -24,13 +24,13 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     if(!(res && res.length)) return reply("Wolfram error, response is dicked");
 
     if(res.length === 1) {
-      return reply("No result for query: " + res[0].subpods[0].value);
+      return reply("No result for query: " + res[0].subpods[0].text);
     }
 
     var primary_pods = res.filter(function(x){return x.primary;});
     if(primary_pods.length === 0) {
       try {
-        return reply(res[0].subpods[0].value + ': ' + res[1].subpods[0].value.split('\n').join(' ~ '));
+        return reply(res[0].subpods[0].text + ': ' + res[1].subpods[0].text.split('\n').join(' ~ '));
       } catch(ex) {
         return reply("No primary pod, try http://www.wolframalpha.com/input/?i="+encodeURIComponent(remainder));
       }
@@ -40,11 +40,13 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     try {
       if(ppod.title && ppod.subpods[0].value) {
         reply(ppod.title + ": " + ppod.subpods[0].value);
+      } else if(ppod.title && ppod.subpods[0].text ) {
+        reply(ppod.title + ": " + ppod.subpods[0].text);
       } else {
         throw("Can't handle this ppod");
       }
     } catch(ex) {
-      console.log(ppod);
+      console.log(JSON.stringify(ppod));
       reply("Not sure how to handle primary pod, someone should pull request this");
     }
   });
