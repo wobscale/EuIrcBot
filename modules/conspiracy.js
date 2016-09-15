@@ -6,7 +6,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
   ];
 
   var objects = [
-    'jet fuel', 'steel beams', 'bigfoot', 'vaccines', 'autism'
+    'jet fuel', 'steel beams', 'bigfoot', 'vaccines', 'autism', '9/11', 'thinking about things'
   ];
 
   var motivations = [
@@ -16,7 +16,8 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 
   var theories = [
     "-object- can't melt -object-",
-    "-entity- created -object- to -motivation-"
+    "-entity- created -object- to -motivation-",
+    "-object- was an inside job!"
   ];
 
   var conspiracy = theories[Math.floor(Math.random() * theories.length)];
