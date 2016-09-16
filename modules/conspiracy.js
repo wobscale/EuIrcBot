@@ -1,35 +1,52 @@
 module.exports.command = "conspiracy";
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
 
-  var entities = [
+  var groups = [
     'the government', 'the Jews', 'the Goys', 'lizard people', 'scientists', 'doctors',
-    'big pharma', 'Monsanto', 'the gays', 'FDA', 'IRS', 'the illuminati', 'Hillary Clinton'
+    'big pharma', 'Monsanto', 'the gays', 'FDA', 'IRS', 'the illuminati'
+  ];
+
+  var entities = [
+    'Hillary Clinton', 'Obama', 'Hitler'
   ];
 
   var objects = [
-    'jet fuel', 'steel beams', 'bigfoot', 'vaccines', 'autism', '9/11', 'thinking about things',
-    'DNC 2016', 'Bernie Sanders', 'chemtrails'
+    'jet fuel', 'steel beams', 'bigfoot', 'vaccines', 'autism', 'thinking about things',
+    'DNC 2016', 'Bernie Sanders', 'chemtrails', 'GMOs'
   ];
 
   var motivations = [
     "cover up -object-",
-    "distract from -entity-",
-    "poison -entity-",
-    "make -entity- infertile",
+    "distract from -group-",
+    "distract from -disaster-",
+    "poison -group-",
+    "make -marginalizedgroup- infertile",
+    "eracidate -marginalizedgroup-",
+  ];
+
+  var marginalized_groups = [
+    'whites', 'blacks', 'homosexuals', 'transexuals', 'children'
+  ];
+
+  var disasters = [
+    '9/11', 'Hurricane Katrina', 'Bengazi', 'mandatory vaccinations'
   ];
 
   var theories = [
     "-object- can't melt -object-",
-    "-entity- created -object- to -motivation-",
-    "-object- was an inside job!",
-    "-object- is secretly run by -entity-",
-    "-entity- is a false front for -entity-"
+    "-group- created -object- to -motivation-",
+    "-disaster- was an inside job!",
+    "-group- is secretly run by -entity-",
+    "-group- are a false front for -group-",
   ];
 
   var keyword_to_options = {
     'motivation': motivations,  // must go first as contains lower ones.
-    'entity': entities,
+    'group': groups,
     'object': objects,
+    'entity': entities,
+    'marginalizedgroup': marginalized_groups,
+    'disaster': disasters,
   };
 
   var conspiracy = theories[Math.floor(Math.random() * theories.length)];
