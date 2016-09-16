@@ -4,7 +4,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
   var groups = [
     'the government', 'the Jews', 'the Goys', 'lizard people', 'scientists', 'doctors',
     'big pharma', 'Monsanto', 'the gays', 'FDA', 'IRS', 'the illuminati', 'muslims',
-    'the Catholic Church"
+    'the Catholic Church'
   ];
 
   var entities = [
