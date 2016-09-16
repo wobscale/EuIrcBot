@@ -3,7 +3,8 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 
   var groups = [
     'the government', 'the Jews', 'the Goys', 'lizard people', 'scientists', 'doctors',
-    'big pharma', 'Monsanto', 'the gays', 'FDA', 'IRS', 'the illuminati'
+    'big pharma', 'Monsanto', 'the gays', 'FDA', 'IRS', 'the illuminati', 'muslims',
+    'the Catholic Church"
   ];
 
   var entities = [
@@ -11,17 +12,25 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
   ];
 
   var objects = [
-    'jet fuel', 'steel beams', 'bigfoot', 'vaccines', 'autism', 'thinking about things',
+    'jet fuel', 'steel beams', 'bigfoot', 'vaccines', 'thinking about things',
     'DNC 2016', 'Bernie Sanders', 'chemtrails', 'GMOs'
   ];
+  
+  var ailments = [
+    "cancer",
+    "Zika",
+    "autism",
+    "infertility"
+  ]
 
   var motivations = [
     "cover up -object-",
     "distract from -group-",
     "distract from -disaster-",
     "poison -group-",
-    "make -marginalizedgroup- infertile",
     "eracidate -marginalizedgroup-",
+    "give -marginalizedgroup- -ailment-",
+    "give -marginalizedgroup- -ailment- in retribution for -disaster-",
   ];
 
   var marginalized_groups = [
@@ -47,6 +56,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'entity': entities,
     'marginalizedgroup': marginalized_groups,
     'disaster': disasters,
+    'ailment': ailments,
   };
 
   var conspiracy = theories[Math.floor(Math.random() * theories.length)];
