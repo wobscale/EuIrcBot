@@ -26,22 +26,22 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     "-entity- is a false front for -entity-"
   ];
 
+  var keyword_to_options = {
+    'motivation': motivations,  // must go first as contains lower ones.
+    'entity': entities,
+    'object': objects,
+  };
+
   var conspiracy = theories[Math.floor(Math.random() * theories.length)];
 
-  while (conspiracy.indexOf('-motivation-') > -1) {
-    var motivation = motivations[Math.floor(Math.random() * motivations.length)];
-    conspiracy = conspiracy.replace('-motivation-', motivation);
-  }
+  Object.keys(keyword_to_options).forEach(function (key) {
+    while (conspiracy.indexOf('-' + key + '-') > -1) {
+      var options = keyword_to_options[key];
+      var option = options[Math.floor(Math.random() * options.length)];
 
-  while (conspiracy.indexOf('-entity-') > -1) {
-    var entity = entities[Math.floor(Math.random() * entities.length)];
-    conspiracy = conspiracy.replace('-entity-', entity);
-  }
-
-  while (conspiracy.indexOf('-object-') > -1) {
-    var object = objects[Math.floor(Math.random() * objects.length)];
-    conspiracy = conspiracy.replace('-object-', object);
-  }
+      conspiracy = conspiracy.replace('-' + key + '-', option);
+    }
+  });
 
   reply('Conspiracy theory: ' + conspiracy);
 };
