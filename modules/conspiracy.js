@@ -3,9 +3,10 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 
   var groups = [
     'the government', 'the Jews', 'the Goys', 'lizard people', 'scientists', 'doctors',
-    'big pharma', 'Monsanto', 'the gays', 'FDA', 'IRS', 'the illuminati', 'muslims',
-    'the Catholic Church', 'big oil', 'EPA', 'Communists', 'Facists', 'Marxists',
-    'China', 'North Korea', 'ISIS', 'wall street', 'the UN', 'men'
+    'big pharma', 'Monsanto', 'the gays', 'the FDA', 'the IRS', 'the illuminati', 'muslims',
+    'the Catholic Church', 'big oil', 'the EPA', 'Communists', 'Facists', 'Marxists',
+    'China', 'North Korea', 'ISIS', 'wall street', 'the UN', 'the FBI', 'Russia',
+    'aliens', 'NRA'
   ];
 
   var entities = [
@@ -14,8 +15,8 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 
   var objects = [
     'jet fuel', 'steel beams', 'bigfoot', 'vaccines', 'thinking about things',
-    'DNC 2016', 'Bernie Sanders', 'chemtrails', 'GMOs', 'asbestous', 'UFOs',
-    'WMDs'
+    'DNC 2016', 'Bernie Sanders', 'chemtrails', 'asbestous', 'UFOs',
+    'WMDs', 'aliens'
   ];
   
   var ailments = [
@@ -34,8 +35,13 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 
   var disasters = [
     '9/11', 'Hurricane Katrina', 'Bengazi', 'mandatory vaccinations', 'the Fukushima nuclear disaster', 'the Holocaust',
-    'the Kennedy Assassination', 'fraking', 'earthquakes', 'the BP oil spill', 'the moon landing', 'the Columbine massacre',
-    'the recession', 'the great depression', 'flourinated water'
+    'the Kennedy Assassination', 'earthquakes', 'the BP oil spill', 'the moon landing', 'the Columbine massacre',
+    'the recession', 'the great depression', 'global warming', 'Roswell'
+  ];
+
+  var inventions = [
+    'diet soda', 'encryption', 'fraking', 'fluorinated water', 'GMOs', 'NPR', 'TV', 'processed foods',
+    'pyamids', 'libraries', 'guns'
   ];
 
   var motivations = [
@@ -48,8 +54,9 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     "eracidate -marginalizedgroup-",
     "give -marginalizedgroup- -ailment-",
     "give -marginalizedgroup- -ailment- in retribution for -disaster-",
+    "control the masses",
+    "control -marginalizedgroup-",
   ];
-
 
   var theories = [
     "-object- can't melt -object-",
@@ -57,6 +64,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     "-disaster- was an inside job!",
     "-group- are secretly run by -entity-",
     "-group- was created to -motivation-",
+    "-invention- was created to -motivation-",
     "-group- are a false front for -group-",
     "-entity- is single-handedly trying to -motivation-",
     "-group- are using -ailment- to -motivation-",
@@ -70,6 +78,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'marginalizedgroup': marginalized_groups,
     'disaster': disasters,
     'ailment': ailments,
+    'invention': inventions
   };
 
   var conspiracy = theories[Math.floor(Math.random() * theories.length)];
