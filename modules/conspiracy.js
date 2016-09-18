@@ -6,42 +6,47 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'big pharma', 'Monsanto', 'the gays', 'the FDA', 'the IRS', 'the illuminati', 'muslims',
     'the Catholic Church', 'big oil', 'the EPA', 'Communists', 'Facists', 'Marxists',
     'China', 'North Korea', 'ISIS', 'wall street', 'the UN', 'the FBI', 'Russia',
-    'aliens', 'the NRA'
+    'aliens', 'the NRA', 'the Bilderberg Group', 'the NSA', 'the CIA', 'the Five Eyes',
+    'vegans', 'the MPAA', 'Hollywood', 'the patriarchy', 'the FCC', 'the FDIC', 'Goldman Sachs',
+    'Anonymous', 'academics', 'Baby Boomers', 'the UN', 'the Freemasons'
   ];
 
   var entities = [
-    'Hillary Clinton', 'Obama', 'Hitler', 'Stalin', 'Putin'
+    'Hillary Clinton', 'Obama', 'Hitler', 'Stalin', 'Putin', 'the Koch Brothers', 'Kim Jong-Un',
+    'Henry Kissinger', 'George W Bush', 'Al Gore', 'Rupert Murdoch', 'Richard Nixon', 'JFK'
   ];
 
   var objects = [
     'jet fuel', 'steel beams', 'bigfoot', 'vaccines', 'thinking about things',
     'DNC 2016', 'Bernie Sanders', 'chemtrails', 'asbestos', 'UFOs',
-    'WMDs', 'aliens'
+    'WMDs', 'aliens', 'Noam Chomsky', 'artificial intelligence', 'nukes', 'IEDs',
+    'RFID chips', 'the mark of the beast', 'Masonic Lodges', 'Obama\'s birth certificate',
+    'renewable energy', 'postmodernism'
   ];
 
   var ailments = [
-    'cancer',
-    'Zika',
-    'autism',
-    'infertility',
-    'AIDs',
-    'smallpox',
-    'Ebola'
+    'cancer', 'Zika', 'autism', 'infertility', 'AIDs', 'smallpox', 'Ebola', 'swine flu', 'superbacteria',
+    'the common cold', 'alcoholism'
   ]
 
   var marginalized_groups = [
-    'whites', 'blacks', 'homosexuals', 'transsexuals', 'children', 'refugees', 'native americans', 'women'
+    'whites', 'blacks', 'homosexuals', 'transsexuals', 'children', 'refugees', 'native americans', 'women', 'vegans',
+    'straight white males', 'journalists', 'the homeless', 'free software', 'hippies', 'grad students', 'millenials'
   ];
 
   var disasters = [
     '9/11', 'Hurricane Katrina', 'Bengazi', 'mandatory vaccinations', 'the Fukushima nuclear disaster', 'the Holocaust',
     'the Kennedy Assassination', 'earthquakes', 'the BP oil spill', 'the moon landing', 'the Columbine massacre',
-    'the recession', 'the great depression', 'global warming', 'Roswell'
+    'the recession', 'the great depression', 'global warming', 'Roswell', 'Chernobyl', 'the Challenger disaster',
+    'the Columbia disaster', 'Occupy Wall Street', 'Edward Snowden', 'Japanese internment camps', 'bitcoin', 'antibiotics',
+    'the Manhattan Project', 'Pearl Harbor'
   ];
 
   var inventions = [
     'diet soda', 'encryption', 'fracking', 'fluorinated water', 'GMOs', 'NPR', 'TV', 'processed foods',
-    'pyramids', 'libraries', 'guns'
+    'pyramids', 'libraries', 'guns', 'monads', 'video games', 'pornography', 'tofurkey', 'homophobia',
+    'Apollo 13', 'pansexuality', 'artificial intelligence', 'self-driving cars', 'copyright', 'software patents',
+    'virtual reality', 'cigarettes', 'anime', 'wind farms'
   ];
 
   var motivations = [
@@ -68,6 +73,9 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     "-group- are a false front for -group-",
     "-entity- is single-handedly trying to -motivation-",
     "-group- are using -ailment- to -motivation-",
+    "-disaster- was faked!",
+    "-disaster- was faked by -entity-!",
+    "-disaster- was faked by -group- to -motivation-",
   ];
 
   var keyword_to_options = {
