@@ -6,7 +6,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'big pharma', 'Monsanto', 'the gays', 'the FDA', 'the IRS', 'the illuminati', 'muslims',
     'the Catholic Church', 'big oil', 'the EPA', 'Communists', 'Facists', 'Marxists',
     'China', 'North Korea', 'ISIS', 'wall street', 'the UN', 'the FBI', 'Russia',
-    'aliens', 'NRA'
+    'aliens', 'the NRA'
   ];
 
   var entities = [
@@ -15,10 +15,10 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 
   var objects = [
     'jet fuel', 'steel beams', 'bigfoot', 'vaccines', 'thinking about things',
-    'DNC 2016', 'Bernie Sanders', 'chemtrails', 'asbestous', 'UFOs',
+    'DNC 2016', 'Bernie Sanders', 'chemtrails', 'asbestos', 'UFOs',
     'WMDs', 'aliens'
   ];
-  
+
   var ailments = [
     'cancer',
     'Zika',
@@ -30,7 +30,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
   ]
 
   var marginalized_groups = [
-    'whites', 'blacks', 'homosexuals', 'transexuals', 'children', 'refugees', 'native americans', 'women'
+    'whites', 'blacks', 'homosexuals', 'transsexuals', 'children', 'refugees', 'native americans', 'women'
   ];
 
   var disasters = [
@@ -40,8 +40,8 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
   ];
 
   var inventions = [
-    'diet soda', 'encryption', 'fraking', 'fluorinated water', 'GMOs', 'NPR', 'TV', 'processed foods',
-    'pyamids', 'libraries', 'guns'
+    'diet soda', 'encryption', 'fracking', 'fluorinated water', 'GMOs', 'NPR', 'TV', 'processed foods',
+    'pyramids', 'libraries', 'guns'
   ];
 
   var motivations = [
