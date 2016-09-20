@@ -79,7 +79,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
   ];
 
   var keyword_to_options = {
-    'motivation': motivations,  // must go first as contains lower ones.
+    'motivation': motivations,
     'group': groups,
     'object': objects,
     'entity': entities,
@@ -91,14 +91,19 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 
   var conspiracy = theories[Math.floor(Math.random() * theories.length)];
 
-  Object.keys(keyword_to_options).forEach(function (key) {
-    while (conspiracy.indexOf('-' + key + '-') > -1) {
-      var options = keyword_to_options[key];
-      var option = options[Math.floor(Math.random() * options.length)];
+  var change_count;
+  do {
+    change_count = 0;
+    Object.keys(keyword_to_options).forEach(function (key) {
+      while (conspiracy.indexOf('-' + key + '-') > -1) {
+        var options = keyword_to_options[key];
+        var option = options[Math.floor(Math.random() * options.length)];
 
-      conspiracy = conspiracy.replace('-' + key + '-', option);
-    }
-  });
+        conspiracy = conspiracy.replace('-' + key + '-', option);
+        change_count++;
+      }
+    });
+  } while(change_count > 0);
 
   reply('Conspiracy theory: ' + conspiracy);
 };
