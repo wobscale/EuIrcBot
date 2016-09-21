@@ -46,7 +46,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'diet soda', 'encryption', 'fracking', 'fluorinated water', 'GMOs', 'NPR', 'TV', 'processed foods',
     'pyramids', 'libraries', 'guns', 'monads', 'video games', 'pornography', 'tofurkey', 'homophobia',
     'Apollo 13', 'pansexuality', 'artificial intelligence', 'self-driving cars', 'copyright', 'software patents',
-    'virtual reality', 'cigarettes', 'anime', 'wind farms'
+    'virtual reality', 'cigarettes', 'anime', 'wind farms', 'tinfoil hats'
   ];
 
   var motivations = [
