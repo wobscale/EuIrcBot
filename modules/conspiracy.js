@@ -26,7 +26,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
   ];
 
   var ailments = [
-    'cancer', 'Zika', 'autism', 'infertility', 'AIDs', 'smallpox', 'Ebola', 'swine flu', 'superbacteria',
+    'cancer', 'Zika', 'autism', 'infertility', 'AIDS', 'smallpox', 'Ebola', 'swine flu', 'superbacteria',
     'the common cold', 'alcoholism'
   ]
 
