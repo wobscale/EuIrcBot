@@ -13,12 +13,13 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 
   var entities = [
     'Hillary Clinton', 'Obama', 'Hitler', 'Stalin', 'Putin', 'the Koch Brothers', 'Kim Jong-Un',
-    'Henry Kissinger', 'George W Bush', 'Al Gore', 'Rupert Murdoch', 'Richard Nixon', 'JFK'
+    'Henry Kissinger', 'George W Bush', 'Al Gore', 'Rupert Murdoch', 'Richard Nixon', 'JFK',
+    'Chancellor Schrader', 'Jesus Christ', 'Larry Ellison'
   ];
 
   var objects = [
     'jet fuel', 'steel beams', 'bigfoot', 'vaccines', 'thinking about things',
-    'DNC 2016', 'Bernie Sanders', 'chemtrails', 'asbestos', 'UFOs',
+    'DNC 2016', 'Bernie Sanders', 'chemtrails', 'asbestos', 'UFOs', 'nihilism',
     'WMDs', 'aliens', 'Noam Chomsky', 'artificial intelligence', 'nukes', 'IEDs',
     'RFID chips', 'the mark of the beast', 'Masonic Lodges', 'Obama\'s birth certificate',
     'renewable energy', 'postmodernism', 'the Denver International Airport', 'the Bermuda Triangle'
@@ -31,7 +32,8 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 
   var marginalized_groups = [
     'whites', 'blacks', 'homosexuals', 'transsexuals', 'children', 'refugees', 'native americans', 'women', 'vegans',
-    'straight white males', 'journalists', 'the homeless', 'free software', 'hippies', 'grad students', 'millenials'
+    'straight white males', 'journalists', 'the homeless', 'free software', 'hippies', 'grad students', 'millenials',
+    'libertarians'
   ];
 
   var disasters = [
@@ -39,14 +41,14 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'the Kennedy Assassination', 'earthquakes', 'the BP oil spill', 'the moon landing', 'the Columbine massacre',
     'the recession', 'the great depression', 'global warming', 'Roswell', 'Chernobyl', 'the Challenger disaster',
     'the Columbia disaster', 'Occupy Wall Street', 'Edward Snowden', 'Japanese internment camps', 'bitcoin', 'antibiotics',
-    'the Manhattan Project', 'Pearl Harbor', 'the disappearance of Amelia Earhart'
+    'the Manhattan Project', 'Pearl Harbor', 'the disappearance of Amelia Earhart', 'smallpox blankets'
   ];
 
   var inventions = [
     'diet soda', 'encryption', 'fracking', 'fluorinated water', 'GMOs', 'NPR', 'TV', 'processed foods',
     'pyramids', 'libraries', 'guns', 'monads', 'video games', 'pornography', 'tofurkey', 'homophobia',
     'Apollo 13', 'pansexuality', 'artificial intelligence', 'self-driving cars', 'copyright', 'software patents',
-    'virtual reality', 'cigarettes', 'anime', 'wind farms', 'tinfoil hats', 'LSD'
+    'virtual reality', 'cigarettes', 'anime', 'wind farms', 'tinfoil hats', 'LSD', 'trolley problems'
   ];
 
   var motivations = [
