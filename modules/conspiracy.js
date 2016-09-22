@@ -8,7 +8,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'China', 'North Korea', 'ISIS', 'wall street', 'the UN', 'the FBI', 'Russia',
     'aliens', 'the NRA', 'the Bilderberg Group', 'the NSA', 'the CIA', 'the Five Eyes',
     'vegans', 'the MPAA', 'Hollywood', 'the patriarchy', 'the FCC', 'the FDIC', 'Goldman Sachs',
-    'Anonymous', 'academics', 'Baby Boomers', 'the UN', 'the Freemasons'
+    'Anonymous', 'academics', 'Baby Boomers', 'the UN', 'the Freemasons', 'the New World Order'
   ];
 
   var entities = [
@@ -21,7 +21,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'DNC 2016', 'Bernie Sanders', 'chemtrails', 'asbestos', 'UFOs',
     'WMDs', 'aliens', 'Noam Chomsky', 'artificial intelligence', 'nukes', 'IEDs',
     'RFID chips', 'the mark of the beast', 'Masonic Lodges', 'Obama\'s birth certificate',
-    'renewable energy', 'postmodernism'
+    'renewable energy', 'postmodernism', 'the Denver International Airport', 'the Bermuda Triangle'
   ];
 
   var ailments = [
@@ -39,14 +39,14 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     'the Kennedy Assassination', 'earthquakes', 'the BP oil spill', 'the moon landing', 'the Columbine massacre',
     'the recession', 'the great depression', 'global warming', 'Roswell', 'Chernobyl', 'the Challenger disaster',
     'the Columbia disaster', 'Occupy Wall Street', 'Edward Snowden', 'Japanese internment camps', 'bitcoin', 'antibiotics',
-    'the Manhattan Project', 'Pearl Harbor'
+    'the Manhattan Project', 'Pearl Harbor', 'the disappearance of Amelia Earhart'
   ];
 
   var inventions = [
     'diet soda', 'encryption', 'fracking', 'fluorinated water', 'GMOs', 'NPR', 'TV', 'processed foods',
     'pyramids', 'libraries', 'guns', 'monads', 'video games', 'pornography', 'tofurkey', 'homophobia',
     'Apollo 13', 'pansexuality', 'artificial intelligence', 'self-driving cars', 'copyright', 'software patents',
-    'virtual reality', 'cigarettes', 'anime', 'wind farms', 'tinfoil hats'
+    'virtual reality', 'cigarettes', 'anime', 'wind farms', 'tinfoil hats', 'LSD'
   ];
 
   var motivations = [
