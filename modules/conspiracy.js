@@ -18,7 +18,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
   ];
 
   var objects = [
-    'jet fuel', 'steel beams', 'bigfoot', 'vaccines', 'thinking about things',
+    'jet fuel', 'steel beams', 'bigfoot', 'vaccines', 'thinking about things', '"healthy living"',
     'DNC 2016', 'Bernie Sanders', 'chemtrails', 'asbestos', 'UFOs', 'nihilism',
     'WMDs', 'aliens', 'Noam Chomsky', 'artificial intelligence', 'nukes', 'IEDs',
     'RFID chips', 'the mark of the beast', 'Masonic Lodges', 'Obama\'s birth certificate',
