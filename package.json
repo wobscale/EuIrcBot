@@ -6,7 +6,7 @@
   "dependencies": {
     "async": "latest",
     "change-case": "^2.3.0",
-    "irc": "git+https://github.com/LinuxMercedes/node-irc.git#bleeding",
+    "irc": "^0.5.1",
     "snailescape.js": "^2.0.1",
     "underscore": "latest"
   },
