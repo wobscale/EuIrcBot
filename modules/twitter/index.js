@@ -39,7 +39,7 @@ module.exports.url = function(url, reply) {
       var id = m[6];
       t.get("/statuses/show/:id", {id: id, tweet_mode: "extended"}, function(err, res) {
         if(err) reply("Error getting tweet");
-        else reply(ent.decode(res.user.name) + " (@" + ent.decode(res.user.screen_name) + "): " + ent.decode(res.text).replace(/\n/g, "\t\t"));
+        else reply(ent.decode(res.user.name) + " (@" + ent.decode(res.user.screen_name) + "): " + ent.decode(res.full_text).replace(/\n/g, "\t\t"));
       });
     }
   }
