@@ -37,7 +37,7 @@ module.exports.url = function(url, reply) {
     } else {
       var uname = m[3];
       var id = m[6];
-      t.get("/statuses/show/:id", {id: id}, function(err, res) {
+      t.get("/statuses/show/:id", {id: id, tweet_mode: "extended"}, function(err, res) {
         if(err) reply("Error getting tweet");
         else reply(ent.decode(res.user.name) + " (@" + ent.decode(res.user.screen_name) + "): " + ent.decode(res.text).replace(/\n/g, "\t\t"));
       });
