@@ -46,7 +46,16 @@ module.exports.url = function(url, reply) {
 };
 
 
-module.exports.commands = ['quo', 'quoth'];
+module.exports.commands = ['quoth'];
+
+module.exports.post = function(data, channel, callback) {
+  t.post('statuses/update', {status: data}, function(err, res) {
+    if(err) return callback(err);
+    callback(false, tConf.baseUrl + 'status/' + res.id_str);
+  });
+};
+
+var me = module.exports;
 
 
 module.exports.run = function(r, parts, reply, command, from, to) {
@@ -60,9 +69,9 @@ module.exports.run = function(r, parts, reply, command, from, to) {
     if(err) return reply(err);
     if(res.match(/(pls|#)noquo/)) return reply("don't be a deck, betch");
     
-    t.post('statuses/update', {status: res}, function(err, data) {
-      if(err) return reply(err);
-      reply(tConf.baseUrl + 'status/' + data.id_str);
+    me.post(res, function(err, resp) {
+      if(err) reply(err);
+      else reply(resp);
     });
   });
 };
