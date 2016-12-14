@@ -221,6 +221,45 @@ bot.initClient = function(cb) {
     }
   });
 
+  // This is emitted by the client right before it tries to say something.
+  // Note, this will not work if we send notices or certain other events,
+  // but that won't happen in practice yet
+  bot.client.on('selfMessage', function(to, text) {
+    // Hack! This ensures that even though node-irc calls this as part of the same function path, the events for pmsay/chansay happen a tick later.
+    // To understand why this matters, see issue
+    // https://github.com/euank/EuIrcBot/issues/131.
+    //
+    // This also makes sense if we envision the call stack for a message if we
+    // have mod1, which does a reply on 'foo', and mod2, which records all
+    // 'pmsay' and all 'msg' events.
+    //
+    // callModuleFn(msg, foo) // triggers mod1 and mod2
+    //   -> mod1.onmsg(foo)
+    //     -> reply(bar)
+    //       -> bot.client.say(bar)
+    //         -> bot.client.emit(selfMessage)
+    //           -> mod2.onpmsay(bar) // mod2.onpmsay is triggered and records "bar"
+    //           -> ...
+    //   -> mod2.onmsg(foo) // mod2.onmsg records "foo"
+    //    
+    //
+    // The problem with the above is that mod2 has a wrong state of the world
+    // in that it recorded "bar" as being said before receiving the message
+    // "foo". This is obviously wrong.
+    // The easy and sorta hacky fix for this is simply ensuring that all
+    // 'onpmsay' events are triggered after the current eventloop finishes
+    // processing, since that ensures that if the 'onmsg' handler of bar
+    // records the message in the same tick it was called, it will retain a
+    // correct ordering.
+    process.nextTick(function() {
+      if(bot.isChannel(to)) {
+        bot.callModuleFn('chansay', [bot.client.nick, to, text]);
+      } else {
+        bot.callModuleFn('pmsay', [bot.client.nick, to, text]);
+      }
+    });
+  });
+
   cb();
 };
 
@@ -274,11 +313,6 @@ bot.isChannel = function(name) {
 bot.getReply = function(chan) {
   return function(args) {
     var repStr = bot.stringifyArgs.apply(this, arguments);
-    if(bot.isChannel(chan)) {
-      bot.callModuleFn('chansay', [bot.client.nick, chan, repStr]);
-    } else {
-      bot.callModuleFn('pmsay', [bot.client.nick, chan, repStr]);
-    }
     bot.client.say(chan, repStr);
   };
 };
