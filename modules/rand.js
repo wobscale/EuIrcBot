@@ -16,7 +16,7 @@ module.exports.run = function(r, parts, reply, command) {
 
 	var results = {};
 	for(var level = 0; level < levels; level++) {
-		if(parseInt(parts[level],10) > 9e5) { 
+		if(parseInt(parts[level],10) > 9e5) {
 			reply("no");
 			return;
 		}
@@ -32,11 +32,11 @@ module.exports.run = function(r, parts, reply, command) {
 		}
 	}
 
-	reply(
-			Object.keys(results)
-			.sort(function(k1,k2){return results[k2]-results[k1];})
-			.map(function(k) { return k + " " + results[k] + " times"; }) 
-			.join(", ")
-			);
+	reply(Object.keys(results).sort(function(k1,k2){
+			return results[k2]-results[k1];
+		}).map(function(k) {
+			return k + " " + results[k] + " times";
+		}).join(", ")
+	);
 };
 
