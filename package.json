@@ -8,7 +8,8 @@
     "change-case": "^2.3.0",
     "irc": "^0.5.1",
     "snailescape.js": "^2.0.1",
-    "underscore": "latest"
+    "underscore": "latest",
+    "heapdump": "latest"
   },
   "devDependencies": {
     "chai": "^3.5.0",

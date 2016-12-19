@@ -10,6 +10,7 @@ var irc = require('irc'),
     changeCase = require('change-case'),
     SnailEscape = require('snailescape.js');
 
+var heapdump = null;
 
 var reEscape = function(s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -20,6 +21,15 @@ var bot = {};
 bot.util = {}; //Util functions
 
 bot.init = function(cb) {
+  if(bot.config.heapdump) {
+    console.log("Enabling heap dumps");
+    heapdump = require('heapdump');
+    process.on('SIGINT', function() {
+      console.log("Please stand by...");
+      bot.dump();
+      process.exit();
+    });
+  }
   bot.configfolder = bot.config.configfolder;
   bot.tmpfolder = bot.config.tmpfolder;
   bot.datafolder = bot.config.datafolder;
@@ -347,6 +357,14 @@ bot.fsListData = function(namespace, listPath, cb) {
   fs.readdir(finalPath, cb);
 };
 
+bot.dump = function() {
+  if(heapdump) {
+    heapdump.writeSnapshot(function(err, filename) {
+      console.log('Heapdump written to', filename);
+    });
+  }
+}
+
 async.series([
   function(cb) {
     bot.conf = bot.config = bot.loadConfig();
@@ -364,8 +382,12 @@ async.series([
   bot.initModuleManager,
   moduleMan.loadModules,
   bot.joinChannels,
+  function(cb) {
+    bot.dump();
+  },
 ], function(err, results) {
   if(err) {
+    bot.dump();
     console.trace("Error in init");
     console.log(err);
   }
