@@ -20,7 +20,7 @@ function getSelector(url, selector, reply) {
 }
 
 module.exports.run_title = function(remainder, p, reply) {
-  getSelector(remainder, 'title', reply);
+  getSelector(p[0], 'title', reply);
 };
 module.exports.run_websel = function(r, p, reply) {
   getSelector(p[1], p[0], reply);
