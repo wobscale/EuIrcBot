@@ -6,4 +6,4 @@ RUN npm install
 VOLUME /usr/src/app/conf
 VOLUME /usr/src/app/data
 
-CMD ["node", "--max_old_space_size=150","bot.js"]
+CMD ["node", "--max_old_space_size=150", "bot.js"]
