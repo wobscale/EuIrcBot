@@ -15,7 +15,7 @@
     "mocha": "^2.5.3"
   },
   "scripts": {
-    "start": "node bot.js",
+    "start": "node --max_old_space_size=150 bot.js",
     "install": "./installModules.sh",
     "test": "mocha $(git ls-files | grep -E \"test.js$\")"
   },
