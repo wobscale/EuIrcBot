@@ -1,4 +1,4 @@
-FROM node:latest
+FROM node:6
 COPY . /usr/src/app/
 WORKDIR /usr/src/app
 RUN npm install
