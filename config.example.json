@@ -10,6 +10,7 @@
   "port": 6667,
   "timeout": 256,
   "debug": false,
+  "heapdump": false,
   "mainChannel": "#seubot",
   "channels": "#seubot",
   "autoRejoin": true,
