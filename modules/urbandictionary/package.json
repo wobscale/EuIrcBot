@@ -4,7 +4,7 @@
   "description": "UrbanDictionary module",
   "main": "index.js",
   "dependencies": {
-    "urban": "git+https://github.com/LinuxMercedes/urban.git"
+    "urban": "latest"
   },
   "author": "LinuxMercedes",
   "license": "MIT"
