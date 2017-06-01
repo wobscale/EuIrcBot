@@ -9,7 +9,12 @@ function getSelector(url, selector, reply) {
     url = "http://" + remainder;
   }
 
-  request(url, function(err, resp, html) {
+  var options = {
+    url: url,
+    jar: true
+  };
+
+  request(options, function(err, resp, html) {
     if(err) return reply(err);
 
     var res = cheerio(selector, html);
