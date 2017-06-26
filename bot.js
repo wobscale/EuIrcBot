@@ -8,7 +8,10 @@ var irc = require('irc'),
     path = require('path'),
     moduleMan = require("./node-module-manager"),
     changeCase = require('change-case'),
-    SnailEscape = require('snailescape.js');
+    SnailEscape = require('snailescape.js'),
+    bunyan = require('bunyan');
+
+var log = bunyan.createLogger({name: "euircbot"});
 
 var heapdump = null;
 
@@ -22,10 +25,10 @@ bot.util = {}; //Util functions
 
 bot.init = function(cb) {
   if(bot.config.heapdump) {
-    console.log("Enabling heap dumps");
+    log.debug("enabling heap dumps");
     heapdump = require('heapdump');
     process.on('SIGINT', function() {
-      console.log("Please stand by...");
+      log.warn("dumping heap, if configured, and exiting");
       bot.dump();
       process.exit();
     });
@@ -38,6 +41,7 @@ bot.init = function(cb) {
       fs.mkdirSync("./"+bot[i]);
     }
   });
+  log.level(bot.config.level);
   cb(null);
 };
 
@@ -109,7 +113,7 @@ bot.loadConfig = function(cb) { //sync
   try {
     conf = JSON.parse(fs.readFileSync('./config.json'));
   } catch(ex) {
-    console.log("Error reading config file: ", e);
+    log.error(e, "error reading config file");
     conf = default_config;
   }
 
@@ -120,7 +124,7 @@ bot.loadConfig = function(cb) { //sync
       try {
         conf[key] = JSON.parse(process.env[envKey]);
       } catch(ex) {
-        console.log("Could not load key: " + envKey + " because it was not valid json");
+        log.error("could not load env config '%s' because it was not valid json", envKey);
       }
     }
   });
@@ -128,7 +132,7 @@ bot.loadConfig = function(cb) { //sync
   var def_keys = Object.keys(default_config);
   _.each(default_config, function(value, key) {
     if(typeof conf[key] === 'undefined') {
-      console.log("Setting: ", key, " to ", value);
+      log.debug("defaulting %s=%s", key, value);
       conf[key] = value;
     }
   });
@@ -157,7 +161,9 @@ bot.initClient = function(cb) {
 
   var quoteSplit = new SnailEscape();
 
-  bot.client.on('error', function(err) { console.log(err);});
+  bot.client.on('error', function(err) { 
+    log.error(err, "irc client error");
+  });
 
 
   bot.client.on('join', function(channel, nick, raw) {
@@ -287,7 +293,9 @@ bot.say = function(args) {
 };
 
 bot.joinChannels = function(cb) {
-  if(!cb) cb = function(err) { if(err) console.log(err); };
+  if(!cb) cb = function(err) {
+    if(err) log.error(err);
+  };
 
   var channels = Array.isArray(bot.conf.channels) ? bot.conf.channels : bot.conf.channels.split(',');
   async.map(channels, function(item, joined) {
@@ -394,10 +402,12 @@ bot.fsListData = function(namespace, listPath, cb) {
 bot.dump = function() {
   if(heapdump) {
     heapdump.writeSnapshot(function(err, filename) {
-      console.log('Heapdump written to', filename);
+      log.warn('heapdump written to', filename);
     });
+  } else {
+    log.trace("dump called, but heapdump off");
   }
-}
+};
 
 async.series([
   function(cb) {
@@ -410,7 +420,7 @@ async.series([
     bot.client.connect(function(){cb(null);});
   },
   function(cb){
-    console.log("Connected!");
+    log.info("connected!");
     cb(null);
   },
   bot.initModuleManager,
@@ -422,8 +432,8 @@ async.series([
 ], function(err, results) {
   if(err) {
     bot.dump();
-    console.trace("Error in init");
-    console.log(err);
+    log.fatal("error in init");
+    log.error(err);
   }
 });
 

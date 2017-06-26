@@ -5,6 +5,7 @@
   "realName": "seubot",
   "server": "irc.freenode.net",
   "owner": "owner",
+  "logLevel": "info",
   "commandPrefix": "!",
   "ssl": false,
   "port": 6667,

@@ -5,6 +5,7 @@
   "main": "bot.js",
   "dependencies": {
     "async": "latest",
+    "bunyan": "^1.8.10",
     "change-case": "^2.3.0",
     "heapdump": "latest",
     "irc": "^0.5.1",
