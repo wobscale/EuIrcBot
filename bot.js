@@ -11,7 +11,10 @@ var irc = require('irc'),
     SnailEscape = require('snailescape.js'),
     bunyan = require('bunyan');
 
-var log = bunyan.createLogger({name: "euircbot"});
+var log = bunyan.createLogger({
+  name: "euircbot",
+  serializers: {err: bunyan.stdSerializers.err},
+});
 
 var heapdump = null;
 
@@ -46,7 +49,7 @@ bot.init = function(cb) {
 };
 
 bot.initModuleManager = function(cb) {
-  moduleMan.init(bot, cb);
+  moduleMan.init(bot, log, cb);
 };
 
 var supportedConfigTypes = [

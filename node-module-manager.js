@@ -1,18 +1,21 @@
 var fs = require('fs'),
 		path = require('path'),
 		async = require('async'),
-		_ = require('underscore');
+		_ = require('underscore'),
+		bunyan = require('bunyan');
 
 var modules = {};
 var modulePaths = {};
 
 var config;
 var bot;
+var log;
 
 var me = module.exports = {};
 
-me.init = function(botObj, cb) {
+me.init = function(botObj, logObj, cb) {
 	bot = botObj;
+        log = logObj;
 	config = botObj.config;
 	if(cb) cb(null);
 };
@@ -31,8 +34,7 @@ me.getModuleName = function(mpath) {
 			m = JSON.parse(fs.readFileSync(path.join(mpath, 'package.json'))).name;
 			if(m) return m;
 		} catch(ex) {
-			console.log("Invalid package.json for " + mpath);
-			console.log(ex);
+			log.warn(ex, "invalid package.json for %s", mpath);
 		}
 	}
 	return mpath;
@@ -41,7 +43,7 @@ me.getModuleName = function(mpath) {
 me.loadModuleFolder = function(folder, cb) {
 	fs.readdir(path.join('.',folder), function(err, mPaths) {
 		if(err) {
-			console.log(err);
+			log.warn(err, "error reading module folder: %s", folder);
 			// Don't err; it'll stop async from hitting up other module folders
 			return cb(null, {modules: {}, modulePaths: {}});
 		}
@@ -61,8 +63,7 @@ me.loadModuleFolder = function(folder, cb) {
 				modules[moduleName] = mod;
 				modulePaths[moduleName] = fullPath;
 			} catch(ex) {
-				console.error(ex.stack);
-				console.error(ex);
+				log.error(ex, "error loading %s", folder);
 			}
 		}
 		cb(false, {modules: modules, modulePaths: modulePaths});
@@ -85,6 +86,10 @@ me.loadModules = function(cb) {
 me.initModules = function(cb) {
 	// Todo, don't ever init if they're already initted
 	_.each(_.values(modules), function(mod) {
+		mod.log = bunyan.createLogger({
+			name: 'euircbot/' + me.moduleName(mod),
+			serializers: {err: bunyan.stdSerializers.err}
+		});
 		if(typeof mod.init == 'function') {
 			mod.init(me.modifyThisForModule(mod));
 		}
@@ -117,8 +122,7 @@ me.callModuleFn = function(fname, args) {
 			try {
 				m[fname].apply(bot, args);
 			} catch(ex) {
-				console.log(ex.stack);
-				console.log(ex);
+				log.warn({err: ex, func: fname, args: args}, "exception calling module function");
 			}
 		}
 	});
@@ -288,13 +292,17 @@ me.traverseCommandHierarchy = function(botObj, fnObj, args) {
 	return fnObj.fn.apply(me.modifyThisForModule(fnObj.module), args);
 };
 
+me.moduleName = function(module) {
+	return _.find(Object.keys(modules), function(mname) {
+		return modules[mname] === module; 
+	});
+};
+
 me.modifyThisForModule = function(module) {
 	var obj = _.clone(bot);
 	obj.getAllCommandFns = me.getAllCommandFns();
-	obj.name = _.find(Object.keys(modules), function(mname) {
-		return modules[mname] === module; 
-	});
 
+	obj.name = me.moduleName(module);
 	obj.datadir = bot.getDataFolder(obj.name);
 
 	obj.appendDataFile = function(file, data, cb) {
@@ -318,6 +326,7 @@ me.modifyThisForModule = function(module) {
 	obj.modules = modules;
 
 	obj.module = module;
+	obj.log = module.log;
 	return obj;
 };
 
@@ -336,7 +345,7 @@ me.callCommandFn = function(command, args) {
 	var call = function(ctx, args) {
 		try {
 			ctx.fn.apply(me.modifyThisForModule(ctx.module), args);
-		} catch(ex) { console.trace("Call Command: " + command + "\n" + ex.stack); console.log(ex); }
+		} catch(ex) { log.warn({err: ex, command: command, args: args}); }
 	};
 
 	// String functions
