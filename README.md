@@ -8,7 +8,7 @@ The code is the documentation, right?
 
 ## Installation
 
-`npm install`
+`yarn install`; this will also install all modules
 
 ## Status
 

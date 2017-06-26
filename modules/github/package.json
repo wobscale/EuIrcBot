@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "",
   "dependencies": {
-      "github": "git+https://github.com/mikedeboer/node-github.git" 
+    "github": "git+https://github.com/mikedeboer/node-github.git"
   },
   "main": "index.js",
   "author": "",

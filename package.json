@@ -6,10 +6,10 @@
   "dependencies": {
     "async": "latest",
     "change-case": "^2.3.0",
+    "heapdump": "latest",
     "irc": "^0.5.1",
     "snailescape.js": "^2.0.1",
-    "underscore": "latest",
-    "heapdump": "latest"
+    "underscore": "latest"
   },
   "devDependencies": {
     "chai": "^3.5.0",

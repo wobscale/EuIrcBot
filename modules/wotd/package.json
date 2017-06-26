@@ -3,8 +3,7 @@
   "version": "0.0.0",
   "description": "wordly ================",
   "main": "index.js",
-  "dependencies": {
-  },
+  "dependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

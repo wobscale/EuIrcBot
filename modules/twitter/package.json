@@ -4,8 +4,8 @@
   "description": "Twitter module",
   "main": "index.js",
   "dependencies": {
-    "twit": "latest",
-    "ent": "latest"
+    "ent": "latest",
+    "twit": "latest"
   },
   "author": "EuanK",
   "license": "MIT"
