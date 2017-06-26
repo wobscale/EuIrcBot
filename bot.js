@@ -41,7 +41,7 @@ bot.init = function(cb) {
       fs.mkdirSync("./"+bot[i]);
     }
   });
-  log.level(bot.config.level);
+  log.level(bot.config.logLevel);
   cb(null);
 };
 
@@ -167,17 +167,21 @@ bot.initClient = function(cb) {
 
 
   bot.client.on('join', function(channel, nick, raw) {
+    log.trace({channel: channel, nick: nick, raw: raw, event: "join"});
     bot.callModuleFn('join', [channel, nick, raw]);
   });
   bot.client.on('part', function(channel, nick, raw) {
+    log.trace({channel: channel, nick: nick, raw: raw, event: "part"});
     bot.callModuleFn('part', [channel, nick, raw]);
   });
   bot.client.on('quit', function(nick,reason,channels,raw) {
+    log.trace({channel: channel, nick: nick, reason: reason, raw: raw, event: "quit"});
     bot.callModuleFn('quit', [nick, reason, channels, raw]);
   });
 
 
   bot.client.on('notice', function(from, to, text, raw) {
+    log.trace({from: from, to: to, text: text, raw: raw, event: "notice"});
     var primaryFrom = (to == bot.client.nick) ? from : to;
 
     bot.callModuleFn('notice', [text, from, to, bot.getNoticeReply(primaryFrom), raw]);
@@ -190,6 +194,7 @@ bot.initClient = function(cb) {
   });
 
   bot.client.on('message', function(from, to, text, raw) {
+    log.trace({from: from, to: to, text: text, raw: raw, event: "message"});
     var primaryFrom = (to == bot.client.nick) ? from : to;
     bot.callModuleFn('message', [text, from, to, bot.getReply(primaryFrom), raw]);
 
@@ -214,6 +219,7 @@ bot.initClient = function(cb) {
   });
 
   bot.client.on('ctcp', function(from, to, text, type, raw) {
+    log.trace({from: from, to: to, text: text, type: type, raw: raw, event: "ctcp"});
     if(from == bot.config.owner && to == bot.client.nick && text == "RELOAD") {
       moduleMan.reloadModules();
     } else if(from == bot.config.owner && to == bot.client.nick && text == "LOAD") {
@@ -224,6 +230,7 @@ bot.initClient = function(cb) {
   });
 
   bot.client.on('action', function(from, to, text, type, raw) {
+    log.trace({from: from, to: to, text: text, type: type, raw: raw, event: "action"});
     var primaryFrom = (to == bot.client.nick) ? from : to;
     moduleMan.callModuleFn('action', [text, from, to, bot.getActionReply(primaryFrom), raw]);
     if(to == bot.client.nick) {
@@ -237,6 +244,7 @@ bot.initClient = function(cb) {
   // Note, this will not work if we send notices or certain other events,
   // but that won't happen in practice yet
   bot.client.on('selfMessage', function(to, text) {
+    log.trace({to: to, text: text, event: "selfMessage"});
     // Hack! This ensures that even though node-irc calls this as part of the same function path, the events for pmsay/chansay happen a tick later.
     // To understand why this matters, see issue
     // https://github.com/euank/EuIrcBot/issues/131.
@@ -412,6 +420,7 @@ bot.dump = function() {
 async.series([
   function(cb) {
     bot.conf = bot.config = bot.loadConfig();
+    log.trace("loaded config");
     cb(null);
   },
   bot.initClient,
