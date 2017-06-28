@@ -8,7 +8,13 @@ var irc = require('irc'),
     path = require('path'),
     moduleMan = require("./node-module-manager"),
     changeCase = require('change-case'),
-    SnailEscape = require('snailescape.js');
+    SnailEscape = require('snailescape.js'),
+    bunyan = require('bunyan');
+
+var log = bunyan.createLogger({
+  name: "euircbot",
+  serializers: {err: bunyan.stdSerializers.err},
+});
 
 var heapdump = null;
 
@@ -22,10 +28,10 @@ bot.util = {}; //Util functions
 
 bot.init = function(cb) {
   if(bot.config.heapdump) {
-    console.log("Enabling heap dumps");
+    log.debug("enabling heap dumps");
     heapdump = require('heapdump');
     process.on('SIGINT', function() {
-      console.log("Please stand by...");
+      log.warn("dumping heap, if configured, and exiting");
       bot.dump();
       process.exit();
     });
@@ -38,11 +44,12 @@ bot.init = function(cb) {
       fs.mkdirSync("./"+bot[i]);
     }
   });
+  log.level(bot.config.logLevel);
   cb(null);
 };
 
 bot.initModuleManager = function(cb) {
-  moduleMan.init(bot, cb);
+  moduleMan.init(bot, log, cb);
 };
 
 var supportedConfigTypes = [
@@ -109,7 +116,7 @@ bot.loadConfig = function(cb) { //sync
   try {
     conf = JSON.parse(fs.readFileSync('./config.json'));
   } catch(ex) {
-    console.log("Error reading config file: ", e);
+    log.error(e, "error reading config file");
     conf = default_config;
   }
 
@@ -120,7 +127,7 @@ bot.loadConfig = function(cb) { //sync
       try {
         conf[key] = JSON.parse(process.env[envKey]);
       } catch(ex) {
-        console.log("Could not load key: " + envKey + " because it was not valid json");
+        log.error("could not load env config '%s' because it was not valid json", envKey);
       }
     }
   });
@@ -128,7 +135,7 @@ bot.loadConfig = function(cb) { //sync
   var def_keys = Object.keys(default_config);
   _.each(default_config, function(value, key) {
     if(typeof conf[key] === 'undefined') {
-      console.log("Setting: ", key, " to ", value);
+      log.debug("defaulting %s=%s", key, value);
       conf[key] = value;
     }
   });
@@ -157,21 +164,27 @@ bot.initClient = function(cb) {
 
   var quoteSplit = new SnailEscape();
 
-  bot.client.on('error', function(err) { console.log(err);});
+  bot.client.on('error', function(err) { 
+    log.error(err, "irc client error");
+  });
 
 
   bot.client.on('join', function(channel, nick, raw) {
+    log.trace({channel: channel, nick: nick, raw: raw, event: "join"});
     bot.callModuleFn('join', [channel, nick, raw]);
   });
   bot.client.on('part', function(channel, nick, raw) {
+    log.trace({channel: channel, nick: nick, raw: raw, event: "part"});
     bot.callModuleFn('part', [channel, nick, raw]);
   });
   bot.client.on('quit', function(nick,reason,channels,raw) {
+    log.trace({channel: channel, nick: nick, reason: reason, raw: raw, event: "quit"});
     bot.callModuleFn('quit', [nick, reason, channels, raw]);
   });
 
 
   bot.client.on('notice', function(from, to, text, raw) {
+    log.trace({from: from, to: to, text: text, raw: raw, event: "notice"});
     var primaryFrom = (to == bot.client.nick) ? from : to;
 
     bot.callModuleFn('notice', [text, from, to, bot.getNoticeReply(primaryFrom), raw]);
@@ -184,6 +197,7 @@ bot.initClient = function(cb) {
   });
 
   bot.client.on('message', function(from, to, text, raw) {
+    log.trace({from: from, to: to, text: text, raw: raw, event: "message"});
     var primaryFrom = (to == bot.client.nick) ? from : to;
     bot.callModuleFn('message', [text, from, to, bot.getReply(primaryFrom), raw]);
 
@@ -208,6 +222,7 @@ bot.initClient = function(cb) {
   });
 
   bot.client.on('ctcp', function(from, to, text, type, raw) {
+    log.trace({from: from, to: to, text: text, type: type, raw: raw, event: "ctcp"});
     if(from == bot.config.owner && to == bot.client.nick && text == "RELOAD") {
       moduleMan.reloadModules();
     } else if(from == bot.config.owner && to == bot.client.nick && text == "LOAD") {
@@ -218,6 +233,7 @@ bot.initClient = function(cb) {
   });
 
   bot.client.on('action', function(from, to, text, type, raw) {
+    log.trace({from: from, to: to, text: text, type: type, raw: raw, event: "action"});
     var primaryFrom = (to == bot.client.nick) ? from : to;
     moduleMan.callModuleFn('action', [text, from, to, bot.getActionReply(primaryFrom), raw]);
     if(to == bot.client.nick) {
@@ -231,6 +247,7 @@ bot.initClient = function(cb) {
   // Note, this will not work if we send notices or certain other events,
   // but that won't happen in practice yet
   bot.client.on('selfMessage', function(to, text) {
+    log.trace({to: to, text: text, event: "selfMessage"});
     // Hack! This ensures that even though node-irc calls this as part of the same function path, the events for pmsay/chansay happen a tick later.
     // To understand why this matters, see issue
     // https://github.com/euank/EuIrcBot/issues/131.
@@ -287,7 +304,9 @@ bot.say = function(args) {
 };
 
 bot.joinChannels = function(cb) {
-  if(!cb) cb = function(err) { if(err) console.log(err); };
+  if(!cb) cb = function(err) {
+    if(err) log.error(err);
+  };
 
   var channels = Array.isArray(bot.conf.channels) ? bot.conf.channels : bot.conf.channels.split(',');
   async.map(channels, function(item, joined) {
@@ -394,14 +413,17 @@ bot.fsListData = function(namespace, listPath, cb) {
 bot.dump = function() {
   if(heapdump) {
     heapdump.writeSnapshot(function(err, filename) {
-      console.log('Heapdump written to', filename);
+      log.warn('heapdump written to', filename);
     });
+  } else {
+    log.trace("dump called, but heapdump off");
   }
-}
+};
 
 async.series([
   function(cb) {
     bot.conf = bot.config = bot.loadConfig();
+    log.trace("loaded config");
     cb(null);
   },
   bot.initClient,
@@ -410,7 +432,7 @@ async.series([
     bot.client.connect(function(){cb(null);});
   },
   function(cb){
-    console.log("Connected!");
+    log.info("connected!");
     cb(null);
   },
   bot.initModuleManager,
@@ -422,8 +444,8 @@ async.series([
 ], function(err, results) {
   if(err) {
     bot.dump();
-    console.trace("Error in init");
-    console.log(err);
+    log.fatal("error in init");
+    log.error(err);
   }
 });
 

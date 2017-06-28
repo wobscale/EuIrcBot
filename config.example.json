@@ -5,6 +5,7 @@
   "realName": "seubot",
   "server": "irc.freenode.net",
   "owner": "owner",
+  "logLevel": "info",
   "commandPrefix": "!",
   "ssl": false,
   "port": 6667,
@@ -18,7 +19,7 @@
   "channelPrefixes": "&#",
   "messageSplit": 512,
   "moduleFolders": ["modules"],
-  "disabledModules": ["github"],
+  "disabledModules": ["github", "testlog"],
   "datafolder": "data",
   "tmpfolder": "tmp",
   "configfolder": "conf"
