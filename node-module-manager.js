@@ -1,7 +1,7 @@
 var fs = require('fs'),
 		path = require('path'),
 		async = require('async'),
-		_ = require('underscore'),
+		_ = require('lodash'),
 		bunyan = require('bunyan');
 
 var modules = {};
@@ -53,7 +53,7 @@ me.loadModuleFolder = function(folder, cb) {
 			/* ./ required because of how require works. go figure. */
 			var fullPath = './' + path.join('.', folder, mPaths[i]);
 			var moduleName = me.getModuleName(fullPath);
-			if(_.contains(config.disabledModules, moduleName)) {
+			if(_.includes(config.disabledModules, moduleName)) {
 				continue;
 			}
 			if(modules[moduleName]) continue;
@@ -85,11 +85,12 @@ me.loadModules = function(cb) {
 
 me.initModules = function(cb) {
 	// Todo, don't ever init if they're already initted
-	_.each(_.values(modules), function(mod) {
+	_.forEach(modules, function(mod, name) {
 		mod.log = bunyan.createLogger({
-			name: 'euircbot/' + me.moduleName(mod),
+			name: 'euircbot/' + name,
 			serializers: {err: bunyan.stdSerializers.err}
 		});
+		mod._name = name;
 		if(typeof mod.init == 'function') {
 			mod.init(me.modifyThisForModule(mod));
 		}
@@ -292,17 +293,11 @@ me.traverseCommandHierarchy = function(botObj, fnObj, args) {
 	return fnObj.fn.apply(me.modifyThisForModule(fnObj.module), args);
 };
 
-me.moduleName = function(module) {
-	return _.find(Object.keys(modules), function(mname) {
-		return modules[mname] === module; 
-	});
-};
-
 me.modifyThisForModule = function(module) {
 	var obj = _.clone(bot);
 	obj.getAllCommandFns = me.getAllCommandFns();
 
-	obj.name = me.moduleName(module);
+	obj.name = module._name;
 	obj.datadir = bot.getDataFolder(obj.name);
 
 	obj.appendDataFile = function(file, data, cb) {
