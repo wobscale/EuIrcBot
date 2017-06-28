@@ -1,13 +1,34 @@
 module.exports.name = "sirc-testlog";
-module.exports.command = "testlog";
+
+module.exports.run_testlog = function(remainder, parts, reply, command, from, to, text, raw, regex) {
+  this.log.info(parts);
+  reply("logged at info");
+};
+
+module.exports.run_testlog2 = function(remainder, parts, reply, command, from, to, text, raw, regex) {
+  var self = this;
+  process.nextTick(function() {
+    self.log.info(parts);
+    reply("logged in a callback");
+  });
+};
+
+module.exports.run_testlog3 = function(remainder, parts, reply, command, from, to, text, raw, regex) {
+  process.nextTick(function() {
+    module.exports.log.info(parts);
+    reply("logged in a callback via module");
+  });
+};
 
 
-module.exports.run = function(remainder, parts, reply, command, from, to, text, raw, regex) {
-  if(p.length == 2) {
-    this.log[p[0]](p[1]);
-    reply("logged at " + p[0]);
-  } else {
-    this.log.info(r);
-    reply("logged at info");
-  }
+var l;
+module.exports.init = function() {
+  l = this.log;
+};
+
+module.exports.run_testlog4 = function(remainder, parts, reply, command, from, to, text, raw, regex) {
+  process.nextTick(function() {
+    l.info(parts);
+    reply("logged in a callback via a module-scoped variable");
+  });
 };
