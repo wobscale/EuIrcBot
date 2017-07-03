@@ -185,29 +185,34 @@ bot.initClient = function(cb) {
 
   bot.client.on('notice', function(from, to, text, raw) {
     log.trace({from: from, to: to, text: text, raw: raw, event: "notice"});
-    var primaryFrom = (to == bot.client.nick) ? from : to;
+    var isPm = (to == bot.client.nick);
+    var replyTo = isPm ? from : to;
+    var replyFn = bot.getNoticeReply(replyTo, isPm);
 
-    bot.callModuleFn('notice', [text, from, to, bot.getNoticeReply(primaryFrom), raw]);
-    if(to == bot.client.nick) {
-      bot.callModuleFn('pmnotice', [text, from, bot.getNoticeReply(primaryFrom), raw]);
+    bot.callModuleFn('notice', [text, from, to, replyFn, raw]);
+    if(isPm) {
+      bot.callModuleFn('pmnotice', [text, from, replyFn, raw]);
     } else {
-      bot.callModuleFn('channotice', [text, to, from, bot.getNoticeReply(primaryFrom), raw]);
+      bot.callModuleFn('channotice', [text, to, from, replyFn, raw]);
     }
-
   });
 
   bot.client.on('message', function(from, to, text, raw) {
     log.trace({from: from, to: to, text: text, raw: raw, event: "message"});
-    var primaryFrom = (to == bot.client.nick) ? from : to;
-    bot.callModuleFn('message', [text, from, to, bot.getReply(primaryFrom), raw]);
+    var isPm = (to == bot.client.nick);
+    var replyTo = isPm ? from : to;
+    var replyFn = bot.getReply(replyTo, isPm);
 
-    bot.callModuleFn('msg', [text, from, bot.getReply(primaryFrom), raw]);
+    bot.callModuleFn('message', [text, from, to, replyFn, raw]);
 
-    if(to == bot.client.nick) {
-      bot.callModuleFn('pm', [text, from, bot.getReply(from), raw]);
+    bot.callModuleFn('msg', [text, from, replyFn, raw]);
+
+    if(isPm) {
+      bot.callModuleFn('pm', [text, from, replyFn, raw]);
     } else {
-      bot.callModuleFn('chanmsg', [text, to, from, bot.getReply(to), raw]);
+      bot.callModuleFn('chanmsg', [text, to, from, replyFn, raw]);
     }
+
     if(text.substring(0, bot.config.commandPrefix.length) == bot.config.commandPrefix) {
       var re = new RegExp('^' + reEscape(bot.config.commandPrefix) + '(\\S*)\\s*(.*)$', 'g');
       var rem = re.exec(text);
@@ -216,8 +221,8 @@ bot.initClient = function(cb) {
       var respTo = (bot.client.nick == to) ? from : to;
 
       var parts = quoteSplit.parse(remainder).parts || remainder.split(" ");
-      bot.callModuleFn("any_command", [remainder, parts, bot.getReply(respTo), command, from, to, text, raw]);
-      bot.callCommandFn(command, [remainder, parts, bot.getReply(respTo), command, from, to, text, raw]);
+      bot.callModuleFn("any_command", [remainder, parts, replyFn, command, from, to, text, raw]);
+      bot.callCommandFn(command, [remainder, parts, replyFn, command, from, to, text, raw]);
     }
   });
 
@@ -234,12 +239,15 @@ bot.initClient = function(cb) {
 
   bot.client.on('action', function(from, to, text, type, raw) {
     log.trace({from: from, to: to, text: text, type: type, raw: raw, event: "action"});
-    var primaryFrom = (to == bot.client.nick) ? from : to;
-    moduleMan.callModuleFn('action', [text, from, to, bot.getActionReply(primaryFrom), raw]);
-    if(to == bot.client.nick) {
-      moduleMan.callModuleFn('pmaction', [text, from, bot.getActionReply(primaryFrom), raw]);
+    var isPm = (to == bot.client.nick);
+    var replyTo = isPm ? from : to;
+    var replyFn = bot.getActionReply(replyTo, isPm);
+
+    moduleMan.callModuleFn('action', [text, from, to, replyFn, raw]);
+    if(isPm) {
+      moduleMan.callModuleFn('pmaction', [text, from, replyFn, raw]);
     } else {
-      moduleMan.callModuleFn('chanaction', [text, to, from, bot.getActionReply(primaryFrom), raw]);
+      moduleMan.callModuleFn('chanaction', [text, to, from, replyFn, raw]);
     }
   });
 
@@ -335,14 +343,14 @@ bot.isChannel = function(name) {
 };
 
 
-bot.getReply = function(chan) {
+bot.getReply = function(to, isPm) {
   return function(args) {
     var repStr = bot.stringifyArgs.apply(this, arguments);
-    bot.client.say(chan, repStr);
+    bot.client.say(to, repStr);
   };
 };
 
-bot.getNoticeReply = function(to) {
+bot.getNoticeReply = function(to, isPm) {
   return function(args) {
     var repStr = bot.stringifyArgs.apply(this, arguments);
 
@@ -354,7 +362,7 @@ bot.getNoticeReply = function(to) {
     bot.client.notice(to, repStr);
   };
 };
-bot.getActionReply = function(to) {
+bot.getActionReply = function(to, isPm) {
   return function(args) {
     var repStr = bot.stringifyArgs.apply(this, arguments);
 
