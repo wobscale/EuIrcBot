@@ -187,7 +187,7 @@ bot.initClient = function(cb) {
     log.trace({from: from, to: to, text: text, raw: raw, event: "notice"});
     var isPm = (to == bot.client.nick);
     var replyTo = isPm ? from : to;
-    var replyFn = bot.getNoticeReply(replyTo, isPm);
+    var replyFn = bot.getReply(replyTo, isPm);
 
     bot.callModuleFn('notice', [text, from, to, replyFn, raw]);
     if(isPm) {
@@ -241,7 +241,7 @@ bot.initClient = function(cb) {
     log.trace({from: from, to: to, text: text, type: type, raw: raw, event: "action"});
     var isPm = (to == bot.client.nick);
     var replyTo = isPm ? from : to;
-    var replyFn = bot.getActionReply(replyTo, isPm);
+    var replyFn = bot.getReply(replyTo, isPm);
 
     moduleMan.callModuleFn('action', [text, from, to, replyFn, raw]);
     if(isPm) {
@@ -347,31 +347,6 @@ bot.getReply = function(to, isPm) {
   return function(args) {
     var repStr = bot.stringifyArgs.apply(this, arguments);
     bot.client.say(to, repStr);
-  };
-};
-
-bot.getNoticeReply = function(to, isPm) {
-  return function(args) {
-    var repStr = bot.stringifyArgs.apply(this, arguments);
-
-    if(bot.isChannel(chan)) {
-      bot.callModuleFn('channotice', [bot.client.nick, to, repStr]);
-    } else {
-      bot.callModuleFn('pmnotice', [bot.client.nick, to, repStr]);
-    }
-    bot.client.notice(to, repStr);
-  };
-};
-bot.getActionReply = function(to, isPm) {
-  return function(args) {
-    var repStr = bot.stringifyArgs.apply(this, arguments);
-
-    if(bot.isChannel(chan)) {
-      bot.callModuleFn('channotice', [bot.client.nick, to, repStr]);
-    } else {
-      bot.callModuleFn('pmnotice', [bot.client.nick, to, repStr]);
-    }
-    bot.client.action(to, repStr);
   };
 };
 
