@@ -187,7 +187,7 @@ bot.initClient = function(cb) {
     log.trace({from: from, to: to, text: text, raw: raw, event: "notice"});
     var isPm = (to == bot.client.nick);
     var replyTo = isPm ? from : to;
-    var replyFn = bot.getReply(replyTo, isPm);
+    var replyFn = bot.getReply(replyTo, isPm, from);
 
     bot.callModuleFn('notice', [text, from, to, replyFn, raw]);
     if(isPm) {
@@ -201,7 +201,7 @@ bot.initClient = function(cb) {
     log.trace({from: from, to: to, text: text, raw: raw, event: "message"});
     var isPm = (to == bot.client.nick);
     var replyTo = isPm ? from : to;
-    var replyFn = bot.getReply(replyTo, isPm);
+    var replyFn = bot.getReply(replyTo, isPm, from);
 
     bot.callModuleFn('message', [text, from, to, replyFn, raw]);
 
@@ -241,7 +241,7 @@ bot.initClient = function(cb) {
     log.trace({from: from, to: to, text: text, type: type, raw: raw, event: "action"});
     var isPm = (to == bot.client.nick);
     var replyTo = isPm ? from : to;
-    var replyFn = bot.getReply(replyTo, isPm);
+    var replyFn = bot.getReply(replyTo, isPm, from);
 
     moduleMan.callModuleFn('action', [text, from, to, replyFn, raw]);
     if(isPm) {
@@ -343,11 +343,94 @@ bot.isChannel = function(name) {
 };
 
 
-bot.getReply = function(to, isPm) {
-  return function(args) {
+bot.getReply = function(to, isPm, pmTarget) {
+  var spamReply = function(args) {
     var repStr = bot.stringifyArgs.apply(this, arguments);
     bot.client.say(to, repStr);
   };
+
+  // custom reply takes options of the following:
+  // {
+  //   trim: true, // trim spaces, leading and trailing
+  //   lines: 2, // number of lines to spam
+  //   replaceNewLines: false, // whether to replace newlines with | while figuring out if it'll spam
+  //   pmExtra: false, // whether to PM the whole message if it overflows
+  // }
+  var customReply = function(opts, args) {
+    var maxLineChars = 460; // convenient lie; the true number is complicated due to having to account for nick-length etc
+
+    args = Array.prototype.slice.call(arguments, 1);
+
+    // If it's a pm, all options get ignored
+    if(isPm) {
+      spamReply.apply(this, args);
+    }
+
+    var repStr = bot.stringifyArgs.apply(this, args);
+    if(opts.trim) {
+      repStr = repStr.trim();
+    }
+    var lines = repStr.split("\n");
+    var numLines = lines.length;
+    for(var i = 0; i < lines.length; i++) {
+      if(lines[i].length > maxLineChars) {
+        // we'd split this line across two when we spoke it
+        numLines++;
+      }
+    }
+
+    if(numLines <= opts.lines) {
+      // Cool, we can just say it raw and be done with it.
+      bot.client.say(to, repStr);
+      return;
+    }
+
+    // Now let's see if we can compress it down by stripping newlines maybe?
+    if(opts.replaceNewlines) {
+      var withoutNewlines = repStr.split("\n").join(" | ");
+      if(withoutNewlines.length <= (maxLineChars * opts.lines)) {
+        // Stripping was enough, we're done
+        bot.client.say(to, withoutNewlines);
+        return;
+      }
+
+      // This isn't fitting, say a stripped version
+      bot.client.say(withoutNewlines.substring(0, maxLineChars - 3) + "...");
+      // don't return, we might have to spit out extra
+    } else {
+      // we know it doesn't fit like this already, let's say a trimmed down version.
+      var toSay = "";
+      for(var i=0; i < lines.length; i++) {
+        if(i == (opts.lines - 1)) {
+          toSay += lines[i].substring(0, maxLineChars-4) + " ...";
+          break;
+        }
+        toSay += lines[i].substring(0, maxLineChars) + "\n";
+      }
+      bot.client.say(to, toSay);
+    }
+
+    if(opts.pmExtra) {
+      bot.client.say(pmTarget, repStr);
+    }
+  };
+
+  var reply = function(args) {
+    if(isPm) {
+      spamReply.apply(this, arguments);
+      return;
+    }
+    // Default to not spam if it's not a pm
+    args = Array.prototype.slice.call(arguments);
+    args.unshift({lines: 2, replaceNewLines: false, pmExtra: false, trim: true});
+    customReply.apply(this, args);
+  };
+
+  // Allow callers to do things like 'reply.spam' and 'reply.custom'
+  reply.spam = spamReply;
+  reply.custom = customReply;
+
+  return reply;
 };
 
 bot.createPathIfNeeded = function(fullPath, cb) {

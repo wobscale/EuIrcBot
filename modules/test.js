@@ -24,6 +24,10 @@ module.exports.run_test6 = function(r,p,reply) {
   reply("My name is " + this.name);
 };
 
+module.exports.run_testspam = function(r,p,reply) {
+  reply("foo\nbar\nbaz");
+};
+
 module.exports.run_testscrollback = function(r, p, reply, command, from, to) {
   var scrollbackModule = this.modules['sirc-scrollback'];
 
