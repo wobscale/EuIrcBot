@@ -497,33 +497,37 @@ bot.dump = function() {
   }
 };
 
-async.series([
-  function(cb) {
-    bot.conf = bot.config = bot.loadConfig();
-    log.trace("loaded config");
-    cb(null);
-  },
-  bot.initClient,
-  bot.init,
-  function(cb){
-    bot.client.connect(function(){cb(null);});
-  },
-  function(cb){
-    log.info("connected!");
-    cb(null);
-  },
-  bot.initModuleManager,
-  moduleMan.loadModules,
-  bot.joinChannels,
-  function(cb) {
-    bot.dump();
-  },
-], function(err, results) {
-  if(err) {
-    bot.dump();
-    log.fatal("error in init");
-    log.error(err);
-  }
-});
 
+bot.run = function() {
+  async.series([
+    function(cb) {
+      bot.conf = bot.config = bot.loadConfig();
+      log.trace("loaded config");
+      cb(null);
+    },
+    bot.initClient,
+    bot.init,
+    function(cb){
+      bot.client.connect(function(){cb(null);});
+    },
+    function(cb){
+      log.info("connected!");
+      cb(null);
+    },
+    bot.initModuleManager,
+    moduleMan.loadModules,
+    bot.joinChannels,
+    function(cb) {
+      bot.dump();
+    },
+  ], function(err, results) {
+    if(err) {
+      bot.dump();
+      log.fatal("error in init");
+      log.error(err);
+    }
+  });
+};
+
+module.exports = bot;
 }());
