@@ -357,7 +357,10 @@ bot.getReply = function(to, isPm, pmTarget) {
   //   pmExtra: false, // whether to PM the whole message if it overflows
   // }
   var customReply = function(opts, args) {
-    var maxLineChars = 460; // convenient lie; the true number is complicated due to having to account for nick-length etc
+    // Note, this value is based on what our client does (https://github.com/martynsmith/node-irc/blob/e4000b7a8ac42d9eb16fb6c3f362e1425d664f4b/lib/irc.js#L1069), which may differ from the reality of what a given irc server enforces.
+    //
+    var maxLineChars = Math.min(bot.client.maxLineLength - to.length, 
+                                bot.client.opt.messageSplit);
 
     args = Array.prototype.slice.call(arguments, 1);
 
