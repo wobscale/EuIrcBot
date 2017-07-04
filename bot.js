@@ -369,10 +369,15 @@ bot.getReply = function(to, isPm, pmTarget) {
       spamReply.apply(this, args);
     }
 
+    // Since this is a message to a channel, we're going to now apply 'custom'
+    // logic to it.
+    // First, get the string representation which the module requested to send.
     var repStr = bot.stringifyArgs.apply(this, args);
+    // Trim it if requested
     if(opts.trim) {
       repStr = repStr.trim();
     }
+    // Figure out the number of lines this would span, taking into account too-long lines splitting across lines.
     var lines = repStr.split("\n");
     var numLines = lines.length;
     for(var i = 0; i < lines.length; i++) {
@@ -382,13 +387,14 @@ bot.getReply = function(to, isPm, pmTarget) {
       }
     }
 
+    // If it fits in the max lines allowed, we don't have to modify anything
     if(numLines <= opts.lines) {
       // Cool, we can just say it raw and be done with it.
       bot.client.say(to, repStr);
       return;
     }
 
-    // Now let's see if we can compress it down by stripping newlines maybe?
+    // If replaceNewlines is set, we see if ignoring '\n' and joining stuff with '|' fixes it.
     if(opts.replaceNewlines) {
       var withoutNewlines = repStr.split("\n").join(" | ");
       if(withoutNewlines.length <= (maxLineChars * opts.lines)) {
