@@ -57,4 +57,45 @@ describe('bot.getReply', function() {
       assert.isTrue(s.calledWith("#foo", tests[i][1]), "wrong args. Expected #foo " + tests[i][1] + ", got " + util.inspect(s.getCall(0).args));
     }
   });
+
+
+  it('should spam with reply.spam', function() {
+    var tests = [
+      [["x\ny\nz\nalpha"], "x\ny\nz\nalpha"],
+      [["x".repeat(2000)], "x".repeat(2000)],
+    ];
+
+    for(var i=0; i < tests.length; i++) {
+      bot.client = mockClient();
+
+      var reply = bot.getReply("#foo", false, "holden");
+      reply.spam.apply(bot, tests[i][0]);
+
+      var s = bot.client.say;
+
+      assert.isTrue(s.called, "say not called");
+      assert.isTrue(s.calledOnce, "say called too many times: " + JSON.stringify(s.getCalls()));
+      assert.isTrue(s.calledWith("#foo", tests[i][1]), "wrong args. Expected #foo " + tests[i][1] + ", got " + util.inspect(s.getCall(0).args));
+    }
+  });
+
+  it('should spam overflow in pm', function() {
+    var tests = [
+      [["x\ny\nz\nalpha"], "x\ny\nz\nalpha"],
+      [["x".repeat(2000)], "x".repeat(2000)],
+    ];
+
+    for(var i=0; i < tests.length; i++) {
+      bot.client = mockClient();
+
+      var reply = bot.getReply("timmy", true, "timmy");
+      reply.apply(bot, tests[i][0]);
+
+      var s = bot.client.say;
+
+      assert.isTrue(s.called, "say not called");
+      assert.isTrue(s.calledOnce, "say called too many times: " + JSON.stringify(s.getCalls()));
+      assert.isTrue(s.calledWith("timmy", tests[i][1]), "wrong args. Expected #foo " + tests[i][1] + ", got " + util.inspect(s.getCall(0).args));
+    }
+  });
 });
