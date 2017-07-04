@@ -382,8 +382,10 @@ bot.getReply = function(to, isPm, pmTarget) {
     var numLines = lines.length;
     for(var i = 0; i < lines.length; i++) {
       if(lines[i].length > maxLineChars) {
-        // we'd split this line across two when we spoke it
-        numLines++;
+        // we'd split this line across multiple when we spoke it
+        // note, `- 1` since numLines above already counted this once, so we
+        // just need the extra after that first.
+        numLines += Math.ceil(lines[i].length / maxLineChars) - 1;
       }
     }
 
