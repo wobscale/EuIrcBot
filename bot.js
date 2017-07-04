@@ -410,15 +410,17 @@ bot.getReply = function(to, isPm, pmTarget) {
       // don't return, we might have to spit out extra
     } else {
       // we know it doesn't fit like this already, let's say a trimmed down version.
-      var toSay = "";
+      var linesToSay = [];
+      var maxLength = maxLineChars * opts.lines - 4; // -4 to leave room for '...'
       for(var i=0; i < lines.length; i++) {
-        if(i == (opts.lines - 1)) {
-          toSay += lines[i].substring(0, maxLineChars-4) + " ...";
+        if((linesToSay.length + lines[i].length) > maxLength || i == (opts.lines - 1)) {
+          linesToSay.push(lines[i].substring(0, maxLength - linesToSay.length) + " ...");
           break;
+        } else {
+          linesToSay.push(lines[i]);
         }
-        toSay += lines[i].substring(0, maxLineChars) + "\n";
       }
-      bot.client.say(to, toSay);
+      bot.client.say(to, linesToSay.join("\n"));
     }
 
     if(opts.pmExtra) {
