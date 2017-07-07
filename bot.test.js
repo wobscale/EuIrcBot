@@ -79,7 +79,7 @@ describe('bot.getReply', function() {
     }
   });
 
-  it('should spam overflow in pm', function() {
+  it('should spam by default in pm', function() {
     var tests = [
       [["x\ny\nz\nalpha"], "x\ny\nz\nalpha"],
       [["x".repeat(2000)], "x".repeat(2000)],
@@ -96,6 +96,90 @@ describe('bot.getReply', function() {
       assert.isTrue(s.called, "say not called");
       assert.isTrue(s.calledOnce, "say called too many times: " + JSON.stringify(s.getCalls()));
       assert.isTrue(s.calledWith("timmy", tests[i][1]), "wrong args. Expected #foo " + tests[i][1] + ", got " + util.inspect(s.getCall(0).args));
+    }
+  });
+
+  it('should work with reply.custom', function() {
+    var tests = [
+      {
+        // defaulting
+        opts: {},
+        input: [" foo bar baz "],
+        output: "foo bar baz",
+        pmOutput: null,
+      },
+      {
+        opts: {
+          trim: false,
+        },
+        input: [" foo bar baz "],
+        output: " foo bar baz ",
+        pmOutput: null,
+      },
+      {
+        opts: {
+          lines: 5,
+        },
+        input: ["SAY\nWHAT\nONE\nMORE\nTIME"],
+        output: "SAY\nWHAT\nONE\nMORE\nTIME",
+        pmOutput: null,
+      },
+      {
+        opts: {
+          lines: 5,
+        },
+        input: ["SAY\nWHAT\nONE\nMORE\nTIME\nI\nDARE\nYOU"],
+        output: "SAY\nWHAT\nONE\nMORE\nTIME ...",
+        pmOutput: null,
+      },
+      {
+        opts: {
+          replaceNewlines: true,
+        },
+        input: ["SAY\nWHAT\nONE\nMORE\nTIME\nI\nDARE\nYOU"],
+        output: "SAY | WHAT | ONE | MORE | TIME | I | DARE | YOU",
+        pmOutput: null,
+      },
+      {
+        opts: {
+          lines: 1,
+          pmExtra: true,
+        },
+        input: ["SAY\nWHAT"],
+        output: "SAY ...",
+        pmOutput: "SAY\nWHAT",
+      },
+      {
+        opts: {
+          lines: 1,
+          replaceNewlines: true,
+          pmExtra: true,
+        },
+        input: ["x".repeat("350") + "\n" + "x".repeat("350")],
+        output: "x".repeat("350") + " | " + "x".repeat(400 - 350 - 3 - 4) + " ...",
+        pmOutput: "x".repeat("350") + "\n" + "x".repeat("350"),
+      },
+    ];
+
+    for(let test of tests) {
+      bot.client = mockClient();
+      let reply = bot.getReply("#beep", false, "timmy");
+      reply.custom(test.opts, ...test.input);
+
+      let s = bot.client.say;
+      assert.isTrue(s.called, "say not called");
+      let calledTimes = test.pmOutput ? 2 : 1;
+      assert.equal(s.getCalls().length, calledTimes);
+
+      assert.isTrue(s.calledWith("#beep", test.output),
+        "wrong args. Expected #beep " + test.output + ", got " + util.inspect(s.getCall(0).args)
+      );
+
+      if(test.pmOutput) {
+        assert.isTrue(s.calledWith("timmy", test.pmOutput),
+          "wrong args. Expected #beep " + test.output + ", got " + util.inspect(s.getCall(1).args)
+        );
+      }
     }
   });
 });
