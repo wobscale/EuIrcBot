@@ -23,7 +23,7 @@ function getFirst(command, term, reply) {
 	result.first(function(json) {
 		if(json) {
 			elems[command].forEach(function(elem){
-				reply(elem + ": " + json[elem]);
+				reply.custom({lines: 5, replaceNewlines: true, pmExtra: true}, elem + ": " + json[elem]);
 			});
 		}
 		else {
