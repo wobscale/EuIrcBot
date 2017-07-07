@@ -353,41 +353,45 @@ bot.getReply = function(to, isPm, pmTarget) {
   // {
   //   trim: true, // trim spaces, leading and trailing
   //   lines: 2, // number of lines to spam
-  //   replaceNewLines: false, // whether to replace newlines with | while figuring out if it'll spam
+  //   replaceNewlines: false, // whether to replace newlines with | while figuring out if it'll spam
   //   pmExtra: false, // whether to PM the whole message if it overflows
   // }
-  var customReply = function(opts, args) {
+  var customReply = function(opts, ...args) {
     // Note, this value is based on what our client does (https://github.com/martynsmith/node-irc/blob/e4000b7a8ac42d9eb16fb6c3f362e1425d664f4b/lib/irc.js#L1069), which may differ from the reality of what a given irc server enforces.
     //
-    var maxLineChars = Math.min(bot.client.maxLineLength - to.length, 
+    let maxLineChars = Math.min(bot.client.maxLineLength - to.length, 
                                 bot.client.opt.messageSplit);
 
-    args = Array.prototype.slice.call(arguments, 1);
+    // default opts
+    opts = Object.assign({
+      trim: true,
+      lines: 2,
+      replaceNewlines: false,
+      pmExtra: false,
+    }, opts);
 
     // If it's a pm, all options get ignored
     if(isPm) {
       spamReply.apply(this, args);
+      return;
     }
 
     // Since this is a message to a channel, we're going to now apply 'custom'
     // logic to it.
     // First, get the string representation which the module requested to send.
-    var repStr = bot.stringifyArgs.apply(this, args);
+    let repStr = bot.stringifyArgs.apply(this, args);
     // Trim it if requested
     if(opts.trim) {
       repStr = repStr.trim();
     }
     // Figure out the number of lines this would span, taking into account too-long lines splitting across lines.
-    var lines = repStr.split("\n");
-    var numLines = lines.length;
-    for(var i = 0; i < lines.length; i++) {
-      if(lines[i].length > maxLineChars) {
-        // we'd split this line across multiple when we spoke it
-        // note, `- 1` since numLines above already counted this once, so we
-        // just need the extra after that first.
-        numLines += Math.ceil(lines[i].length / maxLineChars) - 1;
-      }
-    }
+    let lines = repStr.split("\n");
+    let numLines = lines.reduce((sum, line) => {
+      // how many lines does this consume after splitting over maxLineChars?
+      let linesSplitOver = Math.ceil(line.length / maxLineChars);
+      // even a 0 length line gets printed and consumes space
+      return sum + Math.max(1, linesSplitOver);
+    }, 0);
 
     // If it fits in the max lines allowed, we don't have to modify anything
     if(numLines <= opts.lines) {
@@ -398,7 +402,7 @@ bot.getReply = function(to, isPm, pmTarget) {
 
     // If replaceNewlines is set, we see if ignoring '\n' and joining stuff with '|' fixes it.
     if(opts.replaceNewlines) {
-      var withoutNewlines = repStr.split("\n").join(" | ");
+      let withoutNewlines = repStr.replace(/\n/g, " | ");
       if(withoutNewlines.length <= (maxLineChars * opts.lines)) {
         // Stripping was enough, we're done
         bot.client.say(to, withoutNewlines);
@@ -406,13 +410,13 @@ bot.getReply = function(to, isPm, pmTarget) {
       }
 
       // This isn't fitting, say a stripped version
-      bot.client.say(withoutNewlines.substring(0, maxLineChars - 3) + "...");
+      bot.client.say(to, withoutNewlines.substring(0, maxLineChars - 4) + " ...");
       // don't return, we might have to spit out extra
     } else {
       // we know it doesn't fit like this already, let's say a trimmed down version.
-      var linesToSay = [];
-      var maxLength = maxLineChars * opts.lines - 4; // -4 to leave room for '...'
-      for(var i=0; i < lines.length; i++) {
+      let linesToSay = [];
+      let maxLength = maxLineChars * opts.lines - 4; // -4 to leave room for '...'
+      for(let i=0; i < lines.length; i++) {
         if((linesToSay.length + lines[i].length) > maxLength || i == (opts.lines - 1)) {
           linesToSay.push(lines[i].substring(0, maxLength - linesToSay.length) + " ...");
           break;
@@ -435,7 +439,7 @@ bot.getReply = function(to, isPm, pmTarget) {
     }
     // Default to not spam if it's not a pm
     args = Array.prototype.slice.call(arguments);
-    args.unshift({lines: 2, replaceNewLines: false, pmExtra: false, trim: true});
+    args.unshift({lines: 2, replaceNewlines: false, pmExtra: false, trim: true});
     customReply.apply(this, args);
   };
 
