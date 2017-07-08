@@ -178,7 +178,7 @@ bot.initClient = function(cb) {
     bot.callModuleFn('part', [channel, nick, raw]);
   });
   bot.client.on('quit', function(nick,reason,channels,raw) {
-    log.trace({channel: channel, nick: nick, reason: reason, raw: raw, event: "quit"});
+    log.trace({channels: channels, nick: nick, reason: reason, raw: raw, event: "quit"});
     bot.callModuleFn('quit', [nick, reason, channels, raw]);
   });
 
