@@ -2,7 +2,7 @@
   "name": "EuIrcBot",
   "version": "0.0.1",
   "description": "An irc bot",
-  "main": "bot.js",
+  "main": "index.js",
   "dependencies": {
     "async": "latest",
     "bunyan": "^1.8.10",
@@ -14,10 +14,11 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "mocha": "^2.5.3"
+    "mocha": "^2.5.3",
+    "sinon": "^2.3.6"
   },
   "scripts": {
-    "start": "node --max_old_space_size=150 bot.js",
+    "start": "node --max_old_space_size=150 index.js",
     "install": "./installModules.sh",
     "test": "mocha $(git ls-files | grep -E \"test.js$\")"
   },

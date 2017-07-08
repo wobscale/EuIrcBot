@@ -185,29 +185,34 @@ bot.initClient = function(cb) {
 
   bot.client.on('notice', function(from, to, text, raw) {
     log.trace({from: from, to: to, text: text, raw: raw, event: "notice"});
-    var primaryFrom = (to == bot.client.nick) ? from : to;
+    var isPm = (to == bot.client.nick);
+    var replyTo = isPm ? from : to;
+    var replyFn = bot.getReply(replyTo, isPm, from);
 
-    bot.callModuleFn('notice', [text, from, to, bot.getNoticeReply(primaryFrom), raw]);
-    if(to == bot.client.nick) {
-      bot.callModuleFn('pmnotice', [text, from, bot.getNoticeReply(primaryFrom), raw]);
+    bot.callModuleFn('notice', [text, from, to, replyFn, raw]);
+    if(isPm) {
+      bot.callModuleFn('pmnotice', [text, from, replyFn, raw]);
     } else {
-      bot.callModuleFn('channotice', [text, to, from, bot.getNoticeReply(primaryFrom), raw]);
+      bot.callModuleFn('channotice', [text, to, from, replyFn, raw]);
     }
-
   });
 
   bot.client.on('message', function(from, to, text, raw) {
     log.trace({from: from, to: to, text: text, raw: raw, event: "message"});
-    var primaryFrom = (to == bot.client.nick) ? from : to;
-    bot.callModuleFn('message', [text, from, to, bot.getReply(primaryFrom), raw]);
+    var isPm = (to == bot.client.nick);
+    var replyTo = isPm ? from : to;
+    var replyFn = bot.getReply(replyTo, isPm, from);
 
-    bot.callModuleFn('msg', [text, from, bot.getReply(primaryFrom), raw]);
+    bot.callModuleFn('message', [text, from, to, replyFn, raw]);
 
-    if(to == bot.client.nick) {
-      bot.callModuleFn('pm', [text, from, bot.getReply(from), raw]);
+    bot.callModuleFn('msg', [text, from, replyFn, raw]);
+
+    if(isPm) {
+      bot.callModuleFn('pm', [text, from, replyFn, raw]);
     } else {
-      bot.callModuleFn('chanmsg', [text, to, from, bot.getReply(to), raw]);
+      bot.callModuleFn('chanmsg', [text, to, from, replyFn, raw]);
     }
+
     if(text.substring(0, bot.config.commandPrefix.length) == bot.config.commandPrefix) {
       var re = new RegExp('^' + reEscape(bot.config.commandPrefix) + '(\\S*)\\s*(.*)$', 'g');
       var rem = re.exec(text);
@@ -216,8 +221,8 @@ bot.initClient = function(cb) {
       var respTo = (bot.client.nick == to) ? from : to;
 
       var parts = quoteSplit.parse(remainder).parts || remainder.split(" ");
-      bot.callModuleFn("any_command", [remainder, parts, bot.getReply(respTo), command, from, to, text, raw]);
-      bot.callCommandFn(command, [remainder, parts, bot.getReply(respTo), command, from, to, text, raw]);
+      bot.callModuleFn("any_command", [remainder, parts, replyFn, command, from, to, text, raw]);
+      bot.callCommandFn(command, [remainder, parts, replyFn, command, from, to, text, raw]);
     }
   });
 
@@ -234,12 +239,15 @@ bot.initClient = function(cb) {
 
   bot.client.on('action', function(from, to, text, type, raw) {
     log.trace({from: from, to: to, text: text, type: type, raw: raw, event: "action"});
-    var primaryFrom = (to == bot.client.nick) ? from : to;
-    moduleMan.callModuleFn('action', [text, from, to, bot.getActionReply(primaryFrom), raw]);
-    if(to == bot.client.nick) {
-      moduleMan.callModuleFn('pmaction', [text, from, bot.getActionReply(primaryFrom), raw]);
+    var isPm = (to == bot.client.nick);
+    var replyTo = isPm ? from : to;
+    var replyFn = bot.getReply(replyTo, isPm, from);
+
+    moduleMan.callModuleFn('action', [text, from, to, replyFn, raw]);
+    if(isPm) {
+      moduleMan.callModuleFn('pmaction', [text, from, replyFn, raw]);
     } else {
-      moduleMan.callModuleFn('chanaction', [text, to, from, bot.getActionReply(primaryFrom), raw]);
+      moduleMan.callModuleFn('chanaction', [text, to, from, replyFn, raw]);
     }
   });
 
@@ -335,36 +343,111 @@ bot.isChannel = function(name) {
 };
 
 
-bot.getReply = function(chan) {
-  return function(args) {
+bot.getReply = function(to, isPm, pmTarget) {
+  var spamReply = function(args) {
     var repStr = bot.stringifyArgs.apply(this, arguments);
-    bot.client.say(chan, repStr);
+    bot.client.say(to, repStr);
   };
-};
 
-bot.getNoticeReply = function(to) {
-  return function(args) {
-    var repStr = bot.stringifyArgs.apply(this, arguments);
+  // custom reply takes options of the following:
+  // {
+  //   trim: true, // trim spaces, leading and trailing
+  //   lines: 2, // number of lines to spam
+  //   replaceNewlines: false, // whether to replace newlines with | while figuring out if it'll spam
+  //   pmExtra: false, // whether to PM the whole message if it overflows
+  // }
+  var customReply = function(opts, ...args) {
+    // Note, this value is based on what our client does (https://github.com/martynsmith/node-irc/blob/e4000b7a8ac42d9eb16fb6c3f362e1425d664f4b/lib/irc.js#L1069), which may differ from the reality of what a given irc server enforces.
+    //
+    let maxLineChars = Math.min(bot.client.maxLineLength - to.length, 
+                                bot.client.opt.messageSplit);
 
-    if(bot.isChannel(chan)) {
-      bot.callModuleFn('channotice', [bot.client.nick, to, repStr]);
-    } else {
-      bot.callModuleFn('pmnotice', [bot.client.nick, to, repStr]);
+    // default opts
+    opts = Object.assign({
+      trim: true,
+      lines: 2,
+      replaceNewlines: false,
+      pmExtra: false,
+    }, opts);
+
+    // If it's a pm, all options get ignored
+    if(isPm) {
+      spamReply.apply(this, args);
+      return;
     }
-    bot.client.notice(to, repStr);
-  };
-};
-bot.getActionReply = function(to) {
-  return function(args) {
-    var repStr = bot.stringifyArgs.apply(this, arguments);
 
-    if(bot.isChannel(chan)) {
-      bot.callModuleFn('channotice', [bot.client.nick, to, repStr]);
-    } else {
-      bot.callModuleFn('pmnotice', [bot.client.nick, to, repStr]);
+    // Since this is a message to a channel, we're going to now apply 'custom'
+    // logic to it.
+    // First, get the string representation which the module requested to send.
+    let repStr = bot.stringifyArgs.apply(this, args);
+    // Trim it if requested
+    if(opts.trim) {
+      repStr = repStr.trim();
     }
-    bot.client.action(to, repStr);
+    // Figure out the number of lines this would span, taking into account too-long lines splitting across lines.
+    let lines = repStr.split("\n");
+    let numLines = lines.reduce((sum, line) => {
+      // how many lines does this consume after splitting over maxLineChars?
+      let linesSplitOver = Math.ceil(line.length / maxLineChars);
+      // even a 0 length line gets printed and consumes space
+      return sum + Math.max(1, linesSplitOver);
+    }, 0);
+
+    // If it fits in the max lines allowed, we don't have to modify anything
+    if(numLines <= opts.lines) {
+      // Cool, we can just say it raw and be done with it.
+      bot.client.say(to, repStr);
+      return;
+    }
+
+    // If replaceNewlines is set, we see if ignoring '\n' and joining stuff with '|' fixes it.
+    if(opts.replaceNewlines) {
+      let withoutNewlines = repStr.replace(/\n/g, " | ");
+      if(withoutNewlines.length <= (maxLineChars * opts.lines)) {
+        // Stripping was enough, we're done
+        bot.client.say(to, withoutNewlines);
+        return;
+      }
+
+      // This isn't fitting, say a stripped version
+      bot.client.say(to, withoutNewlines.substring(0, maxLineChars - 4) + " ...");
+      // don't return, we might have to spit out extra
+    } else {
+      // we know it doesn't fit like this already, let's say a trimmed down version.
+      let linesToSay = [];
+      let maxLength = maxLineChars * opts.lines - 4; // -4 to leave room for '...'
+      for(let i=0; i < lines.length; i++) {
+        if((linesToSay.length + lines[i].length) > maxLength || i == (opts.lines - 1)) {
+          linesToSay.push(lines[i].substring(0, maxLength - linesToSay.length) + " ...");
+          break;
+        } else {
+          linesToSay.push(lines[i]);
+        }
+      }
+      bot.client.say(to, linesToSay.join("\n"));
+    }
+
+    if(opts.pmExtra) {
+      bot.client.say(pmTarget, repStr);
+    }
   };
+
+  var reply = function(args) {
+    if(isPm) {
+      spamReply.apply(this, arguments);
+      return;
+    }
+    // Default to not spam if it's not a pm
+    args = Array.prototype.slice.call(arguments);
+    args.unshift({lines: 2, replaceNewlines: false, pmExtra: false, trim: true});
+    customReply.apply(this, args);
+  };
+
+  // Allow callers to do things like 'reply.spam' and 'reply.custom'
+  reply.spam = spamReply;
+  reply.custom = customReply;
+
+  return reply;
 };
 
 bot.createPathIfNeeded = function(fullPath, cb) {
@@ -420,33 +503,37 @@ bot.dump = function() {
   }
 };
 
-async.series([
-  function(cb) {
-    bot.conf = bot.config = bot.loadConfig();
-    log.trace("loaded config");
-    cb(null);
-  },
-  bot.initClient,
-  bot.init,
-  function(cb){
-    bot.client.connect(function(){cb(null);});
-  },
-  function(cb){
-    log.info("connected!");
-    cb(null);
-  },
-  bot.initModuleManager,
-  moduleMan.loadModules,
-  bot.joinChannels,
-  function(cb) {
-    bot.dump();
-  },
-], function(err, results) {
-  if(err) {
-    bot.dump();
-    log.fatal("error in init");
-    log.error(err);
-  }
-});
 
+bot.run = function() {
+  async.series([
+    function(cb) {
+      bot.conf = bot.config = bot.loadConfig();
+      log.trace("loaded config");
+      cb(null);
+    },
+    bot.initClient,
+    bot.init,
+    function(cb){
+      bot.client.connect(function(){cb(null);});
+    },
+    function(cb){
+      log.info("connected!");
+      cb(null);
+    },
+    bot.initModuleManager,
+    moduleMan.loadModules,
+    bot.joinChannels,
+    function(cb) {
+      bot.dump();
+    },
+  ], function(err, results) {
+    if(err) {
+      bot.dump();
+      log.fatal("error in init");
+      log.error(err);
+    }
+  });
+};
+
+module.exports = bot;
 }());

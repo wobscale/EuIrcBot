@@ -27,27 +27,31 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
       return reply("No result for query: " + res[0].subpods[0].text);
     }
 
+    let r = function(...args) {
+      reply.custom({lines: 5, pmExtra: true, replaceNewlines: true}, ...args);
+    };
+
     var primary_pods = res.filter(function(x){return x.primary;});
     if(primary_pods.length === 0) {
       try {
-        return reply(res[0].subpods[0].text + ': ' + res[1].subpods[0].text.split('\n').join(' ~ '));
+        return r(res[0].subpods[0].text + ': ' + res[1].subpods[0].text);
       } catch(ex) {
-        return reply("No primary pod, try http://www.wolframalpha.com/input/?i="+encodeURIComponent(remainder));
+        return r("No primary pod, try http://www.wolframalpha.com/input/?i="+encodeURIComponent(remainder));
       }
     }
 
     var ppod = primary_pods[0];
     try {
       if(ppod.title && ppod.subpods[0].value) {
-        reply(ppod.title + ": " + ppod.subpods[0].value);
+        return r(ppod.title + ": " + ppod.subpods[0].value);
       } else if(ppod.title && ppod.subpods[0].text ) {
-        reply(ppod.title + ": " + ppod.subpods[0].text);
+          return r(ppod.title + ": " + ppod.subpods[0].text);
       } else {
         throw("Can't handle this ppod");
       }
     } catch(ex) {
       console.log(JSON.stringify(ppod));
-      reply("Not sure how to handle primary pod, someone should pull request this");
+      r("Not sure how to handle primary pod, someone should pull request this");
     }
   });
 };
