@@ -1,8 +1,7 @@
 var coinmarketcap = require('@linuxmercedes/coinmarketcap');
-var _ = require('lodash');
 
 function findDataForCoin(coin, data) {
-  let matches = _.filter(data, datum => coin.toLowerCase() === datum.symbol.toLowerCase());
+  let matches = data.filter(datum => coin.toLowerCase() === datum.symbol.toLowerCase());
   if (matches.length == 0) {
     return "Could not find data for " + coin;
   }
