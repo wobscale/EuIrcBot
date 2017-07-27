@@ -1,4 +1,4 @@
-var coinmarketcap = require('coinmarketcap');
+var coinmarketcap = require('@linuxmercedes/coinmarketcap');
 var _ = require('lodash');
 
 function findDataForCoin(coin, data) {

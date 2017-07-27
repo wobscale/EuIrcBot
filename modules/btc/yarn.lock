@@ -2,9 +2,9 @@
 # yarn lockfile v1
 
 
-"coinmarketcap@https://github.com/LinuxMercedes/coinmarketcap.git#deps":
-  version "0.2.0"
-  resolved "https://github.com/LinuxMercedes/coinmarketcap.git#f0ad32d02022d12dd5b8c876f836fa3d1128afd5"
+"@linuxmercedes/coinmarketcap@latest":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@linuxmercedes/coinmarketcap/-/coinmarketcap-0.2.1.tgz#7876577e3c13db088557e12a4d2a4d2b07342bbd"
   dependencies:
     node-fetch "^1.6.3"
 
