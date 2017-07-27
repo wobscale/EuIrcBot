@@ -2,6 +2,33 @@
 # yarn lockfile v1
 
 
-btce@latest:
-  version "0.4.4"
-  resolved "https://registry.yarnpkg.com/btce/-/btce-0.4.4.tgz#6ba459767fb86822d31c0c90d9a60a834c871afa"
+"coinmarketcap@https://github.com/LinuxMercedes/coinmarketcap.git#deps":
+  version "0.2.0"
+  resolved "https://github.com/LinuxMercedes/coinmarketcap.git#f0ad32d02022d12dd5b8c876f836fa3d1128afd5"
+  dependencies:
+    node-fetch "^1.6.3"
+
+encoding@^0.1.11:
+  version "0.1.12"
+  resolved "https://registry.yarnpkg.com/encoding/-/encoding-0.1.12.tgz#538b66f3ee62cd1ab51ec323829d1f9480c74beb"
+  dependencies:
+    iconv-lite "~0.4.13"
+
+iconv-lite@~0.4.13:
+  version "0.4.18"
+  resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.18.tgz#23d8656b16aae6742ac29732ea8f0336a4789cf2"
+
+is-stream@^1.0.1:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/is-stream/-/is-stream-1.1.0.tgz#12d4a3dd4e68e0b79ceb8dbc84173ae80d91ca44"
+
+lodash@latest:
+  version "4.17.4"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
+
+node-fetch@^1.6.3:
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-1.7.1.tgz#899cb3d0a3c92f952c47f1b876f4c8aeabd400d5"
+  dependencies:
+    encoding "^0.1.11"
+    is-stream "^1.0.1"
