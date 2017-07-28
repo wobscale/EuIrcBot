@@ -8,8 +8,8 @@ function findDataForCoin(coin, data) {
 
   let match = matches[0];
 
-  let price = "Price: $" + match.price_usd
-  let change = " | Change over last:"
+  let price = "Price: $" + match.price_usd;
+  let change = " | Change over last:";
   let append_change = false;
 
   if(match.percent_change_1h !== null) {
@@ -33,7 +33,7 @@ function getTickerData(coin, callback) {
     .then(data => callback(findDataForCoin(coin,data)))
     .catch(reason => {
       this.log.debug(reason);
-      return callback("Error occured getting price")
+      return callback("Error occured getting price");
     });
 }
 
