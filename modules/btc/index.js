@@ -1,53 +1,45 @@
-var BTCE = require('btce');
-var btce = new BTCE();
-var http = require('http');
+var coinmarketcap = require('@linuxmercedes/coinmarketcap');
 
-function capitalize(str) {
-  if(str === '') return '';
-  return str[0].toUpperCase() + str.slice(1);
-}
-
-function getDogecoinData(callback) {
-  http.get('http://pubapi.cryptsy.com/api.php?method=singlemarketdata&marketid=132', function(res) {
-    var j = '';
-    res.on('data', function(c) { j += c; });
-    res.on('end', function() {
-      try {
-        j = JSON.parse(j.toString());
-        var dgc_to_btc_last = j.return.markets.DOGE.lasttradeprice;
-        var dgc_to_btc_avg = j.return.markets.DOGE.recenttrades.map(function(l) { return parseFloat(l.price); });
-        dgc_to_btc_avg = dgc_to_btc_avg.reduce(function(l,r){return l+r;}) / dgc_to_btc_avg.length;
-        btce.ticker({pair: "btc_usd"}, function(err, data) {
-          if(err || !data || !data.ticker) return callback("Error occured getting BTC prices");
-          data = data.ticker;
-          callback("Last: $" + data.last * dgc_to_btc_last + " | Avg: $" + data.avg * dgc_to_btc_avg);
-        });
-      } catch(ex) {
-        callback(ex);
-        callback("Could not get doge");
-      }
-    });
-  });
-}
-
-function getTickerData(coin, metric, callback) {
-  if(coin === 'dgc') {
-    return getDogecoinData(callback);
+function findDataForCoin(coin, data) {
+  let matches = data.filter(datum => coin.toLowerCase() === datum.symbol.toLowerCase());
+  if (matches.length == 0) {
+    return "Could not find data for " + coin;
   }
-  btce.ticker({pair: coin+"_usd"}, function(err, data) {
-    if(err || !data || !data.ticker) return callback("Error occured getting BTC prices");
-    data = data.ticker;
-    if(data[metric.toLowerCase()]) {
-      callback(capitalize(metric) + ": $" + data[metric.toLowerCase()]);
-    } else {
-      callback("Last: $" + data.last + " | Avg: $" + data.avg);
-    }
-  });
+
+  let match = matches[0];
+
+  let price = "Price: $" + match.price_usd;
+  let change = " | Change over last:";
+  let append_change = false;
+
+  if(match.percent_change_1h !== null) {
+    change += (" Hour: " + match.percent_change_1h + "%");
+    append_change = true;
+  }
+  if(match.percent_change_24h !== null) {
+    change += (" Day: " + match.percent_change_24h + "%");
+    append_change = true;
+  }
+  if(match.percent_change_7d !== null) {
+    change += (" Week: " + match.percent_change_7d + "%");
+    append_change = true;
+  }
+
+  return price + (append_change ? change : "");
 }
 
-module.exports.commands = ['btc', 'ltc', 'dgc', 'eth'];
+function getTickerData(coin, callback) {
+  coinmarketcap.ticker()
+    .then(data => callback(findDataForCoin(coin,data)))
+    .catch(reason => {
+      this.log.debug(reason);
+      return callback("Error occured getting price");
+    });
+}
+
+module.exports.commands = ['btc', 'ltc', 'doge', 'eth', 'etc', 'zec'];
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
-  getTickerData(command, remainder, reply);
+  getTickerData(command, reply);
 };
 
 module.exports.run_cryptoval = function(remainder, parts, reply, command, from, to, text, raw) {
