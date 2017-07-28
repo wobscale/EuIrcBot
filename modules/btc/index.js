@@ -31,7 +31,10 @@ function findDataForCoin(coin, data) {
 function getTickerData(coin, callback) {
   coinmarketcap.ticker()
     .then(data => callback(findDataForCoin(coin,data)))
-    .catch(reason => {this.log.debug(reason); return callback("Error occured getting price")});
+    .catch(reason => {
+      this.log.debug(reason);
+      return callback("Error occured getting price")
+    });
 }
 
 module.exports.commands = ['btc', 'ltc', 'doge', 'eth', 'etc', 'zec'];
