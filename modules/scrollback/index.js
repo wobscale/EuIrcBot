@@ -298,7 +298,7 @@ function parseRegex(str, idx) {
       regex = new RegExp(ret, flags);
       return {result: regex, index: idx};
     } catch(ex) {
-      return {result: ret, index: idx, error: "Could not parse regex: " + ret + "/" + flags + ", " + ex.toString()};
+      return {result: ret, index: idx, error: "Could not parse regex: /" + ret + "/" + flags + ", " + ex.toString()};
     }
   }
   else { // Unterminated regex
