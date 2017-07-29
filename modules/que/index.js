@@ -17,6 +17,10 @@ module.exports.run = function(r, parts, reply, command, from, to) {
 
   var specs = scrollbackModule.parseSpecs(r);
 
+  if (specs.error !== undefined) {
+    return bot.sayTo(from, specs.error);
+  }
+
   scrollbackModule.getScrollbackForSpecs(to, specs, function(err, lines) {
     if (err)
       return bot.sayTo(from, err);

@@ -288,11 +288,17 @@ function parseRegex(str, idx) {
   if(idx < str.length) { // Catch the trailing /
     idx++;
 
+    let flags = '';
+    if(str[idx] === 'i') { // Check for case-insensitive regex flag
+      idx++;
+      flags = 'i';
+    }
+
     try { // Parse the regex
-      regex = new RegExp(ret);
+      regex = new RegExp(ret, flags);
       return {result: regex, index: idx};
     } catch(ex) {
-      return {result: ret, index: idx, error: "Could not parse regex: " + ret + "/, " + ex.toString()};
+      return {result: ret, index: idx, error: "Could not parse regex: /" + ret + "/" + flags + ", " + ex.toString()};
     }
   }
   else { // Unterminated regex
