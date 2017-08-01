@@ -3,16 +3,18 @@ var rangeParser = require('parse-numeric-range');
 var async = require('async');
 
 var bot;
+var log;
 
 var cacheSize = 1000;
 var cache = {};
 
 module.exports.init = function(b) {
   bot = b;
+  log = this.log;
 };
 
 function logErr(err) {
-  if(err) this.log.debug(err);
+  if(err) log.debug(err);
 }
 
 function strl(obj){
@@ -544,7 +546,7 @@ module.exports.getFormattedScrollbackLinesFromRanges = function(channel, input, 
 
   if(specs.error !== undefined) {
     this.log.debug(specs.err);
-    cb(specs.error);
+    return cb(specs.error);
   }
 
   module.exports.getScrollbackForSpecs(channel, specs, function(err, lines) {
