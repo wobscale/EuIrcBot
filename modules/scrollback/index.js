@@ -544,8 +544,8 @@ module.exports.getScrollbackForSpecs = function(channel, specs, cb) {
 module.exports.getFormattedScrollbackLinesFromRanges = function(channel, input, cb) {
   var specs = module.exports.parseSpecs(input);
 
-  if(specs.error !== undefined) {
-    this.log.debug(specs.err);
+  if(specs.error) {
+    log.debug(specs.err);
     return cb(specs.error);
   }
 
