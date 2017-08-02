@@ -3,16 +3,18 @@ var rangeParser = require('parse-numeric-range');
 var async = require('async');
 
 var bot;
+var log;
 
 var cacheSize = 1000;
 var cache = {};
 
 module.exports.init = function(b) {
   bot = b;
+  log = this.log;
 };
 
 function logErr(err) {
-  if(err) console.log(err);
+  if(err) log.debug(err);
 }
 
 function strl(obj){
@@ -204,7 +206,10 @@ module.exports.parseSpecs = function(input) {
 
   // Parse input into tokens
   while(i < input.length) {
-    if(state === STATES.NICK) {
+    if(state === STATES.ERROR) {
+      return {error: 'Could not parse "' + input.substring(i)} + '"';
+    }
+    else if(state === STATES.NICK) {
       result = parseNick(input, i);
 
       if(i != result.index) { // Got a nick
@@ -538,6 +543,11 @@ module.exports.getScrollbackForSpecs = function(channel, specs, cb) {
 
 module.exports.getFormattedScrollbackLinesFromRanges = function(channel, input, cb) {
   var specs = module.exports.parseSpecs(input);
+
+  if(specs.error) {
+    log.debug(specs.err);
+    return cb(specs.error);
+  }
 
   module.exports.getScrollbackForSpecs(channel, specs, function(err, lines) {
     if(err) {
