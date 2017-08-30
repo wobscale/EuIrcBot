@@ -90,7 +90,11 @@ module.exports.msg = function(text, from, reply, raw) {
     return;
   }
 
-  res = res.toString();
+  if(res.toString) {
+    res = res.toString();
+  } else {
+    return;
+  }
 
   var resclean = res.replace(/\s/g, '');
   var textclean = text.replace(/\s/g, '');
