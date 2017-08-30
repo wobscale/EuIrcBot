@@ -31,7 +31,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
       reply.custom({lines: 5, pmExtra: true, replaceNewlines: true}, ...args);
     };
 
-    var primary_pods = res.filter(function(x){return x.primary;});
+    let primary_pods = res.filter(function(x){return x.primary;});
     if(primary_pods.length === 0) {
       try {
         return r(res[0].subpods[0].text + ': ' + res[1].subpods[0].text);
@@ -40,18 +40,37 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
       }
     }
 
-    var ppod = primary_pods[0];
-    try {
-      if(ppod.title && ppod.subpods[0].value) {
-        return r(ppod.title + ": " + ppod.subpods[0].value);
-      } else if(ppod.title && ppod.subpods[0].text ) {
-          return r(ppod.title + ": " + ppod.subpods[0].text);
-      } else {
-        throw("Can't handle this ppod");
-      }
-    } catch(ex) {
-      console.log(JSON.stringify(ppod));
+    let ppod = primary_pods[0];
+    if(!ppod.title) {
+      this.log.error("unrecognized primary pod: ", ppod);
       r("Not sure how to handle primary pod, someone should pull request this");
+      return;
+    }
+    let title = "";
+    if(ppod.title != "Result") {
+      title = ppod.title;
+    }
+    let subval = subpodValue(ppod.subpods[0]);
+
+    if(title && subval) {
+      r(title + ": " + subval);
+    } else if(title) {
+      r(title);
+    } else {
+      r(subval);
     }
   });
 };
+
+// subpodValue, given a subpod, attempts to figure out the correct thing to print.
+// Currently, that just means any non-empty item from value, text, image,
+// preferring them in that order.
+// In the future, it's quite plausible the image may be useful for some queries.
+// Right now, it's often a duplicate of the text content if text is available.
+function subpodValue(subpod) {
+  return [
+    subpod.value,
+    subpod.text,
+    subpod.image,
+  ].find((val) => val);
+}
