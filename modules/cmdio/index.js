@@ -65,7 +65,10 @@ module.exports.run = function(r, parts, reply, cmd, from, to) {
       log.error(err);
       return reply("error: ", err);
     }
-
-    reply.custom({lines: 5, replaceNewlines: true, pmExtra: true}, body);
+    if(body) {
+      reply.custom({lines: 5, replaceNewlines: true, pmExtra: true}, body);
+    } else {
+      reply("no output but it ran I guess");
+    }
   });
 };
