@@ -10,7 +10,8 @@
     "heapdump": "latest",
     "irc": "^0.5.1",
     "snailescape.js": "^2.0.1",
-    "underscore": "latest"
+    "underscore": "latest",
+    "xregexp": "^3.2.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",

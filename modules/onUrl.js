@@ -1,23 +1,33 @@
+var url = require('url')
+  , XRegExp = require('xregexp');
+
+var tokenSplitRegex = XRegExp('[\\p{Pc}\\p{Pd}\\pZ]+')
+  , tokenTrimBase = '(?![/])\\pP+'
+  , tokenTrimStart = XRegExp('^' + tokenTrimBase)
+  , tokenTrimEnd = XRegExp(tokenTrimBase + '$');
+
 var bot;
 module.exports.init = function(b) {
   bot = b;
 };
 
-var urlRegex = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)/g;
-
 module.exports.msg = function(text, from, reply, raw) {
-  var re;
   /* Avoid dupe urls in one line unless they really want it */
   var thisLinesUrls = [];
-  while((re = urlRegex.exec(text))) {
-    var url = re[0];
-    if(thisLinesUrls.indexOf(url) >= 0) {
-      bot.callModuleFn('dupeurl', [url, reply, text, from, raw]);
-    } else {
-      bot.callModuleFn('url', [url, reply, text, from, raw]);
-    }
-    thisLinesUrls.push(url);
-  }
+
+  text.split(tokenSplitRegex)
+    .map((token) => url.parse(
+      token.replace(tokenTrimStart, '').replace(tokenTrimEnd, '')))
+    .filter((u) => u.protocol && u.host)
+    .map((u) => u.href)
+    .forEach((u) => {
+      if (thisLinesUrls.includes(u)) {
+        bot.callModuleFn('dupeurl', [u, reply, text, from, raw]);
+      } else {
+        bot.callModuleFn('url', [u, reply, text, from, raw]);
+      }
+      thisLinesUrls.push(u);
+    });
 };
 
 module.exports.url = function(url, reply, text) {
