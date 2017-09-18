@@ -1,7 +1,7 @@
 var url = require('url')
   , XRegExp = require('xregexp');
 
-var tokenSplitRegex = XRegExp('[\\p{Pc}\\p{Pd}\\pZ]+')
+var tokenSplitRegex = XRegExp('(?![-_])[\\p{Pc}\\p{Pd}\\pZ]+')
   , tokenTrimBase = '(?![/])\\pP+'
   , tokenTrimStart = XRegExp('^' + tokenTrimBase)
   , tokenTrimEnd = XRegExp(tokenTrimBase + '$');
