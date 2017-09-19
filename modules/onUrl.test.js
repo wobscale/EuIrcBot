@@ -17,6 +17,13 @@ describe('onUrl.msg', () => {
       ["http://example.com/", ["http://example.com/"]],
       ["IANNA lanana banana http://example.com/ ", ["http://example.com/"]],
       ["Punctual clocks at http://clock.town/!", ["http://clock.town/"]],
+      ["https://witches.town/@iliana/5147866", ["https://witches.town/@iliana/5147866"]],
+      ["https://oo-ee.ooo", ["https://oo-ee.ooo/"]], // an artifact of url.parse
+      ["https://oo-ee.ooo/underscore_page.html", ["https://oo-ee.ooo/underscore_page.html"]],
+      ["http://example.com/?url=foo/bar=baz.~+waitbeep.", ["http://example.com/?url=foo/bar=baz.~+waitbeep"]],
+      ["file://thank-gosh-our-security-is-good.and-this-is-fine/", ["file://thank-gosh-our-security-is-good.and-this-is-fine/"]],
+      ["file:///thank-gosh-our-security-is-good.and-this-is-fine/", []],
+      ["http://名がドメイン.com", ["http://xn--v8jxj3d1dzdz08w.com/"]],
     ];
 
     testCases.forEach((c) => {
