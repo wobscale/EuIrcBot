@@ -24,6 +24,7 @@ describe('onUrl.msg', () => {
       ["file://thank-gosh-our-security-is-good.and-this-is-fine/", ["file://thank-gosh-our-security-is-good.and-this-is-fine/"]],
       ["file:///thank-gosh-our-security-is-good.and-this-is-fine/", []],
       ["http://名がドメイン.com", ["http://xn--v8jxj3d1dzdz08w.com/"]],
+      ["broken auth http://%@foo.bar/baz pfff", []],
     ];
 
     testCases.forEach((c) => {

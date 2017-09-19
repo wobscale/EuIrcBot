@@ -16,9 +16,12 @@ module.exports.msg = function(text, from, reply, raw) {
   var thisLinesUrls = [];
 
   text.split(tokenSplitRegex)
-    .map((token) => url.parse(
-      token.replace(tokenTrimStart, '').replace(tokenTrimEnd, '')))
-    .filter((u) => u.protocol && u.host)
+    .map((token) => {
+      try {
+        return url.parse(token.replace(tokenTrimStart, '').replace(tokenTrimEnd, ''));
+      } catch (_) {}
+    })
+    .filter((u) => u && u.protocol && u.host)
     .map((u) => u.href)
     .forEach((u) => {
       if (thisLinesUrls.includes(u)) {
