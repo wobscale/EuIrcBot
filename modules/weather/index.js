@@ -1,72 +1,28 @@
 var http = require('http');
 var https = require('https');
-var config;
+var googleMaps = require('googlemaps');
+var apiKey;
 
-module.exports.commands = ["forecast", "w", "weather", "daily"];
+module.exports.commands = ["forecast", "w", "weather"];
 
 module.exports.init = function(bot) {
   bot.getConfig( "weather.json", function( err, conf ) {
     if( err ) {
-      console.log( err );
+      bot.log.error("Failed loading config for Weather Module");
     } else {
-      config = conf;
+      apiKey = conf.wunderground_key;
     }
   });
 };
 
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw){
-  var locStr;
-  locStr = encodeURIComponent(remainder);
-
-  https.get('https://maps.googleapis.com/maps/api/geocode/json?address=' + locStr +
-  '&sensor=false&key=' + config.google_key, function(res) {
-    var data = '';
-    res.on('data', function(chunk) {
-      data += chunk;
-    });
-    var locData;
-    res.on('end', function() {
-      try {
-        locData = JSON.parse(data.toString());
-      } catch(e) {
-        return reply("Error handling goog maps response");
-      }
-
-      if (typeof(locData.results[0]) === "undefined" )
-        return reply("Error: Couldn't find city/state");
-      var address_components = locData.results[0].address_components;
-      var city;
-      var state;
-      var country, longCountry;
-      var i;
-      for (i = 0; i < address_components.length; ++i)
-      {
-        if (address_components[i].types.indexOf("country") != -1)
-        {
-          country = address_components[i].short_name;
-          longCountry = address_components[i].long_name;
-        }
-
-        if (address_components[i].types.indexOf("locality") != -1)
-        {
-          city = address_components[i].short_name;
-        }
-
-        if (address_components[i].types.indexOf("administrative_area_level_1") != -1)
-        {
-          state = address_components[i].short_name;
-        }
-      }
-
-      if (typeof(city) === "undefined" || typeof(longCountry) === "undefined")
-        return reply("Error: Couldn't find city/country");
-
-      city = city.replace(/ /g, '_');
-      if (country != "US")
-        locStr = longCountry + "/" + city;
-      else
-        locStr = state + "/" + city;
-
+  googleMaps.geocode(remainder, function(err, data) {
+    if(err) {
+      return reply("Error calling Google Maps API");
+    } else {
+      if (typeof data.results[0] === "undefined" ) return reply("Error: Couldn't find location");
+      var loc = data.results[0].geometry.location;
+      var locStr = loc.lat.toString() + ',' + loc.lng.toString();
       switch(command)
       {
         case "w":
@@ -75,19 +31,16 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
           return getWeather(locStr, reply);
         case "forecast":
           return getForecast(locStr, reply);
-        case "daily":
-          break;
         default:
-          return reply("Error, command <" + command + "> not implemented!");
+          return reply(`Error, command <${command}> not implemented!`);
       }
 
-    });
+    }
   });
 };
 
 function getWeather(locStr, reply) {
-  http.get('http://api.wunderground.com/api/' + config.wunderground_key +
-      '/conditions/q/' + locStr + '.json', function(res) {
+  http.get(`http://api.wunderground.com/api/${apiKey}/conditions/q/${locStr}.json`, function(res) {
     var wudata = '';
     res.on('data', function(chunk) {
       wudata += chunk;
@@ -99,20 +52,21 @@ function getWeather(locStr, reply) {
       } catch(e) {
         return reply("Error handling wunderground response");
       }
-      if (typeof(weatherData.current_observation) === "undefined")
-        return reply("Couldn't get Weather for : " + locStr);
+      if (typeof(weatherData.current_observation) === "undefined") return reply(`Couldn't get Weather for : ${locStr}`);
       var conditions = weatherData.current_observation;
-      reply(conditions.display_location.full + ' | ' + conditions.temp_f +
-        '°F, '  + conditions.weather + ' | Humidity: ' +
-        conditions.relative_humidity);
+      var display_loc = conditions.display_location.full;
+      var temp = conditions.temp_f;
+      var weather = conditions.weather;
+      var humidity = conditions.relative_humidity;
+      var feelsLike = conditions.feelslike_f
+      reply(`${display_loc} | ${temp}°F (feels like ${feelsLike}°F), ${weather} | Humidity: ${humidity}`);
    });
  });
 }
 
 
 function getForecast(locStr, reply) {
-  http.get('http://api.wunderground.com/api/' + config.wunderground_key +
-      '/forecast/q/' + locStr + '.json', function(res) {
+  http.get(`http://api.wunderground.com/api/${apiKey}/forecast/q/${locStr}.json`, function(res) {
     var wudata = '';
     res.on('data', function(chunk) {
       wudata += chunk;
@@ -130,12 +84,11 @@ function getForecast(locStr, reply) {
       var forecast = weatherData.forecast.simpleforecast.forecastday;
       for(i = 0; i < forecast.length; ++i)
       {
-        reply(forecast[i].date.weekday + ' ' + forecast[i].date.month + '/' +
-          forecast[i].date.day + ': ' + forecast[i].conditions + ' | High: ' +
-          forecast[i].high.fahrenheit +  '°F  | Low: ' +
-          forecast[i].low.fahrenheit + '°F | Precipitation: ' +
-          forecast[i].pop + '%');
-     }
+        var fcst = forecast[i];
+        var fcst_header =  `${fcst.date.weekday} ${fcst.date.month}/${fcst.date.day}: `;
+        var fcst_string = `${fcst.conditions} | High: ${fcst.high.fahrenheit}°F  | Low: ${fcst.low.fahrenheit}°F | Precipitation: ${fcst.pop}%`;
+        reply(fcst_header + fcst_string);
+      }
    });
  });
 }

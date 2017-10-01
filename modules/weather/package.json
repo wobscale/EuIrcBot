@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "description": "Weather Underground module",
   "main": "index.js",
-  "dependencies": {},
+  "dependencies": {
+    "googlemaps": "~0.1.9"
+  },
   "author": "gmackie",
   "license": "MIT"
 }
