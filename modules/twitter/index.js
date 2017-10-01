@@ -1,5 +1,6 @@
 var Twit = require('twit');
 var ent = require('ent');
+var log;
 
 var t = null;
 var tConf = null;
@@ -9,19 +10,20 @@ var twitRegex = /^(https?\:\/\/)?(dashboard\.|www\.)?twitter\.com\/([a-zA-Z0-9_]
 var nonUsers = ["search"];
 module.exports.init = function(b) {
   bot = b;
+  log = bot.log;
   bot.getConfig("twitter.json", function(err, conf) {
     tConf = conf;
-    if(err) bot.say("Unable to load twitter module: " + err);
+    if(err) return log.error("Unable to load twitter module: " + err);
     try {
       t = new Twit(conf);
     } catch(ex) {
-      bot.say("Error loading twitter library: " + ex);
+      log.error("Error loading twitter library: " + ex);
     }
   });
 };
 
 module.exports.url = function(url, reply) {
-  if(t === null) return reply("Unable to handle twitter url; lib not loaded");
+  if(t === null) return log.error("Unable to handle twitter url; lib not loaded");
 
   var m;
   if((m = twitRegex.exec(url))) {
