@@ -1,0 +1,11 @@
+{
+  "name": "sirc-amazon",
+  "version": "0.0.1",
+  "description": "Amazon module",
+  "main": "index.js",
+  "dependencies": {
+    "amazon-product-api": "latest"
+  },
+  "author": "gmackie",
+  "license": "MIT"
+}
