@@ -10,4 +10,4 @@ VOLUME /usr/src/app/data
 USER bot
 RUN yarn install
 
-CMD ["node", "--max_old_space_size=150", "index.js"]
+CMD ["node", "--max_old_space_size=350", "index.js"]
