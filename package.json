@@ -19,7 +19,7 @@
     "sinon": "^2.3.6"
   },
   "scripts": {
-    "start": "node --max_old_space_size=150 index.js",
+    "start": "node --max_old_space_size=350 index.js",
     "install": "./installModules.sh",
     "test": "mocha $(git ls-files | grep -E \"test.js$\")"
   },
