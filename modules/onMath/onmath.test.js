@@ -49,7 +49,7 @@ describe('onMath', function() {
       '3 #comment',
       '"3" #comment',
       'not 5',
-      // 'not []', // TODO, this is kinda dumb
+      'not []',
       // "W 0 B S C A L E", // One can dream
     ];
 
@@ -61,14 +61,18 @@ describe('onMath', function() {
     });
   });
 
+  it("should ignore :VAR matrix expansions", function(done) {
+    assertResponse("D=1", "1", function() {
+      assertNoResponse(":D", done);
+    });
+  });
+
   it("should allow clearing", function(done) {
     assertResponse("x=10", "10", function() {
       assertResponse("x * 100", "1000", function() {
         onmath.run_reset("", null, function() {
-          assertNoResponse("x * 100", function() {
-            // TODO this indentation
-            done();
-          });
+          // someone think of the promises
+          assertNoResponse("x * 100", done);
         });
       });
     });
