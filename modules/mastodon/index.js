@@ -54,7 +54,6 @@ function robotRequest(options, fn) {
     delete robots._rules['*'];
 
     if (robots.isAllowed(url, userAgent)) {
-      console.log(options);
       request(options, fn);
     } else {
       fn(new Error(util.format('URL access disallowed by %s: %s', robotsTxtUrl, url)));
