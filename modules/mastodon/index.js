@@ -117,6 +117,30 @@ function checkHostname(hostname, fn) {
   }
 }
 
+function forceCheckHostname(url, fn) {
+  robotRequest(
+    { url: urlMod.resolve(url, '/api/v1/instance')},
+    (error, response, body) => {
+      if (!error && response.statusCode == 200) {
+        try {
+          body = JSON.parse(body);
+        } catch (e) {
+          fn(false);
+        }
+        if (body.uri) {
+          fn(true);
+          moduleConfig.instances.push(body.uri);
+          writeConfig();
+        } else {
+          fn(false);
+        }
+      } else {
+        fn(false);
+      }
+    }
+  );
+}
+
 /*
  * fetchResource only attempts to fetch the URL given as a particular content
  * type. This is less than what a full ActivityPub-implementing client needs to
@@ -247,7 +271,13 @@ function handleUrl(url, reply) {
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
   url = urlMod.parse(remainder);
   checkHostname(url.host, (ok) => { if (!ok) {
-    handleUrl(url.href, reply);
+    forceCheckHostname(url, (ok) => {
+      if (ok) {
+        handleUrl(url.href, reply);
+      } else {
+        reply('error: not a mastodon instance');
+      }
+    });
   }});
 };
 
