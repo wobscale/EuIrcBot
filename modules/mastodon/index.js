@@ -29,12 +29,12 @@
 var Cacheman = require('cacheman')
   , contentType = require('content-type')
   , execSync = require('child_process').execSync
-  , htmlToText_mod = require('html-to-text')
+  , htmlToTextMod = require('html-to-text')
   , robotsParser = require('robots-parser')
   , robotsTxtCache = new Cacheman()
   , sprintf = require('extsprintf').sprintf
   , util = require('util')
-  , url = require('url');
+  , urlMod = require('url');
 
 /* variables defined in module.exports.init */
 var bot = null
@@ -42,31 +42,34 @@ var bot = null
   , moduleConfig = null
   , request = null;
 
-function robotRequest(url, fn) {
+function robotRequest(options, fn) {
+  var url = options.url;
   var userAgent = moduleConfig != null && moduleConfig.userAgent || 'EuIrcBot';
-  var robotsTxtUrl = url.resolve(url, '/robots.txt');
+  var robotsTxtUrl = urlMod.resolve(url, '/robots.txt');
 
-  var handle = function (robots) {
+  var handle = function (robotsTxt) {
+    robots = robotsParser(robotsTxtUrl, robotsTxt);
+    /* `User-agent: *` rules are generally overzealous. We're not a
+     * search engine spider. */
+    delete robots._rules['*'];
+
     if (robots.isAllowed(url, userAgent)) {
-      request(url, fn);
+      console.log(options);
+      request(options, fn);
     } else {
-      fn(Error(util.format('URL access disallowed by %s: %s', robotsTxtUrl, url)));
+      fn(new Error(util.format('URL access disallowed by %s: %s', robotsTxtUrl, url)));
     }
   };
 
-  robotsTxtCache.get(robotsTxtUrl, function (err, robots) {
+  robotsTxtCache.get(robotsTxtUrl, function (err, robotsTxt) {
     if (err) {
-      fn(Error('robots.txt cache error: ' + err.message));
+      fn(new Error('robots.txt cache error: ' + err.message));
     } else {
-      if (!robots) {
-        request(robotsTxtUrl, function (err, response, body) {
+      if (!robotsTxt) {
+        request(robotsTxtUrl, function (err, response, robotsTxt) {
           if (err) {
-            fn(Error(util.format('failed to fetch %s: %s', robotsTxtUrl, err.message)));
+            fn(new Error(util.format('failed to fetch %s: %s', robotsTxtUrl, err.message)));
           } else {
-            robots = robotsParser(robotsTxtUrl, body);
-            /* `User-agent: *` rules are generally overzealous. We're not a
-             * search engine spider. */
-            delete robots._rules['*'];
             /* Determine TTL for this robots.txt. Google says that requests are
              * "generally cached for up to one day" but that it may adjust that
              * based on max-age Cache-Control headers, which seems reasonable. */
@@ -79,18 +82,17 @@ function robotRequest(url, fn) {
                 ttl = Math.min(Math.max(parseInt(match[1], 10), 300), 604800);
               }
             }
-
-            robotsTxtCache.set(robotsTxtUrl, robots, ttl, function (err) {
+            robotsTxtCache.set(robotsTxtUrl, robotsTxt, ttl, function (err) {
               if (err) {
-                fn(Error('robots.txt cache error: ' + err.message));
+                fn(new Error('robots.txt cache error: ' + err.message));
               } else {
-                handle(robots);
+                handle(robotsTxt);
               }
             });
           }
         });
       } else {
-        handle(robots);
+        handle(robotsTxt);
       }
     }
   });
@@ -122,7 +124,7 @@ function checkHostname(hostname, fn) {
  * types would also be required.
  */
 function fetchResource(url, fn) {
-  request({
+  robotRequest({
     url: url,
     headers: { 'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams", application/activity+json' },
   }, (error, response, body) => {
@@ -150,7 +152,7 @@ function fetchResource(url, fn) {
 }
 
 function htmlToText(s) {
-  return htmlToText_mod.fromString(s, {
+  return htmlToTextMod.fromString(s, {
     wordwrap: null,
     ignoreHref: true,
   });
@@ -230,27 +232,28 @@ module.exports.init = function(b) {
  * continues if the instance is known.
  */
 
+function handleUrl(url, reply) {
+  fetchResource(url, (error, record) => {
+    if (error) {
+      error.mastodonUrl = url;
+      log.info(error);
+      reply('error: ' + error.message);
+    } else {
+      formatRecord(record, (s) => reply.custom({ replaceNewlines: true }, s));
+    }
+  });
+}
+
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
-  u = url.parse(remainder);
-  if (!(u.protocol && u.host)) { return; }
-  checkHostname(u.host, (ok) => { if (!ok) {
-    fetchResource(u, (error, record) => {
-      if (error) {
-        reply('error: ' + error.message);
-      } else {
-        formatRecord(record, (s) => reply.custom({ replaceNewlines: true }, s));
-      }
-    });
+  url = urlMod.parse(remainder);
+  checkHostname(url.host, (ok) => { if (!ok) {
+    handleUrl(url.href, reply);
   }});
 };
 
-module.exports.url = function(u, reply) {
-  u = url.parse(u);
-  checkHostname(u.host, (ok) => { if (ok) {
-    fetchResource(u, (error, record) => {
-      if (!error) {
-        formatRecord(record, (s) => reply.custom({ replaceNewlines: true }, s));
-      }
-    });
+module.exports.url = function(url, reply) {
+  url = urlMod.parse(url);
+  checkHostname(url.host, (ok) => { if (ok) {
+    handleUrl(url.href, reply);
   }});
 };
