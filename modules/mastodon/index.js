@@ -233,7 +233,7 @@ module.exports.init = function(b) {
     userAgent += '/' + ver;
   } catch (ex) {}
 
-  var userAgentUrl = (moduleConfig && moduleConfig.userAgent
+  var userAgentUrl = (moduleConfig && moduleConfig.userAgentUrl
     || 'https://github.com/euank/EuIrcBot/blob/{commitish}/modules/mastodon/info.md');
   if (userAgentUrl.includes('{commitish}')) {
     var commitish = 'master';
