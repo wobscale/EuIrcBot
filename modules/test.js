@@ -8,9 +8,9 @@ module.exports.command = "test";
 module.exports.commands = ['test2', 'test3', /(t+)test/];
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw, regex) {
 	if(typeof regex === "undefined") {
-		reply("One of my test commands were called!", "In fact it was", command);
+		reply("One of my test commands was called!", "In fact it was", command);
 	} else {
-		reply("One of my test regex commands were called!", "In fact it was", regex, "which matched", command);
+		reply("One of my test regex commands was called!", "In fact it was", regex, "which matched", command);
 	}
 };
 
