@@ -63,7 +63,7 @@ module.exports.commands = {
       commandDict[parts[0]].command = parts[1];
       commandDict[parts[0]].blame = from;
 
-      if(exists) reply("Overwrite command " + parts[0]);
+      if(exists) reply("Overwrote command " + parts[0]);
       else reply("Added command " + parts[0]);
 
       writeCommands();
