@@ -57,7 +57,7 @@ module.exports.commands = {
     },
     add: function(r, parts, reply, command, from) {
       if(parts.length !== 2) return reply("add must have *exactly* two arguments");
-      if(!allowCmds && parts[1].charAt(0) === '!') return reply ("You are an asshole");
+      if(!allowCmds && (/^!/m).test(parts[1])) return reply("None of that, now.");
       var exists = commandDict[parts[0]];
       commandDict[parts[0]] = {};
       commandDict[parts[0]].command = parts[1];
