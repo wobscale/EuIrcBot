@@ -1,3 +1,5 @@
 {
-	"password" : "dicks"
+  "nickserv": "nickserv",
+  "password" : "dicks",
+  "successtext": "^You are now identified for "
 }
