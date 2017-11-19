@@ -15,13 +15,17 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
+    "eslint": "^4.11.0",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.8.0",
     "mocha": "^2.5.3",
     "sinon": "^2.3.6"
   },
   "scripts": {
     "start": "node --max_old_space_size=350 index.js",
     "install": "./installModules.sh",
-    "test": "mocha $(git ls-files | grep -E \"test.js$\")"
+    "test": "mocha $(git ls-files | grep -E \"test.js$\")",
+    "lint": "eslint bot.js"
   },
   "repository": {
     "type": "git",

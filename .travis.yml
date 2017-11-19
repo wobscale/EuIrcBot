@@ -5,3 +5,8 @@ branches:
   only:
   - master
   - dev
+
+script:
+- yarn install
+- yarn lint
+- yarn test

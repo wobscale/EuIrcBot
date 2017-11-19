@@ -1,37 +1,34 @@
-(function () {
-'use strict';
+const irc = require('irc');
+const fs = require('fs');
+const _ = require('underscore');
+const async = require('async');
+const path = require('path');
+const moduleMan = require('./node-module-manager');
+const changeCase = require('change-case');
+const SnailEscape = require('snailescape.js');
+const bunyan = require('bunyan');
 
-var irc = require('irc'),
-    fs = require('fs'),
-    _ = require('underscore'),
-    async = require('async'),
-    path = require('path'),
-    moduleMan = require("./node-module-manager"),
-    changeCase = require('change-case'),
-    SnailEscape = require('snailescape.js'),
-    bunyan = require('bunyan');
+let heapdump = null;
 
-var log = bunyan.createLogger({
-  name: "euircbot",
-  serializers: {err: bunyan.stdSerializers.err},
+const log = bunyan.createLogger({
+  name: 'euircbot',
+  serializers: { err: bunyan.stdSerializers.err },
 });
 
-var heapdump = null;
-
-var reEscape = function(s) {
-    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+const reEscape = function reEscape(s) {
+  return s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
 
-var bot = {};
+const bot = {};
 
-bot.util = {}; //Util functions
+bot.util = {}; // Util functions
 
-bot.init = function(cb) {
-  if(bot.config.heapdump) {
-    log.debug("enabling heap dumps");
+bot.init = function botInit(cb) {
+  if (bot.config.heapdump) {
+    log.debug('enabling heap dumps');
     heapdump = require('heapdump');
-    process.on('SIGINT', function() {
-      log.warn("dumping heap, if configured, and exiting");
+    process.on('SIGINT', () => {
+      log.warn('dumping heap, if configured, and exiting');
       bot.dump();
       process.exit();
     });
@@ -39,27 +36,27 @@ bot.init = function(cb) {
   bot.configfolder = bot.config.configfolder;
   bot.tmpfolder = bot.config.tmpfolder;
   bot.datafolder = bot.config.datafolder;
-  _.each(['configfolder', 'tmpfolder', 'datafolder'],function(i) {
-    if(!fs.existsSync("./"+bot[i])) {
-      fs.mkdirSync("./"+bot[i]);
+  _.each(['configfolder', 'tmpfolder', 'datafolder'], (i) => {
+    if (!fs.existsSync(`./${bot[i]}`)) {
+      fs.mkdirSync(`./${bot[i]}`);
     }
   });
   log.level(bot.config.logLevel);
   cb(null);
 };
 
-bot.initModuleManager = function(cb) {
+bot.initModuleManager = function botInitModuleManager(cb) {
   moduleMan.init(bot, log, cb);
 };
 
-var supportedConfigTypes = [
+const supportedConfigTypes = [
   {
-    exts: [".json"],
-    test: null, //TODO
-    parse: function(data, loc, cb) {
+    exts: ['.json'],
+    test: null, // TODO
+    parse(data, loc, cb) {
       try {
         cb(null, JSON.parse(data));
-      } catch(ex) {
+      } catch (ex) {
         cb(ex);
       }
     },
@@ -67,75 +64,76 @@ var supportedConfigTypes = [
   {
     exts: ['.js'],
     test: null,
-    parse: function(data, loc, cb) {
+    parse(data, loc, cb) {
       try {
         cb(null, require(loc));
-      } catch(ex) {
+      } catch (ex) {
         cb(ex);
       }
-    }
-  }
+    },
+  },
 ];
 
-bot.getConfig = function(name, cb) {
-  var fullPath = path.join(bot.config.configfolder, name);
-  var done = false;
-  fs.readFile(fullPath,{encoding: 'utf8'}, function(err, res) {
-    if(err) return cb(err);
+bot.getConfig = function botGetConfig(name, cb) {
+  const fullPath = path.join(bot.config.configfolder, name);
+  let done = false;
+  fs.readFile(fullPath, { encoding: 'utf8' }, (err, res) => {
+    if (err) return cb(err);
 
-    var ext = path.extname(fullPath);
-    supportedConfigTypes.forEach(function(type) {
-      if(_.any(type.exts, function(e) { return e === ext; })) {
+    const ext = path.extname(fullPath);
+    supportedConfigTypes.forEach((type) => {
+      if (_.any(type.exts, e => e === ext)) {
         type.parse(res, fullPath, cb);
         done = true;
         return false;
       }
+      return true;
     });
-    if(!done) return cb(null, res);
+    if (!done) cb(null, res);
+    return null;
   });
 };
 
-bot.getDataFolder = function(namespace) {
+bot.getDataFolder = function botGetDataFolder(namespace) {
   return path.join(bot.datafolder, namespace);
 };
 
 
-bot.callModuleFn = function(fname, args) {
+bot.callModuleFn = function botCallModuleFn(fname, args) {
   return moduleMan.callModuleFn(fname, args);
 };
 
 
-bot.callCommandFn = function(command, args) {
+bot.callCommandFn = function botCallCommandFn(command, args) {
   return moduleMan.callCommandFn(command, args);
 };
 
 
-bot.loadConfig = function(cb) { //sync
-  var conf;
-  var default_config = JSON.parse(fs.readFileSync("./config.example.json"));
+bot.loadConfig = function botLoadConfig() { // sync
+  let conf;
+  const defaultConfig = JSON.parse(fs.readFileSync('./config.example.json'));
   try {
     conf = JSON.parse(fs.readFileSync('./config.json'));
-  } catch(ex) {
-    log.error(e, "error reading config file");
-    conf = default_config;
+  } catch (ex) {
+    log.error(ex, 'error reading config file');
+    conf = defaultConfig;
   }
 
-  _.each(default_config, function(value, key) {
-    var envKey = changeCase.constantCase(key);
+  _.each(defaultConfig, (value, key) => {
+    const envKey = changeCase.constantCase(key);
     // Load environment variable approximations of each config key and let them override
-    if(typeof process.env[envKey] !== 'undefined') {
+    if (typeof process.env[envKey] !== 'undefined') {
       try {
         conf[key] = JSON.parse(process.env[envKey]);
-      } catch(ex) {
+      } catch (ex) {
         log.error("could not load env config '%s' because it was not valid json", envKey);
       }
     }
   });
 
-  var def_keys = Object.keys(default_config);
-  _.each(default_config, function(value, key) {
-    if(typeof conf[key] === 'undefined') {
-      log.debug("defaulting %s=%s", key, value);
+  _.each(defaultConfig, (value, key) => {
+    if (typeof conf[key] === 'undefined') {
+      log.debug('defaulting %s=%s', key, value);
       conf[key] = value;
     }
   });
@@ -143,8 +141,8 @@ bot.loadConfig = function(cb) { //sync
 };
 
 
-bot.initClient = function(cb) {
-  var conf = bot.config;
+bot.initClient = function botInitClient(cb) {
+  const conf = bot.config;
   bot.client = new irc.Client(conf.server, conf.nick, {
     userName: conf.userName,
     password: conf.password,
@@ -159,92 +157,105 @@ bot.initClient = function(cb) {
     selfSigned: true,
     floodProtection: false,
     channelPrefixes: conf.channelPrefixes,
-    messageSplit: conf.messageSplit
+    messageSplit: conf.messageSplit,
   });
 
-  var quoteSplit = new SnailEscape();
+  const quoteSplit = new SnailEscape();
 
-  bot.client.on('error', function(err) { 
-    log.error(err, "irc client error");
+  bot.client.on('error', (err) => {
+    log.error(err, 'irc client error');
   });
 
 
-  bot.client.on('join', function(channel, nick, raw) {
-    log.trace({channel: channel, nick: nick, raw: raw, event: "join"});
+  bot.client.on('join', (channel, nick, raw) => {
+    log.trace({
+      channel, nick, raw, event: 'join',
+    });
     bot.callModuleFn('join', [channel, nick, raw]);
   });
-  bot.client.on('part', function(channel, nick, raw) {
-    log.trace({channel: channel, nick: nick, raw: raw, event: "part"});
+  bot.client.on('part', (channel, nick, raw) => {
+    log.trace({
+      channel, nick, raw, event: 'part',
+    });
     bot.callModuleFn('part', [channel, nick, raw]);
   });
-  bot.client.on('quit', function(nick,reason,channels,raw) {
-    log.trace({channels: channels, nick: nick, reason: reason, raw: raw, event: "quit"});
+  bot.client.on('quit', (nick, reason, channels, raw) => {
+    log.trace({
+      channels, nick, reason, raw, event: 'quit',
+    });
     bot.callModuleFn('quit', [nick, reason, channels, raw]);
   });
 
 
-  bot.client.on('notice', function(from, to, text, raw) {
-    log.trace({from: from, to: to, text: text, raw: raw, event: "notice"});
-    var isPm = (to == bot.client.nick);
-    var replyTo = isPm ? from : to;
-    var replyFn = bot.getReply(replyTo, isPm, from);
+  bot.client.on('notice', (from, to, text, raw) => {
+    log.trace({
+      from, to, text, raw, event: 'notice',
+    });
+    const isPm = (to === bot.client.nick);
+    const replyTo = isPm ? from : to;
+    const replyFn = bot.getReply(replyTo, isPm, from);
 
     bot.callModuleFn('notice', [text, from, to, replyFn, raw]);
-    if(isPm) {
+    if (isPm) {
       bot.callModuleFn('pmnotice', [text, from, replyFn, raw]);
     } else {
       bot.callModuleFn('channotice', [text, to, from, replyFn, raw]);
     }
   });
 
-  bot.client.on('message', function(from, to, text, raw) {
-    log.trace({from: from, to: to, text: text, raw: raw, event: "message"});
-    var isPm = (to == bot.client.nick);
-    var replyTo = isPm ? from : to;
-    var replyFn = bot.getReply(replyTo, isPm, from);
+  bot.client.on('message', (from, to, text, raw) => {
+    log.trace({
+      from, to, text, raw, event: 'message',
+    });
+    const isPm = (to === bot.client.nick);
+    const replyTo = isPm ? from : to;
+    const replyFn = bot.getReply(replyTo, isPm, from);
 
     bot.callModuleFn('message', [text, from, to, replyFn, raw]);
 
     bot.callModuleFn('msg', [text, from, replyFn, raw]);
 
-    if(isPm) {
+    if (isPm) {
       bot.callModuleFn('pm', [text, from, replyFn, raw]);
     } else {
       bot.callModuleFn('chanmsg', [text, to, from, replyFn, raw]);
     }
 
-    if(text.substring(0, bot.config.commandPrefix.length) == bot.config.commandPrefix) {
-      var re = new RegExp('^' + reEscape(bot.config.commandPrefix) + '(\\S*)\\s*(.*)$', 'g');
-      var rem = re.exec(text);
-      var command = rem[1];
-      var remainder = rem.length == 3 ? rem[2] : "";
-      var respTo = (bot.client.nick == to) ? from : to;
+    if (text.substring(0, bot.config.commandPrefix.length) === bot.config.commandPrefix) {
+      const re = new RegExp(`^${reEscape(bot.config.commandPrefix)}(\\S*)\\s*(.*)$`, 'g');
+      const rem = re.exec(text);
+      const command = rem[1];
+      const remainder = rem.length === 3 ? rem[2] : '';
 
-      var parts = quoteSplit.parse(remainder).parts || remainder.split(" ");
-      bot.callModuleFn("any_command", [remainder, parts, replyFn, command, from, to, text, raw]);
+      const parts = quoteSplit.parse(remainder).parts || remainder.split(' ');
+      bot.callModuleFn('any_command', [remainder, parts, replyFn, command, from, to, text, raw]);
       bot.callCommandFn(command, [remainder, parts, replyFn, command, from, to, text, raw]);
     }
   });
 
-  bot.client.on('ctcp', function(from, to, text, type, raw) {
-    log.trace({from: from, to: to, text: text, type: type, raw: raw, event: "ctcp"});
-    if(from == bot.config.owner && to == bot.client.nick && text == "RELOAD") {
+  bot.client.on('ctcp', (from, to, text, type, raw) => {
+    log.trace({
+      from, to, text, type, raw, event: 'ctcp',
+    });
+    if (from === bot.config.owner && to === bot.client.nick && text === 'RELOAD') {
       moduleMan.reloadModules();
-    } else if(from == bot.config.owner && to == bot.client.nick && text == "LOAD") {
+    } else if (from === bot.config.owner && to === bot.client.nick && text === 'LOAD') {
       moduleMan.loadModules();
     } else {
       moduleMan.callModuleFn('ctcp', [text, type, from, to, raw]);
     }
   });
 
-  bot.client.on('action', function(from, to, text, type, raw) {
-    log.trace({from: from, to: to, text: text, type: type, raw: raw, event: "action"});
-    var isPm = (to == bot.client.nick);
-    var replyTo = isPm ? from : to;
-    var replyFn = bot.getReply(replyTo, isPm, from);
+  bot.client.on('action', (from, to, text, type, raw) => {
+    log.trace({
+      from, to, text, type, raw, event: 'action',
+    });
+    const isPm = (to === bot.client.nick);
+    const replyTo = isPm ? from : to;
+    const replyFn = bot.getReply(replyTo, isPm, from);
 
     moduleMan.callModuleFn('action', [text, from, to, replyFn, raw]);
-    if(isPm) {
+    if (isPm) {
       moduleMan.callModuleFn('pmaction', [text, from, replyFn, raw]);
     } else {
       moduleMan.callModuleFn('chanaction', [text, to, from, replyFn, raw]);
@@ -254,9 +265,10 @@ bot.initClient = function(cb) {
   // This is emitted by the client right before it tries to say something.
   // Note, this will not work if we send notices or certain other events,
   // but that won't happen in practice yet
-  bot.client.on('selfMessage', function(to, text) {
-    log.trace({to: to, text: text, event: "selfMessage"});
-    // Hack! This ensures that even though node-irc calls this as part of the same function path, the events for pmsay/chansay happen a tick later.
+  bot.client.on('selfMessage', (to, text) => {
+    log.trace({ to, text, event: 'selfMessage' });
+    // Hack! This ensures that even though node-irc calls this as part of the
+    // same function path, the events for pmsay/chansay happen a tick later.
     // To understand why this matters, see issue
     // https://github.com/euank/EuIrcBot/issues/131.
     //
@@ -272,7 +284,7 @@ bot.initClient = function(cb) {
     //           -> mod2.onpmsay(bar) // mod2.onpmsay is triggered and records "bar"
     //           -> ...
     //   -> mod2.onmsg(foo) // mod2.onmsg records "foo"
-    //    
+    //
     //
     // The problem with the above is that mod2 has a wrong state of the world
     // in that it recorded "bar" as being said before receiving the message
@@ -282,8 +294,8 @@ bot.initClient = function(cb) {
     // processing, since that ensures that if the 'onmsg' handler of bar
     // records the message in the same tick it was called, it will retain a
     // correct ordering.
-    process.nextTick(function() {
-      if(bot.isChannel(to)) {
+    process.nextTick(() => {
+      if (bot.isChannel(to)) {
         bot.callModuleFn('chansay', [bot.client.nick, to, text]);
       } else {
         bot.callModuleFn('pmsay', [bot.client.nick, to, text]);
@@ -294,58 +306,53 @@ bot.initClient = function(cb) {
   cb();
 };
 
-bot.sayTo = function(target, args) {
+bot.sayTo = function botSayTo(target, ...args) {
   // Todo, make this use stringifyArgs.
-  var tosay = [];
-  for(var i=1;i<arguments.length;i++) {
-    tosay.push(arguments[i]);
-  }
-  bot.client.say(target, tosay.join(' '));
+  bot.client.say(target, args.join(' '));
 };
 /* say("one", "two") => "one two" */
-bot.say = function(args) {
-  var tosay = [];
-  for(var i=0;i<arguments.length;i++) {
-    tosay.push(arguments[i]);
+bot.say = function botSay(...args) {
+  bot.client.say(bot.config.mainChannel, args.join(' '));
+};
+
+bot.joinChannels = function botJoinChans(cb) {
+  let joinCb = cb;
+  if (!cb) {
+    joinCb = function botJoinDefaultCb(err) {
+      if (err) log.error(err);
+    };
   }
-  bot.client.say(bot.config.mainChannel, tosay.join(' '));
+
+  const channels = Array.isArray(bot.conf.channels) ? bot.conf.channels : bot.conf.channels.split(',');
+  async.map(channels, (item, joined) => {
+    bot.client.join(item, () => { joined(); });
+  }, joinCb);
 };
 
-bot.joinChannels = function(cb) {
-  if(!cb) cb = function(err) {
-    if(err) log.error(err);
-  };
-
-  var channels = Array.isArray(bot.conf.channels) ? bot.conf.channels : bot.conf.channels.split(',');
-  async.map(channels, function(item, joined) {
-    bot.client.join(item, function(){joined();});
-  }, cb);
-};
-
-bot.stringifyArgs = function(args) {
-  var strParts = [];
-  for(var i=0;i<arguments.length;i++) {
-    if(typeof arguments[i] === 'string') {
-      strParts.push(arguments[i]);
-    } else if(Array.isArray(arguments[i])) {
-      strParts.push(bot.stringifyArgs.apply(this, arguments[i]));
-    } else if(arguments[i] === undefined || arguments[i] === null) {
-      strParts.push('');
-    } else{
-      strParts.push(arguments[i].toString());
+bot.stringifyArgs = function botStringify(...args) {
+  return args.map((el) => {
+    if (typeof el === 'string') {
+      return el;
+    } else if (Array.isArray(el)) {
+      return bot.stringifyArgs.apply(this, el);
+    } else if (el === undefined || el === null) {
+      return '';
+    } else if (typeof el.toString === 'function') {
+      return el.toString();
     }
-  }
-  return strParts.join(' ');
+    log.error('could not stringify', el);
+    return el;
+  }).join(' ');
 };
 
-bot.isChannel = function(name) {
-  return _.some(_.map(bot.config.channelPrefixes.split(''), function(el) { return name[0] == el; }));
+bot.isChannel = function botIsChannel(name) {
+  return _.some(_.map(bot.config.channelPrefixes.split(''), el => name[0] === el));
 };
 
 
-bot.getReply = function(to, isPm, pmTarget) {
-  var spamReply = function(args) {
-    var repStr = bot.stringifyArgs.apply(this, arguments);
+bot.getReply = function botGetReply(to, isPm, pmTarget) {
+  const spamReply = function spamReply(...args) {
+    const repStr = bot.stringifyArgs.apply(this, args);
     bot.client.say(to, repStr);
   };
 
@@ -353,17 +360,20 @@ bot.getReply = function(to, isPm, pmTarget) {
   // {
   //   trim: true, // trim spaces, leading and trailing
   //   lines: 2, // number of lines to spam
-  //   replaceNewlines: false, // whether to replace newlines with | while figuring out if it'll spam
+  //   replaceNewlines: false, // whether to replace newlines with | while
+  //                           // figuring out if it'll spam
   //   pmExtra: false, // whether to PM the whole message if it overflows
   // }
-  var customReply = function(opts, ...args) {
+  const customReply = function customReply(opts, ...args) {
     // Note, this value is based on what our client does (https://github.com/martynsmith/node-irc/blob/e4000b7a8ac42d9eb16fb6c3f362e1425d664f4b/lib/irc.js#L1069), which may differ from the reality of what a given irc server enforces.
     //
-    let maxLineChars = Math.min(bot.client.maxLineLength - to.length, 
-                                bot.client.opt.messageSplit);
+    const maxLineChars = Math.min(
+      bot.client.maxLineLength - to.length,
+      bot.client.opt.messageSplit,
+    );
 
     // default opts
-    opts = Object.assign({
+    const replyOpts = Object.assign({
       trim: true,
       lines: 2,
       replaceNewlines: false,
@@ -371,7 +381,7 @@ bot.getReply = function(to, isPm, pmTarget) {
     }, opts);
 
     // If it's a pm, all options get ignored
-    if(isPm) {
+    if (isPm) {
       spamReply.apply(this, args);
       return;
     }
@@ -381,65 +391,67 @@ bot.getReply = function(to, isPm, pmTarget) {
     // First, get the string representation which the module requested to send.
     let repStr = bot.stringifyArgs.apply(this, args);
     // Trim it if requested
-    if(opts.trim) {
+    if (replyOpts.trim) {
       repStr = repStr.trim();
     }
-    // Figure out the number of lines this would span, taking into account too-long lines splitting across lines.
-    let lines = repStr.split("\n");
-    let numLines = lines.reduce((sum, line) => {
+    // Figure out the number of lines this would span, taking into account
+    // too-long lines splitting across lines.
+    const lines = repStr.split('\n');
+    const numLines = lines.reduce((sum, line) => {
       // how many lines does this consume after splitting over maxLineChars?
-      let linesSplitOver = Math.ceil(line.length / maxLineChars);
+      const linesSplitOver = Math.ceil(line.length / maxLineChars);
       // even a 0 length line gets printed and consumes space
       return sum + Math.max(1, linesSplitOver);
     }, 0);
 
     // If it fits in the max lines allowed, we don't have to modify anything
-    if(numLines <= opts.lines) {
+    if (numLines <= replyOpts.lines) {
       // Cool, we can just say it raw and be done with it.
       bot.client.say(to, repStr);
       return;
     }
 
     // If replaceNewlines is set, we see if ignoring '\n' and joining stuff with '|' fixes it.
-    if(opts.replaceNewlines) {
-      let withoutNewlines = repStr.replace(/\n/g, " | ");
-      if(withoutNewlines.length <= (maxLineChars * opts.lines)) {
+    if (replyOpts.replaceNewlines) {
+      const withoutNewlines = repStr.replace(/\n/g, ' | ');
+      if (withoutNewlines.length <= (maxLineChars * replyOpts.lines)) {
         // Stripping was enough, we're done
         bot.client.say(to, withoutNewlines);
         return;
       }
 
       // This isn't fitting, say a stripped version
-      bot.client.say(to, withoutNewlines.substring(0, maxLineChars - 4) + " ...");
+      bot.client.say(to, `${withoutNewlines.substring(0, maxLineChars - 4)} ...`);
       // don't return, we might have to spit out extra
     } else {
       // we know it doesn't fit like this already, let's say a trimmed down version.
-      let linesToSay = [];
-      let maxLength = maxLineChars * opts.lines - 4; // -4 to leave room for '...'
-      for(let i=0; i < lines.length; i++) {
-        if((linesToSay.length + lines[i].length) > maxLength || i == (opts.lines - 1)) {
-          linesToSay.push(lines[i].substring(0, maxLength - linesToSay.length) + " ...");
+      const linesToSay = [];
+      const maxLength = (maxLineChars * replyOpts.lines) - 4; // -4 to leave room for '...'
+      for (let i = 0; i < lines.length; i += 1) {
+        if ((linesToSay.length + lines[i].length) > maxLength || i === (replyOpts.lines - 1)) {
+          linesToSay.push(`${lines[i].substring(0, maxLength - linesToSay.length)} ...`);
           break;
         } else {
           linesToSay.push(lines[i]);
         }
       }
-      bot.client.say(to, linesToSay.join("\n"));
+      bot.client.say(to, linesToSay.join('\n'));
     }
 
-    if(opts.pmExtra) {
+    if (replyOpts.pmExtra) {
       bot.client.say(pmTarget, repStr);
     }
   };
 
-  var reply = function(args) {
-    if(isPm) {
-      spamReply.apply(this, arguments);
+  const reply = function reply(...args) {
+    if (isPm) {
+      spamReply.apply(this, args);
       return;
     }
     // Default to not spam if it's not a pm
-    args = Array.prototype.slice.call(arguments);
-    args.unshift({lines: 2, replaceNewlines: false, pmExtra: false, trim: true});
+    args.unshift({
+      lines: 2, replaceNewlines: false, pmExtra: false, trim: true,
+    });
     customReply.apply(this, args);
   };
 
@@ -450,10 +462,10 @@ bot.getReply = function(to, isPm, pmTarget) {
   return reply;
 };
 
-bot.createPathIfNeeded = function(fullPath, cb) {
-  var dirname = path.dirname(fullPath);
-  fs.mkdir(dirname, function(err) {
-    if(err && err.code != 'EEXIST') {
+bot.createPathIfNeeded = function botCreatePathIfNeeded(fullPath, cb) {
+  const dirname = path.dirname(fullPath);
+  fs.mkdir(dirname, (err) => {
+    if (err && err.code !== 'EEXIST') {
       // Directory doesn't already exist and couldn't be made
       cb(err);
     } else {
@@ -463,77 +475,76 @@ bot.createPathIfNeeded = function(fullPath, cb) {
   });
 };
 
-bot.fsStoreData = function(namespace, filePath, data, flag, cb) {
+bot.fsStoreData = function botFsStoreData(namespace, filePath, data, flag, cb) {
   // Flags is an optional argument
-  if(typeof flag == 'function') {
-    cb = flag;
-    flag = 'w';
-  }
+  const writeFlag = typeof flag === 'function' ? 'w' : flag;
+  const writeCb = typeof flag === 'function' ? flag : cb;
 
-  var basePath = bot.getDataFolder(namespace);
-  var finalPath = path.join(basePath, filePath);
+  const basePath = bot.getDataFolder(namespace);
+  const finalPath = path.join(basePath, filePath);
 
-  bot.createPathIfNeeded(finalPath, function(err, res) {
-    if(err) return cb(err);
-    fs.writeFile(finalPath, data, {flag: flag}, cb);
+  bot.createPathIfNeeded(finalPath, (err) => {
+    if (err) return writeCb(err);
+    return fs.writeFile(finalPath, data, { writeFlag }, writeCb);
   });
 };
 
-bot.fsGetData = function(namespace, filePath, cb) {
-  var basePath = bot.getDataFolder(namespace);
-  var finalPath = path.join(basePath, filePath);
+bot.fsGetData = function botFsGetData(namespace, filePath, cb) {
+  const basePath = bot.getDataFolder(namespace);
+  const finalPath = path.join(basePath, filePath);
 
   fs.readFile(finalPath, cb);
 };
 
-bot.fsListData = function(namespace, listPath, cb) {
-  var basePath = bot.getDataFolder(namespace);
-  var finalPath = path.join(basePath, listPath);
+bot.fsListData = function botFsListData(namespace, listPath, cb) {
+  const basePath = bot.getDataFolder(namespace);
+  const finalPath = path.join(basePath, listPath);
 
   fs.readdir(finalPath, cb);
 };
 
-bot.dump = function() {
-  if(heapdump) {
-    heapdump.writeSnapshot(function(err, filename) {
+bot.dump = function botDump() {
+  if (heapdump) {
+    heapdump.writeSnapshot((err, filename) => {
       log.warn('heapdump written to', filename);
     });
   } else {
-    log.trace("dump called, but heapdump off");
+    log.trace('dump called, but heapdump off');
   }
 };
 
 
-bot.run = function() {
+bot.run = function botRun() {
   async.series([
-    function(cb) {
-      bot.conf = bot.config = bot.loadConfig();
-      log.trace("loaded config");
+    function loadConf(cb) {
+      bot.config = bot.loadConfig();
+      bot.conf = bot.config;
+      log.trace('loaded config');
       cb(null);
     },
     bot.initClient,
     bot.init,
-    function(cb){
-      bot.client.connect(function(){cb(null);});
+    function initConnect(cb) {
+      bot.client.connect(() => { cb(null); });
     },
-    function(cb){
-      log.info("connected!");
+    function initConnected(cb) {
+      log.info('connected!');
       cb(null);
     },
     bot.initModuleManager,
     moduleMan.loadModules,
     bot.joinChannels,
-    function(cb) {
+    function unexpectedEnd(cb) {
       bot.dump();
+      cb(null);
     },
-  ], function(err, results) {
-    if(err) {
+  ], (err) => {
+    if (err) {
       bot.dump();
-      log.fatal("error in init");
+      log.fatal('error in init');
       log.error(err);
     }
   });
 };
 
 module.exports = bot;
-}());

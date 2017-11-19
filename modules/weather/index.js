@@ -8,7 +8,7 @@ module.exports.commands = ["forecast", "w", "weather"];
 module.exports.init = function(bot) {
   bot.getConfig( "weather.json", function( err, conf ) {
     if( err ) {
-      bot.log.error("Failed loading config for Weather Module");
+      bot.log.error(err, "Failed loading config for Weather Module");
     } else {
       apiKey = conf.wunderground_key;
     }
