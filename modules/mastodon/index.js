@@ -103,12 +103,11 @@ function writeConfig() {
   });
 }
 
-function checkHostname(hostname, fn) {
-  if (moduleConfig.blocks && moduleConfig.blocks.includes(hostname)) {
-    fn(false);
-  } else {
-    fn(moduleConfig.instances && moduleConfig.instances.includes(hostname));
-  }
+function checkHostname(hostname) {
+  if (moduleConfig.blocks && moduleConfig.blocks.includes(hostname))
+    return false;
+
+  return moduleConfig.instances && moduleConfig.instances.includes(hostname);
 }
 
 function forceCheckHostname(url, fn) {
@@ -264,7 +263,7 @@ function handleUrl(url, reply) {
 
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
   url = urlMod.parse(remainder);
-  checkHostname(url.host, (ok) => { if (!ok) {
+  if (!checkHostname(url.host)) {
     forceCheckHostname(url, (ok) => {
       if (ok) {
         handleUrl(url.href, reply);
@@ -272,12 +271,12 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
         reply('error: not a mastodon instance');
       }
     });
-  }});
+  }
 };
 
 module.exports.url = function(url, reply) {
   url = urlMod.parse(url);
-  checkHostname(url.host, (ok) => { if (ok) {
+  if (checkHostname(url.host)) {
     handleUrl(url.href, reply);
-  }});
+  };
 };
