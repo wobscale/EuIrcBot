@@ -110,6 +110,8 @@ function checkHostname(hostname) {
   return moduleConfig.instances && moduleConfig.instances.includes(hostname);
 }
 
+/* TODO: Add support for validating GNU social? */
+/* TODO: Don't check instances more than once a day. */
 function forceCheckHostname(url, fn) {
   robotRequest(
     { url: urlMod.resolve(url, '/api/v1/instance')},
@@ -127,7 +129,12 @@ function forceCheckHostname(url, fn) {
         return fn(false);
 
       fn(true);
-      moduleConfig.instances.push(body.uri);
+      log.info(`adding ${response.request.host} to instance list`);
+      if (moduleConfig.instances) {
+        moduleConfig.instances.push(response.request.host);
+      } else {
+        moduleConfig.instances = [response.request.host];
+      }
       writeConfig();
     }
   );
