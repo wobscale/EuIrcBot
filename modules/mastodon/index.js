@@ -114,22 +114,21 @@ function forceCheckHostname(url, fn) {
   robotRequest(
     { url: urlMod.resolve(url, '/api/v1/instance')},
     (error, response, body) => {
-      if (!error && response.statusCode == 200) {
-        try {
-          body = JSON.parse(body);
-        } catch (e) {
-          fn(false);
-        }
-        if (body.uri) {
-          fn(true);
-          moduleConfig.instances.push(body.uri);
-          writeConfig();
-        } else {
-          fn(false);
-        }
-      } else {
-        fn(false);
+      if (error || response.statusCode != 200)
+        return fn(false);
+
+      try {
+        body = JSON.parse(body);
+      } catch (e) {
+        return fn(false);
       }
+
+      if (!body.uri)
+        return fn(false);
+
+      fn(true);
+      moduleConfig.instances.push(body.uri);
+      writeConfig();
     }
   );
 }
