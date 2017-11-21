@@ -4,6 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
+    "array-uniq": "^1.0.3",
     "cacheman": "^2.2.1",
     "content-type": "^1.0.4",
     "extsprintf": "^1.3.0",

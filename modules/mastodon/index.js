@@ -26,7 +26,8 @@
  * adding them to the "blocked" key in this module's config.json.
  */
 
-var Cacheman = require('cacheman')
+var arrayUniq = require('array-uniq')
+  , Cacheman = require('cacheman')
   , contentType = require('content-type')
   , execSync = require('child_process').execSync
   , htmlToTextMod = require('html-to-text')
@@ -258,6 +259,37 @@ function handleUrl(url, reply) {
       formatRecord(record, (s) => reply.custom({ replaceNewlines: true }, s));
     }
   });
+
+  /*
+   * Instance autodiscovery: hit /api/v1/timelines/public and look for any new
+   * instance domains, then run those through forceCheckHostname to see if they
+   * ought to be added to our list.
+   *
+   * This will cause Pleroma instances to be added to the whitelist, even
+   * though they don't support ActivityPub objects, because they support the
+   * Mastodon client API.
+   */
+
+  robotRequest(
+    { url: urlMod.resolve(url, '/api/v1/timelines/public') },
+    (error, response, body) => {
+      if (error || response.statusCode != 200)
+        return;
+
+      try {
+        body = JSON.parse(body);
+      } catch (e) {
+        return;
+      }
+
+      arrayUniq(body.map((item) => urlMod.parse(item.url))).forEach((url) => {
+        if (moduleConfig.blocks && moduleConfig.blocks.includes(url.host))
+          return;
+        if (!moduleConfig.instances || !moduleConfig.instances.includes(url.host))
+          forceCheckHostname(url, () => {});
+      });
+    }
+  );
 }
 
 /*
