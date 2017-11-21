@@ -228,7 +228,7 @@ module.exports.init = function(b) {
   if (userAgentUrl.includes('{commitish}')) {
     var commitish = 'master';
     try {
-      commitish = execSync('git rev-parse HEAD', {'encoding': 'utf8'}).trim();
+      commitish = execSync('git rev-parse --short HEAD', {'encoding': 'utf8'}).trim();
     } catch (ex) {
       log.error('error determining deployed commit: ' + ex);
     }
