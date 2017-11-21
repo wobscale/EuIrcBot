@@ -242,13 +242,6 @@ module.exports.init = function(b) {
   });
 };
 
-/*
- * When a user calls "!masto [url]", both run and url get called. The first
- * thing we do in each of these methods is check the domain against
- * knownInstances; run only continues if the instance is unknown, and url only
- * continues if the instance is known.
- */
-
 function handleUrl(url, reply) {
   fetchResource(url, (error, record) => {
     if (error) {
@@ -260,6 +253,13 @@ function handleUrl(url, reply) {
     }
   });
 }
+
+/*
+ * When a user calls "!masto [url]", both run and url get called. The first
+ * thing we do in each of these methods is check the domain against
+ * knownInstances; run only continues if the instance is unknown, and url only
+ * continues if the instance is known.
+ */
 
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
   url = urlMod.parse(remainder);
