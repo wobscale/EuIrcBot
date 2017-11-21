@@ -219,7 +219,9 @@ module.exports.init = function(b) {
   try {
     var ver = require('../../package.json').version;
     userAgent += '/' + ver;
-  } catch (ex) {}
+  } catch (ex) {
+    log.error('error getting package version: ' + ex);
+  }
 
   var userAgentUrl = (moduleConfig && moduleConfig.userAgentUrl
     || 'https://github.com/euank/EuIrcBot/blob/{commitish}/modules/mastodon/info.md');
@@ -227,7 +229,9 @@ module.exports.init = function(b) {
     var commitish = 'master';
     try {
       commitish = execSync('git rev-parse HEAD', {'encoding': 'utf8'}).trim();
-    } catch (ex) {}
+    } catch (ex) {
+      log.error('error determining deployed commit: ' + ex);
+    }
     userAgentUrl = userAgentUrl.replace(/{commitish}/g, commitish);
   }
   userAgent += ' (+' + userAgentUrl + ')';
