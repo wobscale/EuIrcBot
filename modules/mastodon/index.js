@@ -181,7 +181,7 @@ function formatRecord(record, fn) {
       if (error) {
         str += '(error getting user): ';
       } else {
-        str += sprintf('%s (@%s): ', userRecord.name, userRecord.preferredUsername);
+        str += `${userRecord.name} (@${userRecord.preferredUsername}): `;
       }
       if (record.sensitive) {
         str += sprintf('[content warning] %s', record.summary);
@@ -191,11 +191,7 @@ function formatRecord(record, fn) {
       fn(str);
     });
   } else if (record.type == 'Person') {
-    fn(sprintf('%s (@%s): %s',
-      record.name,
-      record.preferredUsername,
-      htmlToText(record.summary),
-    ));
+    fn(`${record.name} (@${record.preferredUsername}): ` + htmlToText(record.summary));
   }
 }
 
