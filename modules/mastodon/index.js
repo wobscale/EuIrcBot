@@ -61,39 +61,34 @@ function robotRequest(options, fn) {
   };
 
   robotsTxtCache.get(robotsTxtUrl, function (err, robotsTxt) {
-    if (err) {
-      fn(new Error('robots.txt cache error: ' + err.message));
-    } else {
-      if (!robotsTxt) {
-        request(robotsTxtUrl, function (err, response, robotsTxt) {
-          if (err) {
-            fn(new Error(util.format('failed to fetch %s: %s', robotsTxtUrl, err.message)));
-          } else {
-            /* Determine TTL for this robots.txt. Google says that requests are
-             * "generally cached for up to one day" but that it may adjust that
-             * based on max-age Cache-Control headers, which seems reasonable. */
-            var ttl = 86400;
-            if (response.headers['cache-control']) {
-              var match = response.headers['cache-control'].match(/\bmax-age=([0-9]+)\b/);
-              if (match) {
-                /* Clamp this value to between (300, 604800) to guard against
-                 * unreasonable configuration / bugs in this code. */
-                ttl = Math.min(Math.max(parseInt(match[1], 10), 300), 604800);
-              }
-            }
-            robotsTxtCache.set(robotsTxtUrl, robotsTxt, ttl, function (err) {
-              if (err) {
-                fn(new Error('robots.txt cache error: ' + err.message));
-              } else {
-                handle(robotsTxt);
-              }
-            });
-          }
-        });
-      } else {
-        handle(robotsTxt);
+    if (err)
+      return fn(new Error('robots.txt cache error: ' + err.message));
+    if (robotsTxt)
+      return handle(robotsTxt);
+
+    request(robotsTxtUrl, function (err, response, robotsTxt) {
+      if (err)
+        return fn(new Error(util.format('failed to fetch %s: %s', robotsTxtUrl, err.message)));
+
+      /* Determine TTL for this robots.txt. Google says that requests are
+       * "generally cached for up to one day" but that it may adjust that
+       * based on max-age Cache-Control headers, which seems reasonable. */
+      var ttl = 86400;
+      if (response.headers['cache-control']) {
+        var match = response.headers['cache-control'].match(/\bmax-age=([0-9]+)\b/);
+        if (match) {
+          /* Clamp this value to between (300, 604800) to guard against
+           * unreasonable configuration / bugs in this code. */
+          ttl = Math.min(Math.max(parseInt(match[1], 10), 300), 604800);
+        }
       }
-    }
+      robotsTxtCache.set(robotsTxtUrl, robotsTxt, ttl, function (err) {
+        if (err)
+          return fn(new Error('robots.txt cache error: ' + err.message));
+
+        handle(robotsTxt);
+      });
+    });
   });
 }
 
