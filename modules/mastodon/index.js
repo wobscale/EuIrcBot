@@ -116,7 +116,7 @@ function forceCheckHostname(url, fn) {
   robotRequest(
     { url: urlMod.resolve(url, '/api/v1/instance')},
     (error, response, body) => {
-      if (error || response.statusCode != 200)
+      if (error || response.statusCode >= 400)
         return fn(false);
 
       try {
@@ -153,7 +153,7 @@ function fetchResource(url, fn) {
   }, (error, response, body) => {
     if (error) {
       fn(error);
-    } else if (response.statusCode != 200) {
+    } else if (response.statusCode >= 400) {
       fn(new Error('response status code is ' + response.statusCode));
     } else if (!['application/ld+json', 'application/activity+json'].includes(
       contentType.parse(response.headers['content-type']).type
@@ -272,7 +272,7 @@ function handleUrl(url, reply) {
   robotRequest(
     { url: urlMod.resolve(url, '/api/v1/timelines/public') },
     (error, response, body) => {
-      if (error || response.statusCode != 200)
+      if (error || response.statusCode >= 400)
         return;
 
       try {
