@@ -25,7 +25,7 @@
     "start": "node --max_old_space_size=350 index.js",
     "install": "./installModules.sh",
     "test": "mocha $(git ls-files | grep -E \"test.js$\")",
-    "lint": "eslint bot.js modules/mastodon/index.js"
+    "lint": "eslint bot.js modules/mastodon/index.js modules/schedule/index.js"
   },
   "repository": {
     "type": "git",
