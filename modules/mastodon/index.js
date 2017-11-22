@@ -112,9 +112,9 @@ function checkHostname(hostname) {
 
 /* TODO: Add support for validating GNU social? */
 /* TODO: Don't check instances more than once a day. */
-function forceCheckHostname(url, fn) {
+function forceCheckHostname(hostname, fn) {
   robotRequest(
-    { url: urlMod.resolve(url, '/api/v1/instance')},
+    { url: `https://${hostname}/api/v1/instance` },
     (error, response, body) => {
       if (error || response.statusCode >= 400)
         return fn(false);
@@ -281,11 +281,11 @@ function handleUrl(url, reply) {
         return;
       }
 
-      arrayUniq(body.map((item) => urlMod.parse(item.url))).forEach((url) => {
-        if (moduleConfig.blocks && moduleConfig.blocks.includes(url.host))
+      arrayUniq(body.map((item) => urlMod.parse(item.url).host)).forEach((hostname) => {
+        if (moduleConfig.blocks && moduleConfig.blocks.includes(hostname))
           return;
-        if (!moduleConfig.instances || !moduleConfig.instances.includes(url.host))
-          forceCheckHostname(url, () => {});
+        if (!moduleConfig.instances || !moduleConfig.instances.includes(hostname))
+          forceCheckHostname(hostname, () => {});
       });
     }
   );
@@ -305,7 +305,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
     return log.warn('url.parse threw: ' + ex);
   }
   if (!checkHostname(url.host)) {
-    forceCheckHostname(url, (ok) => {
+    forceCheckHostname(url.host, (ok) => {
       if (ok) {
         handleUrl(url.href, reply);
       } else {
