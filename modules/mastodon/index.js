@@ -33,7 +33,6 @@ var arrayUniq = require('array-uniq')
   , htmlToTextMod = require('html-to-text')
   , robotsParser = require('robots-parser')
   , robotsTxtCache = new Cacheman()
-  , sprintf = require('extsprintf').sprintf
   , util = require('util')
   , urlMod = require('url');
 
@@ -192,7 +191,7 @@ function formatRecord(record, fn) {
         str += `${userRecord.name} (@${userRecord.preferredUsername}): `;
       }
       if (record.sensitive) {
-        str += sprintf('[content warning] %s', record.summary);
+        str += `[content warning] ${record.summary}`;
       } else {
         str += htmlToText(record.content);
       }
