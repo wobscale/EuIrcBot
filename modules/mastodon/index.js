@@ -26,7 +26,6 @@
  * adding them to the "blocked" key in this module's config.json.
  */
 
-const arrayUniq = require('array-uniq');
 const Cacheman = require('cacheman');
 const contentType = require('content-type');
 const execSync = require('child_process').execSync;
@@ -274,7 +273,14 @@ function handleUrl(url, reply, verbose = false) {
         return;
       }
 
-      arrayUniq(body.map(item => urlMod.parse(item.url).host)).forEach((hostname) => {
+      [...new Set(body.map((item) => {
+        try {
+          return urlMod.parse(item.url).host;
+        } catch (ex) {
+          log.warn(`url.parse threw: ${ex}`);
+          return '';
+        }
+      }))].forEach((hostname) => {
         if (moduleConfig.blocks && moduleConfig.blocks.includes(hostname)) { return; }
         if (!moduleConfig.instances || !moduleConfig.instances.includes(hostname)) {
           forceCheckHostname(hostname, () => {});
