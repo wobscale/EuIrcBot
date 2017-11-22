@@ -26,65 +26,62 @@
  * adding them to the "blocked" key in this module's config.json.
  */
 
-var arrayUniq = require('array-uniq')
-  , Cacheman = require('cacheman')
-  , contentType = require('content-type')
-  , execSync = require('child_process').execSync
-  , htmlToTextMod = require('html-to-text')
-  , robotsParser = require('robots-parser')
-  , robotsTxtCache = new Cacheman()
-  , util = require('util')
-  , urlMod = require('url');
+const arrayUniq = require('array-uniq');
+const Cacheman = require('cacheman');
+const contentType = require('content-type');
+const execSync = require('child_process').execSync;
+const htmlToTextMod = require('html-to-text');
+const robotsParser = require('robots-parser');
+const util = require('util');
+const urlMod = require('url');
+
+const robotsTxtCache = new Cacheman();
 
 /* variables defined in module.exports.init */
-var bot = null
-  , log = null
-  , moduleConfig = null
-  , request = null;
+let bot = null;
+let log = null;
+let moduleConfig = null;
+let request = null;
 
 function robotRequest(options, fn) {
-  var url = options.url;
-  var userAgent = moduleConfig != null ? moduleConfig.userAgent : 'EuIrcBot';
-  var robotsTxtUrl = urlMod.resolve(url, '/robots.txt');
+  const url = options.url;
+  const userAgent = moduleConfig != null ? moduleConfig.userAgent : 'EuIrcBot';
+  const robotsTxtUrl = urlMod.resolve(url, '/robots.txt');
 
-  var handle = function (robotsTxt) {
+  function handle(robotsTxt) {
     const robots = robotsParser(robotsTxtUrl, robotsTxt);
     /* `User-agent: *` rules are generally overzealous. We're not a
      * search engine spider. */
-    delete robots._rules['*'];
+    delete robots._rules['*']; // eslint-disable-line no-underscore-dangle
 
     if (robots.isAllowed(url, userAgent)) {
       request(options, fn);
     } else {
       fn(new Error(util.format('URL access disallowed by %s: %s', robotsTxtUrl, url)));
     }
-  };
+  }
 
-  robotsTxtCache.get(robotsTxtUrl, function (err, robotsTxt) {
-    if (err)
-      return fn(new Error('robots.txt cache error: ' + err.message));
-    if (robotsTxt)
-      return handle(robotsTxt);
+  robotsTxtCache.get(robotsTxtUrl, (err, robotsTxt) => {
+    if (err) { fn(new Error(`robots.txt cache error: ${err.message}`)); return; }
+    if (robotsTxt) { handle(robotsTxt); return; }
 
-    request(robotsTxtUrl, function (err, response, robotsTxt) {
-      if (err)
-        return fn(new Error(util.format('failed to fetch %s: %s', robotsTxtUrl, err.message)));
+    request(robotsTxtUrl, (err, response, robotsTxt) => { // eslint-disable-line no-shadow
+      if (err) { fn(new Error(util.format('failed to fetch %s: %s', robotsTxtUrl, err.message))); return; }
 
       /* Determine TTL for this robots.txt. Google says that requests are
        * "generally cached for up to one day" but that it may adjust that
        * based on max-age Cache-Control headers, which seems reasonable. */
-      var ttl = 86400;
+      let ttl = 86400;
       if (response.headers['cache-control']) {
-        var match = response.headers['cache-control'].match(/\bmax-age=([0-9]+)\b/);
+        const match = response.headers['cache-control'].match(/\bmax-age=([0-9]+)\b/);
         if (match) {
           /* Clamp this value to between (300, 604800) to guard against
            * unreasonable configuration / bugs in this code. */
           ttl = Math.min(Math.max(parseInt(match[1], 10), 300), 604800);
         }
       }
-      robotsTxtCache.set(robotsTxtUrl, robotsTxt, ttl, function (err) {
-        if (err)
-          return fn(new Error('robots.txt cache error: ' + err.message));
+      robotsTxtCache.set(robotsTxtUrl, robotsTxt, ttl, (err) => { // eslint-disable-line no-shadow
+        if (err) { fn(new Error(`robots.txt cache error: ${err.message}`)); return; }
 
         handle(robotsTxt);
       });
@@ -93,19 +90,17 @@ function robotRequest(options, fn) {
 }
 
 function defaultConfig() {
-  return {'instances': require('./default_instances.json')};
+  return { instances: require('./default_instances.json') };
 }
 
 function writeConfig() {
-  bot.writeDataFile('config.json', JSON.stringify(moduleConfig), function(err) {
-    if (err)
-      log.error('error writing mastodon module data: ' + err);
+  bot.writeDataFile('config.json', JSON.stringify(moduleConfig), (err) => {
+    if (err) { log.error(`error writing mastodon module data: ${err}`); }
   });
 }
 
 function checkHostname(hostname) {
-  if (moduleConfig.blocks && moduleConfig.blocks.includes(hostname))
-    return false;
+  if (moduleConfig.blocks && moduleConfig.blocks.includes(hostname)) { return false; }
 
   return moduleConfig.instances && moduleConfig.instances.includes(hostname);
 }
@@ -115,18 +110,18 @@ function checkHostname(hostname) {
 function forceCheckHostname(hostname, fn) {
   robotRequest(
     { url: `https://${hostname}/api/v1/instance` },
-    (error, response, body) => {
-      if (error || response.statusCode >= 400)
-        return fn(false);
+    (error, response, bodyRaw) => {
+      let body;
+
+      if (error || response.statusCode >= 400) { return fn(false); }
 
       try {
-        body = JSON.parse(body);
+        body = JSON.parse(bodyRaw);
       } catch (e) {
         return fn(false);
       }
 
-      if (!body.uri)
-        return fn(false);
+      if (!body.uri) { return fn(false); }
 
       fn(true);
       log.info(`adding ${response.request.host} to instance list`);
@@ -135,8 +130,8 @@ function forceCheckHostname(hostname, fn) {
       } else {
         moduleConfig.instances = [response.request.host];
       }
-      writeConfig();
-    }
+      return writeConfig();
+    },
   );
 }
 
@@ -148,20 +143,18 @@ function forceCheckHostname(hostname, fn) {
  */
 function fetchResource(url, fn) {
   robotRequest({
-    url: url,
-    headers: { 'Accept': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams", application/activity+json' },
+    url,
+    headers: { Accept: 'application/ld+json; profile="https://www.w3.org/ns/activitystreams", application/activity+json' },
   }, (error, response, body) => {
     if (error) {
       fn(error);
     } else if (response.statusCode >= 400) {
-      fn(new Error('response status code is ' + response.statusCode));
-    } else if (!['application/ld+json', 'application/activity+json'].includes(
-      contentType.parse(response.headers['content-type']).type
-    )) {
+      fn(new Error(`response status code is ${response.statusCode}`));
+    } else if (!['application/ld+json', 'application/activity+json'].includes(contentType.parse(response.headers['content-type']).type)) {
       fn(new Error('resource is not an ActivityPub record'));
     } else {
       try {
-        var record = JSON.parse(body);
+        const record = JSON.parse(body);
         if (!['Note', 'Person'].includes(record.type)) {
           fn(new Error('record is not a Note or Person'));
         } else {
@@ -182,9 +175,9 @@ function htmlToText(s) {
 }
 
 function formatRecord(record, fn) {
-  if (record.type == 'Note') {
+  if (record.type === 'Note') {
     fetchResource(record.attributedTo, (error, userRecord) => {
-      var str = '';
+      let str = '';
       if (error) {
         str += '(error getting user): ';
       } else {
@@ -197,66 +190,64 @@ function formatRecord(record, fn) {
       }
       fn(str);
     });
-  } else if (record.type == 'Person') {
-    fn(`${record.name} (@${record.preferredUsername}): ` + htmlToText(record.summary));
+  } else if (record.type === 'Person') {
+    fn(`${record.name} (@${record.preferredUsername}): ${htmlToText(record.summary)}`);
   }
 }
 
 module.exports.commands = ['masto'];
 
-module.exports.init = function(b) {
+module.exports.init = (b) => {
   bot = b;
   log = bot.log;
 
-  bot.readDataFile('config.json', function(err, data) {
+  bot.readDataFile('config.json', (err, data) => {
     if (err) {
       log.info('initializing mastodon module data');
       moduleConfig = defaultConfig();
     } else {
       try {
         moduleConfig = JSON.parse(data);
-      } catch(ex) {
+      } catch (ex) {
         moduleConfig = defaultConfig();
       }
     }
     writeConfig();
   });
 
-  var userAgent = moduleConfig && moduleConfig.userAgent || 'EuIrcBot';
+  let userAgent = moduleConfig !== null ? moduleConfig.userAgent : 'EuIrcBot';
   try {
-    var ver = require('../../package.json').version;
-    userAgent += '/' + ver;
+    const ver = require('../../package.json').version;
+    userAgent += `/${ver}`;
   } catch (ex) {
-    log.error('error getting package version: ' + ex);
+    log.error(`error getting package version: ${ex}`);
   }
 
-  var userAgentUrl = (moduleConfig && moduleConfig.userAgentUrl
-    || 'https://github.com/euank/EuIrcBot/blob/{commitish}/modules/mastodon/info.md');
+  let userAgentUrl = (moduleConfig !== null ? moduleConfig.userAgentUrl
+    : 'https://github.com/euank/EuIrcBot/blob/{commitish}/modules/mastodon/info.md');
   if (userAgentUrl.includes('{commitish}')) {
-    var commitish = 'master';
+    let commitish = 'master';
     try {
-      commitish = execSync('git rev-parse --short HEAD', {'encoding': 'utf8'}).trim();
+      commitish = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim();
     } catch (ex) {
-      log.error('error determining deployed commit: ' + ex);
+      log.error(`error determining deployed commit: ${ex}`);
     }
     userAgentUrl = userAgentUrl.replace(/{commitish}/g, commitish);
   }
-  userAgent += ' (+' + userAgentUrl + ')';
+  userAgent += ` (+${userAgentUrl})`;
 
   request = require('request').defaults({
-    headers: {'User-Agent': userAgent}
+    headers: { 'User-Agent': userAgent },
   });
 };
 
 function handleUrl(url, reply, verbose = false) {
   fetchResource(url, (error, record) => {
     if (error) {
-      error.mastodonUrl = url;
-      log.info(error);
-      if (verbose)
-        reply('error: ' + error.message);
+      log.info({ error, mastodonUrl: url });
+      if (verbose) { reply(`error: ${error.message}`); }
     } else {
-      formatRecord(record, (s) => reply.custom({ replaceNewlines: true }, s));
+      formatRecord(record, s => reply.custom({ replaceNewlines: true }, s));
     }
   });
 
@@ -272,23 +263,24 @@ function handleUrl(url, reply, verbose = false) {
 
   robotRequest(
     { url: urlMod.resolve(url, '/api/v1/timelines/public') },
-    (error, response, body) => {
-      if (error || response.statusCode >= 400)
-        return;
+    (error, response, bodyRaw) => {
+      let body;
+
+      if (error || response.statusCode >= 400) { return; }
 
       try {
-        body = JSON.parse(body);
+        body = JSON.parse(bodyRaw);
       } catch (e) {
         return;
       }
 
-      arrayUniq(body.map((item) => urlMod.parse(item.url).host)).forEach((hostname) => {
-        if (moduleConfig.blocks && moduleConfig.blocks.includes(hostname))
-          return;
-        if (!moduleConfig.instances || !moduleConfig.instances.includes(hostname))
+      arrayUniq(body.map(item => urlMod.parse(item.url).host)).forEach((hostname) => {
+        if (moduleConfig.blocks && moduleConfig.blocks.includes(hostname)) { return; }
+        if (!moduleConfig.instances || !moduleConfig.instances.includes(hostname)) {
           forceCheckHostname(hostname, () => {});
+        }
       });
-    }
+    },
   );
 }
 
@@ -299,11 +291,13 @@ function handleUrl(url, reply, verbose = false) {
  * continues if the instance is known.
  */
 
-module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
+module.exports.run = (remainder, parts, reply) => {
+  let url;
   try {
     url = urlMod.parse(remainder);
   } catch (ex) {
-    return log.warn('url.parse threw: ' + ex);
+    log.warn(`url.parse threw: ${ex}`);
+    return;
   }
   if (!checkHostname(url.host)) {
     forceCheckHostname(url.host, (ok) => {
@@ -316,13 +310,15 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
   }
 };
 
-module.exports.url = function(url, reply) {
+module.exports.url = (urlStr, reply) => {
+  let url;
   try {
-    url = urlMod.parse(url);
+    url = urlMod.parse(urlStr);
   } catch (ex) {
-    return log.warn('url.parse threw: ' + ex);
+    log.warn(`url.parse threw: ${ex}`);
+    return;
   }
   if (checkHostname(url.host)) {
     handleUrl(url.href, reply);
-  };
+  }
 };
