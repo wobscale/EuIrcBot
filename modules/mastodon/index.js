@@ -248,12 +248,13 @@ module.exports.init = function(b) {
   });
 };
 
-function handleUrl(url, reply) {
+function handleUrl(url, reply, verbose = false) {
   fetchResource(url, (error, record) => {
     if (error) {
       error.mastodonUrl = url;
       log.info(error);
-      reply('error: ' + error.message);
+      if (verbose)
+        reply('error: ' + error.message);
     } else {
       formatRecord(record, (s) => reply.custom({ replaceNewlines: true }, s));
     }
@@ -307,7 +308,7 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
   if (!checkHostname(url.host)) {
     forceCheckHostname(url.host, (ok) => {
       if (ok) {
-        handleUrl(url.href, reply);
+        handleUrl(url.href, reply, true);
       } else {
         reply('error: not a mastodon instance');
       }
