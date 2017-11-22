@@ -299,7 +299,11 @@ function handleUrl(url, reply) {
  */
 
 module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
-  url = urlMod.parse(remainder);
+  try {
+    url = urlMod.parse(remainder);
+  } catch (ex) {
+    return log.warn('url.parse threw: ' + ex);
+  }
   if (!checkHostname(url.host)) {
     forceCheckHostname(url, (ok) => {
       if (ok) {
@@ -312,7 +316,11 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 };
 
 module.exports.url = function(url, reply) {
-  url = urlMod.parse(url);
+  try {
+    url = urlMod.parse(url);
+  } catch (ex) {
+    return log.warn('url.parse threw: ' + ex);
+  }
   if (checkHostname(url.host)) {
     handleUrl(url.href, reply);
   };
