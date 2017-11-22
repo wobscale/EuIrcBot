@@ -49,7 +49,7 @@ function robotRequest(options, fn) {
   var robotsTxtUrl = urlMod.resolve(url, '/robots.txt');
 
   var handle = function (robotsTxt) {
-    robots = robotsParser(robotsTxtUrl, robotsTxt);
+    const robots = robotsParser(robotsTxtUrl, robotsTxt);
     /* `User-agent: *` rules are generally overzealous. We're not a
      * search engine spider. */
     delete robots._rules['*'];
