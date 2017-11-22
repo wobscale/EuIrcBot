@@ -1,114 +1,111 @@
-var _ = require('underscore');
-var rangeParser = require('parse-numeric-range');
-var async = require('async');
+const _ = require('underscore');
+const rangeParser = require('parse-numeric-range');
+const async = require('async');
 
-var bot;
-var log;
+let bot;
+let log;
 
-var cacheSize = 1000;
-var cache = {};
+const cacheSize = 1000;
+const cache = {};
 
-module.exports.init = function(b) {
+module.exports.init = function (b) {
   bot = b;
   log = this.log;
 };
 
 function logErr(err) {
-  if(err) log.debug(err);
+  if (err) log.debug(err);
 }
 
-function strl(obj){
-  return JSON.stringify(obj) + "\n";
+function strl(obj) {
+  return `${JSON.stringify(obj)}\n`;
 }
 
 function logObject(channel, obj) {
-  getCache(channel, function(cache) {
+  getCache(channel, (cache) => {
     cache.push(obj);
-    while(cache.length > cacheSize) cache.shift();
+    while (cache.length > cacheSize) cache.shift();
   });
 
-  bot.appendDataFile(channel + '-complete.log', strl(obj), logErr);
+  bot.appendDataFile(`${channel}-complete.log`, strl(obj), logErr);
 }
 
 function getCache(channel, cb) {
-  if(cache[channel]) return cb(cache[channel]);
+  if (cache[channel]) return cb(cache[channel]);
 
   // Really should be named '-cache' tbh
-  bot.readDataFile(channel + '-complete.log', function(err, res) {
-    if(err) return cb([]);
+  bot.readDataFile(`${channel}-complete.log`, (err, res) => {
+    if (err) return cb([]);
     // in case someone else read it while our diskio was happening; whatev
-    if(cache[channel]) return cb(cache[channel]);
+    if (cache[channel]) return cb(cache[channel]);
 
-    var lines = res.toString().split("\n").filter(function(line){return line.length > 0;}).map(function(line) {
-      return JSON.parse(line);
-    });
+    const lines = res.toString().split('\n').filter(line => line.length > 0).map(line => JSON.parse(line));
 
     cache[channel] = lines.slice(-cacheSize);
     return cb(cache[channel]);
   });
 }
 
-module.exports.chansay = function(from, chan, text) {
+module.exports.chansay = function (from, chan, text) {
   logObject(chan, {
     type: 'msg',
-    text: text,
-    from: from,
+    text,
+    from,
     time: new Date().getTime(),
   });
 };
-module.exports.channotice = function(from, chan, text) {
+module.exports.channotice = function (from, chan, text) {
   logObject(chan, {
     type: 'notice',
-    text: text,
-    from: from,
+    text,
+    from,
     time: new Date().getTime(),
   });
 };
-module.exports.chanaction = function(from, chan, text) {
+module.exports.chanaction = function (from, chan, text) {
   logObject(chan, {
     type: 'action',
-    text: text,
-    from: from,
+    text,
+    from,
     time: new Date().getTime(),
   });
 };
 
-module.exports.chanmsg = function(text, to, from, reply, raw) {
+module.exports.chanmsg = function (text, to, from, reply, raw) {
   logObject(to, {
     type: 'msg',
-    text: text,
-    from: from,
+    text,
+    from,
     time: new Date().getTime(),
   });
 };
 
-module.exports.channotice = function(text, to, from, reply, raw) {
+module.exports.channotice = function (text, to, from, reply, raw) {
   logObject(to, {
     type: 'notice',
-    text: text,
-    from: from,
+    text,
+    from,
     time: new Date().getTime(),
   });
 };
 
-module.exports.chanaction = function(text, to, from, reply, raw) {
+module.exports.chanaction = function (text, to, from, reply, raw) {
   logObject(to, {
     type: 'action',
-    text: text,
-    from: from,
+    text,
+    from,
     time: new Date().getTime(),
   });
 };
 
 
-module.exports.formatLine = function(line) {
-  if(line.type == 'notice') {
-    return '-' + line.from + '- ' + line.text;
-  } else if(line.type == 'action') {
-    return '* ' + line.from + ' ' + line.text;
-  } else {
-    return '<' + line.from + '> ' + line.text;
+module.exports.formatLine = function (line) {
+  if (line.type == 'notice') {
+    return `-${line.from}- ${line.text}`;
+  } else if (line.type == 'action') {
+    return `* ${line.from} ${line.text}`;
   }
+  return `<${line.from}> ${line.text}`;
 };
 
 /* Abstract: Quoting lines from IRC is an essential problem with far-reaching
@@ -180,109 +177,100 @@ module.exports.formatLine = function(line) {
  *    matching /dog/, then the first line matching /cat/, then the
  *    first line from bill, then the fourth line.
  */
-var STATES = Object.freeze({
+const STATES = Object.freeze({
   NICK: 1,
   REGEX: 2,
   LINES: 3,
   NEW: 4,
-  ERROR: 5
+  ERROR: 5,
 });
 
-module.exports.parseSpecs = function(input) {
-  var specs = [];
-  var spec = {nicks: [], regexes: [], lines: []};
+module.exports.parseSpecs = function (input) {
+  const specs = [];
+  let spec = { nicks: [], regexes: [], lines: [] };
 
   // State machine variables
-  var state = undefined;
+  let state;
 
-  var i = 0;
-  var result = findNextState(input, i, state);
+  let i = 0;
+  let result = findNextState(input, i, state);
   i = result.index;
   state = result.state;
 
-  if(state === STATES.NEW) { // Can't start in 'new'
-    return {error: 'Invalid leading characters'};
+  if (state === STATES.NEW) { // Can't start in 'new'
+    return { error: 'Invalid leading characters' };
   }
 
   // Parse input into tokens
-  while(i < input.length) {
-    if(state === STATES.ERROR) {
-      return {error: 'Could not parse "' + input.substring(i)} + '"';
-    }
-    else if(state === STATES.NICK) {
+  while (i < input.length) {
+    if (state === STATES.ERROR) {
+      return `${{ error: `Could not parse "${input.substring(i)}` }}"`;
+    } else if (state === STATES.NICK) {
       result = parseNick(input, i);
 
-      if(i != result.index) { // Got a nick
+      if (i != result.index) { // Got a nick
         i = result.index;
         spec.nicks.push(result.result);
       }
-
-    }
-    else if(state === STATES.REGEX) {
+    } else if (state === STATES.REGEX) {
       result = parseRegex(input, i);
 
-      if(result.error !== undefined) {
-        return {error: result.error};
-      }
-      else if(i != result.index) { // Got a regex
+      if (result.error !== undefined) {
+        return { error: result.error };
+      } else if (i != result.index) { // Got a regex
         i = result.index;
         spec.regexes.push(result.result);
       }
-    }
-    else if(state === STATES.LINES) {
+    } else if (state === STATES.LINES) {
       result = parseLines(input, i);
 
-      if(result.error !== undefined) {
-        return {error: result.error};
-      }
-      else if(i != result.index) { // Got some lines
+      if (result.error !== undefined) {
+        return { error: result.error };
+      } else if (i != result.index) { // Got some lines
         i = result.index;
         spec.lines = spec.lines.concat(result.result);
       }
-    }
-    else if(state === STATES.NEW) {
+    } else if (state === STATES.NEW) {
       specs.push(spec);
-      spec = {nicks: [], regexes: [], lines: []};
+      spec = { nicks: [], regexes: [], lines: [] };
     }
 
     // Get next state
     result = findNextState(input, i, state);
     i = result.index;
     state = result.state;
-    if(result.error !== undefined) {
-      return {error: result.error};
+    if (result.error !== undefined) {
+      return { error: result.error };
     }
   }
 
   specs.push(spec);
 
-  return _.filter(specs, function(spec) {
-    return (spec.nicks.length > 0) ||
+  return _.filter(specs, spec => (spec.nicks.length > 0) ||
       (spec.regexes.length > 0) ||
-      (spec.lines.length > 0);
-  });
-}
+      (spec.lines.length > 0));
+};
 
 function parseNick(str, idx) {
-  var ret = "";
+  let ret = '';
 
-  while(idx < str.length && !isWhitespace(str[idx]) && str[idx] != ',') {
+  while (idx < str.length && !isWhitespace(str[idx]) && str[idx] != ',') {
     ret += str[idx];
     idx++;
   }
 
-  return {result: ret, index: idx};
+  return { result: ret, index: idx };
 }
 
 function parseRegex(str, idx) {
-  var ret = "";
-  var regex;
+  let ret = '';
+  let regex;
 
   idx++; // Eat leading /
 
-  while(idx < str.length && str[idx] != '/') {
+  while (idx < str.length && str[idx] != '/') {
     ret += str[idx];
-    if(idx < str.length-1 && str[idx] === '\\') { // Skip over escapes
+    if (idx < str.length - 1 && str[idx] === '\\') { // Skip over escapes
       idx++;
       ret += str[idx];
     }
@@ -290,97 +278,91 @@ function parseRegex(str, idx) {
     idx++;
   }
 
-  if(idx < str.length) { // Catch the trailing /
+  if (idx < str.length) { // Catch the trailing /
     idx++;
 
     let flags = '';
-    if(str[idx] === 'i') { // Check for case-insensitive regex flag
+    if (str[idx] === 'i') { // Check for case-insensitive regex flag
       idx++;
       flags = 'i';
     }
 
     try { // Parse the regex
       regex = new RegExp(ret, flags);
-      return {result: regex, index: idx};
-    } catch(ex) {
-      return {result: ret, index: idx, error: "Could not parse regex: /" + ret + "/" + flags + ", " + ex.toString()};
+      return { result: regex, index: idx };
+    } catch (ex) {
+      return { result: ret, index: idx, error: `Could not parse regex: /${ret}/${flags}, ${ex.toString()}` };
     }
-  }
-  else { // Unterminated regex
-    return {result: ret, index: idx, error: "Unterminated regular expression"};
+  } else { // Unterminated regex
+    return { result: ret, index: idx, error: 'Unterminated regular expression' };
   }
 }
 
 function parseLines(str, idx) {
-  var ret = "";
+  let ret = '';
 
-  while(idx < str.length && /[0-9\-.,]/.test(str[idx])) {
+  while (idx < str.length && /[0-9\-.,]/.test(str[idx])) {
     ret += str[idx];
     idx++;
   }
 
-  if(str[idx-1] === ',') { // Put back trailing commas
+  if (str[idx - 1] === ',') { // Put back trailing commas
     idx--;
-    ret = ret.slice(0,-1);
+    ret = ret.slice(0, -1);
   }
 
-  var range = rangeParser.parse(ret);
-  if(range === undefined || range.length == 0) {
-    return {result: range, index: idx, error: "Could not parse " + ret};
+  const range = rangeParser.parse(ret);
+  if (range === undefined || range.length == 0) {
+    return { result: range, index: idx, error: `Could not parse ${ret}` };
   }
-  if(_.every(range, function(num) { return num > 0; })) {
-    return {result: range, index: idx};
+  if (_.every(range, num => num > 0)) {
+    return { result: range, index: idx };
   }
-  else {
-    return {result: range, index: idx, error: "Negative line index"};
-  }
+
+  return { result: range, index: idx, error: 'Negative line index' };
 }
 
 function findNextState(str, idx, state) {
-  var isList = false;
-  var next = {};
+  let isList = false;
+  let next = {};
 
-  if(state === STATES.ERROR) {
-    return {state: state, index: idx};
+  if (state === STATES.ERROR) {
+    return { state, index: idx };
   }
 
-  while(idx < str.length && isWhitespace(str[idx])) { // Consume whitespace
+  while (idx < str.length && isWhitespace(str[idx])) { // Consume whitespace
     idx++;
   }
 
-  if(idx < str.length-1 && str[idx] == ',') {
-    if(isWhitespace(str[idx+1])) { // ", " condition
+  if (idx < str.length - 1 && str[idx] == ',') {
+    if (isWhitespace(str[idx + 1])) { // ", " condition
       idx++;
-      return {state: STATES.NEW, index: idx};
+      return { state: STATES.NEW, index: idx };
     }
-    else { // ",<thing>" condition
-      isList = true;
-      idx++;
-    }
+    // ",<thing>" condition
+    isList = true;
+    idx++;
   }
 
-  if(/[a-zA-Z\[\]\\`_\^\{\}\|]/.test(str[idx])) {
-    next = {state: STATES.NICK, index: idx};
-  }
-  else if(/\//.test(str[idx])) {
-    next = {state: STATES.REGEX, index: idx};
-  }
-  else if(/[0-9]/.test(str[idx])) {
-    next = {state: STATES.LINES, index: idx};
-  }
-  else {
-    next = {state: STATES.ERROR, index: idx, error: 'Could not parse character ' + str[idx]};
+  if (/[a-zA-Z\[\]\\`_\^\{\}\|]/.test(str[idx])) {
+    next = { state: STATES.NICK, index: idx };
+  } else if (/\//.test(str[idx])) {
+    next = { state: STATES.REGEX, index: idx };
+  } else if (/[0-9]/.test(str[idx])) {
+    next = { state: STATES.LINES, index: idx };
+  } else {
+    next = { state: STATES.ERROR, index: idx, error: `Could not parse character ${str[idx]}` };
   }
 
-  //Handle "nick nick" or the like
-  if(!isList && next.state === state) {
+  // Handle "nick nick" or the like
+  if (!isList && next.state === state) {
     next.state = STATES.NEW;
   }
   // Enforce ordering of specs
-  if(state === STATES.REGEX && next.state === STATES.NICK) {
+  if (state === STATES.REGEX && next.state === STATES.NICK) {
     next.state = STATES.NEW;
   }
-  if(state === STATES.LINES && next.state !== STATES.LINES) {
+  if (state === STATES.LINES && next.state !== STATES.LINES) {
     next.state = STATES.NEW;
   }
 
@@ -388,7 +370,7 @@ function findNextState(str, idx, state) {
 }
 
 function isWhitespace(char) {
-  return /[ \t]/.test(char)
+  return /[ \t]/.test(char);
 }
 
 /*  Debugging Command
@@ -396,34 +378,34 @@ function isWhitespace(char) {
  *  Usage: !echo joe bob bill /hillbilly/ 4
  */
 module.exports.command = 'echo';
-module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
-  var specs = module.exports.parseSpecs(remainder);
+module.exports.run = function (remainder, parts, reply, command, from, to, text, raw) {
+  const specs = module.exports.parseSpecs(remainder);
 
   if (specs.error !== undefined) {
     bot.sayTo(from, specs.error);
     return;
   }
 
-  if(specs.length == 0) {
-    bot.sayTo(from, "Parsed nothing!");
+  if (specs.length == 0) {
+    bot.sayTo(from, 'Parsed nothing!');
   }
-  for(var i = 0; i < specs.length; i++) {
-    bot.sayTo(from, 'Spec ' + i + ':');
+  for (let i = 0; i < specs.length; i++) {
+    bot.sayTo(from, `Spec ${i}:`);
     bot.sayTo(from, 'Nicks:');
-    for(var j = 0; j < specs[i].nicks.length; j++) {
+    for (var j = 0; j < specs[i].nicks.length; j++) {
       bot.sayTo(from, specs[i].nicks[j]);
     }
     bot.sayTo(from, 'Regexes:');
-    for(var j = 0; j < specs[i].regexes.length; j++) {
+    for (var j = 0; j < specs[i].regexes.length; j++) {
       bot.sayTo(from, specs[i].regexes[j]);
     }
     bot.sayTo(from, 'Lines:');
-    for(var j = 0; j < specs[i].lines.length; j++) {
+    for (var j = 0; j < specs[i].lines.length; j++) {
       bot.sayTo(from, specs[i].lines[j]);
     }
     bot.sayTo(from, '===');
   }
-}
+};
 
 // Takes in a list of specs produced from parseSpecs() and produces a list of
 // raw scrollback content from a channel and the reason why that content was
@@ -439,100 +421,95 @@ module.exports.run = function(remainder, parts, reply, command, from, to, text, 
 // Should a nick or regex not be specified, that element of the result
 // object will not be set (and thus undefined).
 // If a line is not specified, it will be set to 1.
-module.exports.getScrollbackForSpecs = function(channel, specs, cb) {
-  var lines = [];
+module.exports.getScrollbackForSpecs = function (channel, specs, cb) {
+  const lines = [];
 
-  if(specs.length === 0) {
-    specs = [{nicks: [], regexes: [], lines: [1]}];
+  if (specs.length === 0) {
+    specs = [{ nicks: [], regexes: [], lines: [1] }];
   }
 
-  getCache(channel, function(cache) {
-    var revCache = cache.slice(0);
+  getCache(channel, (cache) => {
+    let revCache = cache.slice(0);
     revCache.reverse();
     // Remove the first element; it's the command that triggered a request for
     // scrollback for all current callers. TODO, let the caller tell us this
     revCache = revCache.slice(1);
 
-    for(var i=0; i < specs.length; i++) {
-      var nickChunks = [];
-      var regexChunks = [];
+    for (let i = 0; i < specs.length; i++) {
+      const nickChunks = [];
+      let regexChunks = [];
 
-      var spec = specs[i];
+      const spec = specs[i];
 
       // Filter Nicks
-      for(var n=0; n < spec.nicks.length; n++) {
+      for (let n = 0; n < spec.nicks.length; n++) {
         var nick = spec.nicks[n];
 
-        var matches = revCache.filter(function(el) {
-          return el.from == nick;
-        });
+        var matches = revCache.filter(el => el.from == nick);
 
-        if(matches.length == 0) {
-          return cb("Cannot find line from " + nick + "; only have " + revCache.length + " lines of context", null);
+        if (matches.length == 0) {
+          return cb(`Cannot find line from ${nick}; only have ${revCache.length} lines of context`, null);
         }
-        else {
-          nickChunks.push({nick:nick, contents:matches});
-        }
+
+        nickChunks.push({ nick, contents: matches });
       }
 
-      if(spec.nicks.length == 0) { // No nicks specified; match from any nick
-        nickChunks.push({contents:revCache});
+      if (spec.nicks.length == 0) { // No nicks specified; match from any nick
+        nickChunks.push({ contents: revCache });
       }
 
       // Filter regexes
-      for(var r=0; r < spec.regexes.length; r++) {
+      for (let r = 0; r < spec.regexes.length; r++) {
         var regex = spec.regexes[r];
 
-        for(var c=0; c < nickChunks.length; c++) {
+        for (var c = 0; c < nickChunks.length; c++) {
           var chunk = nickChunks[c];
 
-          var matches = chunk.contents.filter(function(el) {
-            return regex.test(module.exports.formatLine(el));
-          });
+          var matches = chunk.contents.filter(el => regex.test(module.exports.formatLine(el)));
 
-          if(matches.length == 0) {
-            error = "Cannot find line";
-            if(chunk.nick !== undefined) {
-              error += " from " + chunk.nick;
+          if (matches.length == 0) {
+            error = 'Cannot find line';
+            if (chunk.nick !== undefined) {
+              error += ` from ${chunk.nick}`;
             }
-            error += " matching regex " + regex.toString() + "; only have " + revCache.length + " lines of context";
+            error += ` matching regex ${regex.toString()}; only have ${revCache.length} lines of context`;
             return cb(error, null);
           }
-          else {
-            regexChunks.push({nick:chunk.nick, regex:regex, contents:matches});
-          }
+
+          regexChunks.push({ nick: chunk.nick, regex, contents: matches });
         }
       }
 
-      if(spec.regexes.length == 0) { // No regexes specified; match any line
+      if (spec.regexes.length == 0) { // No regexes specified; match any line
         regexChunks = nickChunks;
       }
 
       // Filter lines
-      if(spec.lines.length == 0) { // No line specified; match first line
+      if (spec.lines.length == 0) { // No line specified; match first line
         spec.lines = [1];
       }
 
-      for(var l=0; l < spec.lines.length; l++) {
-        var offset = spec.lines[l];
+      for (let l = 0; l < spec.lines.length; l++) {
+        const offset = spec.lines[l];
 
-        for(var c=0; c < regexChunks.length; c++) {
+        for (var c = 0; c < regexChunks.length; c++) {
           var chunk = regexChunks[c];
 
-          if(offset > chunk.contents.length || offset === 0) {
-            error = "Cannot find line";
-            if(chunk.nick !== undefined) {
-              error += " from " + chunk.nick;
+          if (offset > chunk.contents.length || offset === 0) {
+            error = 'Cannot find line';
+            if (chunk.nick !== undefined) {
+              error += ` from ${chunk.nick}`;
             }
-            if(chunk.regex !== undefined) {
-              error += " matching regex " + chunk.regex.toString();
+            if (chunk.regex !== undefined) {
+              error += ` matching regex ${chunk.regex.toString()}`;
             }
-            error += " " + offset + " ago; only have " + revCache.length + " lines of context";
+            error += ` ${offset} ago; only have ${revCache.length} lines of context`;
             return cb(error, null);
           }
-          else {
-            lines.push({nick:chunk.nick, regex:chunk.regex, line:offset, spec:spec, content:chunk.contents[offset - 1]});
-          }
+
+          lines.push({
+            nick: chunk.nick, regex: chunk.regex, line: offset, spec, content: chunk.contents[offset - 1],
+          });
         }
       }
     }
@@ -541,20 +518,20 @@ module.exports.getScrollbackForSpecs = function(channel, specs, cb) {
   });
 };
 
-module.exports.getFormattedScrollbackLinesFromRanges = function(channel, input, cb) {
-  var specs = module.exports.parseSpecs(input);
+module.exports.getFormattedScrollbackLinesFromRanges = function (channel, input, cb) {
+  const specs = module.exports.parseSpecs(input);
 
-  if(specs.error) {
+  if (specs.error) {
     log.debug(specs.err);
     return cb(specs.error);
   }
 
-  module.exports.getScrollbackForSpecs(channel, specs, function(err, lines) {
-    if(err) {
+  module.exports.getScrollbackForSpecs(channel, specs, (err, lines) => {
+    if (err) {
       return cb(err);
     }
 
-    return cb(null, _.map(lines,function(l) { return module.exports.formatLine(l.content); }).join("\n"));
+    return cb(null, _.map(lines, l => module.exports.formatLine(l.content)).join('\n'));
   });
-}
+};
 
