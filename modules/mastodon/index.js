@@ -45,7 +45,7 @@ var bot = null
 
 function robotRequest(options, fn) {
   var url = options.url;
-  var userAgent = moduleConfig != null && moduleConfig.userAgent || 'EuIrcBot';
+  var userAgent = moduleConfig != null ? moduleConfig.userAgent : 'EuIrcBot';
   var robotsTxtUrl = urlMod.resolve(url, '/robots.txt');
 
   var handle = function (robotsTxt) {
