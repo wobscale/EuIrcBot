@@ -1,37 +1,38 @@
-var Roll = require('roll');
-var regex = /^(\d*)d(\d+|\%)(([\+\-\/\*b])(\d+))?$/;
+const Roll = require('roll');
 
-module.exports.command = "roll";
+const regex = /^(\d*)d(\d+|\%)(([\+\-\/\*b])(\d+))?$/;
+
+module.exports.command = 'roll';
 
 function rollDice(str, cb) {
-  if(!regex.test(str)) {
+  if (!regex.test(str)) {
     return;
   }
-  var dumbRoll = false;
-  var m = regex.exec(str);
-  if(m[2] == '1') {
+  let dumbRoll = false;
+  const m = regex.exec(str);
+  if (m[2] == '1') {
     dumbRoll = true;
   }
-  var res;
+  let res;
   try {
-    var roll = new Roll()
+    const roll = new Roll();
     res = roll.roll(str);
-  } catch(e) {
+  } catch (e) {
     return;
   }
-  var s = res.result;
-  if(dumbRoll) {
+  let s = res.result;
+  if (dumbRoll) {
     s += ', BUT THAT IS A DUMB ROLL';
-  } else if(res.rolled.length > 1) {
-    s += ": Rolled " + res.rolled.join(", ");
+  } else if (res.rolled.length > 1) {
+    s += `: Rolled ${res.rolled.join(', ')}`;
   }
   cb(s);
 }
 
-module.exports.run = function(remainder, parts, reply, command, from, to, text, raw) {
+module.exports.run = function (remainder, parts, reply, command, from, to, text, raw) {
   rollDice(remainder, reply);
 };
 
-module.exports.msg = function(text, from, reply, raw) {
+module.exports.msg = function (text, from, reply, raw) {
   rollDice(text, reply);
 };

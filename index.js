@@ -1,3 +1,3 @@
-var bot = require('./bot.js');
+const bot = require('./bot.js');
 
 bot.run();

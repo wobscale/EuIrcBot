@@ -1,19 +1,19 @@
-var url = require('url')
-  , XRegExp = require('xregexp');
+let url = require('url'),
+  XRegExp = require('xregexp');
 
-var tokenSplitRegex = XRegExp('(?![-_])[\\p{Pc}\\p{Pd}\\pZ]+')
-  , tokenTrimBase = '(?![/])\\pP+'
-  , tokenTrimStart = XRegExp('^' + tokenTrimBase)
-  , tokenTrimEnd = XRegExp(tokenTrimBase + '$');
+let tokenSplitRegex = XRegExp('(?![-_])[\\p{Pc}\\p{Pd}\\pZ]+'),
+  tokenTrimBase = '(?![/])\\pP+',
+  tokenTrimStart = XRegExp(`^${tokenTrimBase}`),
+  tokenTrimEnd = XRegExp(`${tokenTrimBase}$`);
 
-var bot;
-module.exports.init = function(b) {
+let bot;
+module.exports.init = function (b) {
   bot = b;
 };
 
-module.exports.msg = function(text, from, reply, raw) {
+module.exports.msg = function (text, from, reply, raw) {
   /* Avoid dupe urls in one line unless they really want it */
-  var thisLinesUrls = [];
+  const thisLinesUrls = [];
 
   text.split(tokenSplitRegex)
     .map((token) => {
@@ -21,8 +21,8 @@ module.exports.msg = function(text, from, reply, raw) {
         return url.parse(token.replace(tokenTrimStart, '').replace(tokenTrimEnd, ''));
       } catch (_) {}
     })
-    .filter((u) => u && u.protocol && u.host)
-    .map((u) => u.href)
+    .filter(u => u && u.protocol && u.host)
+    .map(u => u.href)
     .forEach((u) => {
       if (thisLinesUrls.includes(u)) {
         bot.callModuleFn('dupeurl', [u, reply, text, from, raw]);
@@ -33,6 +33,6 @@ module.exports.msg = function(text, from, reply, raw) {
     });
 };
 
-module.exports.url = function(url, reply, text) {
+module.exports.url = function (url, reply, text) {
   // sample url function
 };

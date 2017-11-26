@@ -1,61 +1,60 @@
-var amazon = require('amazon-product-api');
-var amazonClient = null;
-var log;
+const amazon = require('amazon-product-api');
 
-module.exports.init = function(bot) {
+let amazonClient = null;
+let log;
+
+module.exports.init = function (bot) {
   log = bot.log;
-  bot.getConfig("amazon.json", function(err, conf) {
-    if(err) return log.error("Unable to load amazon module: " + err);
+  bot.getConfig('amazon.json', (err, conf) => {
+    if (err) return log.error(`Unable to load amazon module: ${err}`);
     try {
       amazonClient = new amazon.createClient(conf);
-    } catch(ex) {
-      log.error("Error loading amazon library: " + ex);
+    } catch (ex) {
+      log.error(`Error loading amazon library: ${ex}`);
     }
   });
 };
 
-var extractAsin = function(url) {
-  var asin;
-  var amazonRegex = /(B[0-9]{2}[0-9A-Z]{7}|[0-9]{9}(?:X|[0-9]))/;
+const extractAsin = function (url) {
+  let asin;
+  const amazonRegex = /(B[0-9]{2}[0-9A-Z]{7}|[0-9]{9}(?:X|[0-9]))/;
   match = amazonRegex.exec(url);
-  if(match && match[1])
-    asin = match[0];
+  if (match && match[1]) { asin = match[0]; }
   return asin;
 };
 
-var generateErrorMessage = function(error) {
-  var err = error[0].Error[0];
-  var msg;
+const generateErrorMessage = function (error) {
+  const err = error[0].Error[0];
+  let msg;
   // AWS.InvalidParameterValue is returned when an prospective ASIN isn't actually a real ASIN, so we squash it
-  if (err.Code[0] != "AWS.InvalidParameterValue")
-    msg = "Error: " + err.Message[0];
+  if (err.Code[0] != 'AWS.InvalidParameterValue') { msg = `Error: ${err.Message[0]}`; }
   return msg;
 };
 
-var generateResponse = function(results) {
-  var attributes = results[0].ItemAttributes[0];
-  var msg = attributes.Title;
+const generateResponse = function (results) {
+  const attributes = results[0].ItemAttributes[0];
+  let msg = attributes.Title;
   // Free Prime exclusives and sold out items do not have a price. If this occurs, simply return title
-  if(typeof attributes.ListPrice !== "undefined") {
-    var price = attributes.ListPrice[0].FormattedPrice[0];
+  if (typeof attributes.ListPrice !== 'undefined') {
+    const price = attributes.ListPrice[0].FormattedPrice[0];
     msg += `- [${price}]`;
   }
   return msg;
 };
 
-module.exports.url = function(url, reply) {
-  if(amazonClient === null) return log.error("Unable to handle amazon url; lib not loaded");
-  var asin = extractAsin(url);
-  if(asin) {
-    var query = { itemId: asin };
-    amazonClient.itemLookup(query, function(err, results) {
-      var msg;
-      if(err) {
+module.exports.url = function (url, reply) {
+  if (amazonClient === null) return log.error('Unable to handle amazon url; lib not loaded');
+  const asin = extractAsin(url);
+  if (asin) {
+    const query = { itemId: asin };
+    amazonClient.itemLookup(query, (err, results) => {
+      let msg;
+      if (err) {
         msg = generateErrorMessage(err);
       } else {
         msg = generateResponse(results);
       }
-      if(msg) return reply(msg);
+      if (msg) return reply(msg);
     });
   }
 };

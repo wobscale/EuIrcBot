@@ -1,21 +1,21 @@
-var http = require('http');
-var xml2js = require('xml2js');
+const http = require('http');
+const xml2js = require('xml2js');
 
-var nvRegex =  /nicovideo\.jp\/watch\/sm(\d+)/;
+const nvRegex = /nicovideo\.jp\/watch\/sm(\d+)/;
 
 function getInfo(id, cb) {
-  http.get("http://ext.nicovideo.jp/api/getthumbinfo/sm"+id, function(res) {
-    var data = '';
-    res.on('data', function(c) { data += c.toString(); });
-    res.on('end', function() {
-      xml2js.parseString(data, function(err, result) {
-        if(err) {
+  http.get(`http://ext.nicovideo.jp/api/getthumbinfo/sm${id}`, (res) => {
+    let data = '';
+    res.on('data', (c) => { data += c.toString(); });
+    res.on('end', () => {
+      xml2js.parseString(data, (err, result) => {
+        if (err) {
           cb(err);
-        } else if(result.nicovideo_thumb_response && result.nicovideo_thumb_response.$.status == "ok") {
+        } else if (result.nicovideo_thumb_response && result.nicovideo_thumb_response.$.status == 'ok') {
           cb(null, result.nicovideo_thumb_response.thumb[0]);
         } else {
           console.log(result);
-          cb("Result was NOT ok");
+          cb('Result was NOT ok');
         }
       });
     });
@@ -27,12 +27,12 @@ function sayInfo(vid, cb) {
 }
 
 
-module.exports.url = function(url, reply) {
-  var m;
-  if((m = nvRegex.exec(url))) {
-    var id = m[1];
-    getInfo(id, function(err, res) {
-      if(err) reply("Unable to get video info", err);
+module.exports.url = function (url, reply) {
+  let m;
+  if ((m = nvRegex.exec(url))) {
+    const id = m[1];
+    getInfo(id, (err, res) => {
+      if (err) reply('Unable to get video info', err);
       else sayInfo(res, reply);
     });
   }
