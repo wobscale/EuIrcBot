@@ -8,7 +8,7 @@ module.exports.init = function (bot) {
   bot.getConfig('amazon.json', (err, conf) => {
     if (err) return log.error(`Unable to load amazon module: ${err}`);
     try {
-      amazonClient = new amazon.createClient(conf);
+      amazonClient = amazon.createClient(conf);
     } catch (ex) {
       log.error(`Error loading amazon library: ${ex}`);
     }
@@ -24,11 +24,15 @@ const extractAsin = function (url) {
 };
 
 const generateErrorMessage = function (error) {
-  const err = error[0].Error[0];
-  let msg;
-  // AWS.InvalidParameterValue is returned when an prospective ASIN isn't actually a real ASIN, so we squash it
-  if (err.Code[0] != 'AWS.InvalidParameterValue') { msg = `Error: ${err.Message[0]}`; }
-  return msg;
+  try {
+    const err = error[0].Error[0];
+    // AWS.InvalidParameterValue is returned when an prospective ASIN isn't actually a real ASIN, so we squash it
+    if (err.Code[0] == 'AWS.InvalidParameterValue') {
+      return '';
+    }
+    return 'Error: ${err.Message[0]}';
+  } catch (ex) {}
+  return JSON.stringify(error);
 };
 
 const generateResponse = function (results) {
@@ -43,7 +47,7 @@ const generateResponse = function (results) {
 };
 
 module.exports.url = function (url, reply) {
-  if (amazonClient === null) return log.error('Unable to handle amazon url; lib not loaded');
+  if (amazonClient === null) return;
   const asin = extractAsin(url);
   if (asin) {
     const query = { itemId: asin };
