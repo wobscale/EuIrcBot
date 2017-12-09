@@ -4,11 +4,14 @@ let wc = null;
 
 module.exports.init = function (bot) {
   bot.getConfig('wolfram.json', (err, conf) => {
-    if (err) console.log(`Unable to load wolfram module: ${err}`);
+    if (err) {
+      this.log.error(err, 'unable to load wolfram module');
+      return;
+    }
     try {
       wc = new wolfram.createClient(conf.appid);
     } catch (ex) {
-      bot.say(`Error loading wolfram library: ${ex}`);
+      if (err) this.log.error(err, 'unable to load wolfram module');
     }
   });
 };
