@@ -25,15 +25,15 @@ module.exports.run = function (remainder, parts, reply, command, from, to, text,
   ];
 
   const omen_templates = [
-    '-intro- -targets- -actions-.. -outros-',
+    '-intros- -targets- -actions-.. -outros-.',
     '-targets- -actions-. -intros- -outros-.',
-    '-targets-.. -outros-. -intros- they -actions-',
+    '-targets-.. -outros-. -intros- they -actions-.',
     '-targets- -actions-. -targets- -actions-.'
   ];
 
   let omen = omen_templates[Math.floor(Math.random() * omen_templates.length)];
 
-  while (omen.indexOf('-target-') > -1) {
+  while (omen.indexOf('-targets-') > -1) {
   	const selection = targets[Math.floor(Math.random() * targets.length)];
   	omen = omen.replace('-targets-', selection);
   }
