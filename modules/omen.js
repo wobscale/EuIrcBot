@@ -25,9 +25,9 @@ module.exports.run = function (remainder, parts, reply, command, from, to, text,
   ];
 
   const omen_templates = [
-    '-intros- -targets- -actions-.. -outros-.',
+    '-intros- -targets- -actions-... -outros-.',
     '-targets- -actions-. -intros- -outros-.',
-    '-targets-.. -outros-. -intros- they -actions-.',
+    '-targets-... -outros-. -intros- they -actions-.',
     '-targets- -actions-. -targets- -actions-.'
   ];
 
@@ -52,4 +52,3 @@ module.exports.run = function (remainder, parts, reply, command, from, to, text,
 
   reply(`${from}: ${omen}`);
 };
-
