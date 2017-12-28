@@ -51,7 +51,7 @@ module.exports.run = function run(r, parts, reply, command, from, to) {
       return;
     }
 
-    me.post(scrollbackLines, (err2, quoUrl) => {
+    me.post(scrollbackLines, to, (err2, quoUrl) => {
       if (err) reply(err2);
       else reply(quoUrl);
     });
