@@ -7,7 +7,7 @@ let conf = null;
 module.exports.init = function init(b) {
   bot = b;
   bot.getConfig('qdb.json', (err, co) => {
-    if (err) this.error('qdb.json missing');
+    if (err) this.log.error('qdb.json missing');
     else conf = co;
   });
 };
