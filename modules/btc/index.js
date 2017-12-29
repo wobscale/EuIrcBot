@@ -37,7 +37,7 @@ function getTickerData(coin, callback) {
     });
 }
 
-module.exports.commands = ['btc', 'ltc', 'doge', 'eth', 'etc', 'zec'];
+module.exports.commands = ['btc', 'ltc', 'doge', 'eth', 'etc', 'zec', 'xrp'];
 module.exports.run = function (remainder, parts, reply, command, from, to, text, raw) {
   getTickerData(command, reply);
 };
