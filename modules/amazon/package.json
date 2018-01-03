@@ -4,7 +4,7 @@
   "description": "Amazon module",
   "main": "index.js",
   "dependencies": {
-    "amazon-product-api": "latest"
+    "x-ray": "^2.3.0"
   },
   "author": "gmackie",
   "license": "MIT"
