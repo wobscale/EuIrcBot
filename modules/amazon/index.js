@@ -23,7 +23,7 @@ const priceQuery = {
 };
 
 const isAmazonUrl = function(url) {
-  for (let amazUrl in amazonUrlWhitelist) {
+  for (const amazUrl of amazonUrlWhitelist) {
     if (url.includes(amazUrl)) return true;
   }
   return false;
