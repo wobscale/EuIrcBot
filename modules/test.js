@@ -4,11 +4,27 @@ module.exports.name = 'sirc-test';
 
 module.exports.command = 'test';
 
+const testOutputs = [
+  'Hello and, again, welcome to the Aperture Science computer-aided enrichment center.',
+  'Do not submerge the IRC Network in liquid',
+  'Do not stare directly into the IRC Network',
+  'This test is impossible; make no attempt to solve it',
+  "Don't worry, you passed <3",
+  'Is this a test?',
+  'Do you think this is a test? Well, do you?',
+  'If quizzes are quizical, what are tests?',
+  'Test, test, is this thing on?',
+  'test (n): a cricial examination, observation, or evaluation.',
+  "Yup, I'm still here.",
+  'Question 1: If an electron has a mass, does that mean it is Catholic?',
+  'toast',
+  'test(1) check file types and compare values',
+];
 
 module.exports.commands = ['test2', 'test3', /(t+)test/];
 module.exports.run = function (remainder, parts, reply, command, from, to, text, raw, regex) {
   if (typeof regex === 'undefined') {
-    reply('One of my test commands was called!', 'In fact it was', command);
+    reply(testOutputs[Math.floor(Math.random() * testOutputs.length)]);
   } else {
     reply('One of my test regex commands was called!', 'In fact it was', regex, 'which matched', command);
   }
