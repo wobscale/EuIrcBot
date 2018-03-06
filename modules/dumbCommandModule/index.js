@@ -7,27 +7,27 @@ let allowCmds = false;
 
 function writeCommands() {
   bot.writeDataFile('commands.json', JSON.stringify(commandDict), (err) => {
-    if (err) console.log(`Error writing command file: ${err}`);
+    if (err) bot.log.error(`Error writing command file: ${err}`);
   });
 }
 
-module.exports.init = function (b) {
+module.exports.init = function dumbCommandInit(b) {
   bot = b;
-  bot.readDataFile('commands.json', (err, data) => {
+  bot.readDataFile('commands.json', (err, jsonData) => {
     if (err) {
-      console.log('Initializing commandDict');
+      bot.log.info('Initializing commandDict');
       commandDict = {};
     } else {
       try {
-        commandDict = JSON.parse(data);
+        commandDict = JSON.parse(jsonData);
       } catch (ex) {
-        console.log('Corrupted commands.json file! Resetting dict...');
+        bot.log.warn('Corrupted commands.json file! Resetting dict...');
         commandDict = {};
       }
 
       // Convert to new db format
-      if (_.size(commandDict) > 0 && !_.values(commandDict)[0].hasOwnProperty('blame')) {
-        commandDict = _.mapObject(commandDict, (val, key) => {
+      if (_.size(commandDict) > 0 && !Object.prototype.hasOwnProperty.call(_.values(commandDict)[0], 'blame')) {
+        commandDict = _.mapObject(commandDict, (val) => {
           const data = {};
           data.command = val;
           data.blame = 'jruby'; // blame merr
@@ -46,7 +46,7 @@ module.exports.init = function (b) {
 };
 
 
-module.exports.any_command = function (remainder, parts, reply, command) {
+module.exports.any_command = function dumbCommandCommands(remainder, parts, reply, command) {
   if (commandDict[command]) reply(commandDict[command].command);
 };
 
@@ -66,21 +66,20 @@ module.exports.commands = {
       if (exists) reply(`Overwrote command ${parts[0]}`);
       else reply(`Added command ${parts[0]}`);
 
-      writeCommands();
+      return writeCommands();
     },
     blame(r, parts, reply) {
-      if (parts.length === 0) return reply('please specify a command to blame');
+      if (parts.length !== 1) return reply('please specify a command to blame');
       if (typeof commandDict[parts[0]] === 'undefined') return reply('No such command');
-      reply(`Blame ${commandDict[parts[0]].blame} for this`);
+      return reply(`Blame ${commandDict[parts[0]].blame} for this`);
     },
     rblame(r, parts, reply) {
-      if (parts.length !== 0) return reply('please specify a user to blame');
-      let commandArr = []
-      for (let [name, command] of commandDict) {
-        if (command.blame.equals(parts[0])) commandArr.append(name);
-      }
-      if (commandArr > 0) reply(`commandArr.join(' | ')`);
-      else reply(`${parts[0]} has not made any dumbCommands`);
+      if (parts.length !== 1) return reply('please specify a user to blame');
+      const commandArr = Object.entries(commandDict)
+        .filter(([, command]) => command.blame.equals(parts[0]))
+        .map(([name]) => name);
+      if (commandArr > 0) return reply(commandArr.join(' | '));
+      return reply(`${parts[0]} has not made any dumbcommands`);
     },
     remove(r, parts, reply) {
       if (parts.length !== 1) return reply('remove must have *exactly* one argument');
@@ -90,7 +89,7 @@ module.exports.commands = {
       delete commandDict[parts[0]];
       reply(`Removed command ${parts[0]}`);
 
-      writeCommands();
+      return writeCommands();
     },
     list(x, parts, reply) {
       if (parts.length === 0) {

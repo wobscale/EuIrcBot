@@ -25,7 +25,7 @@
     "start": "node --max_old_space_size=350 index.js",
     "install": "./installModules.sh",
     "test": "mocha $(git ls-files | grep -E 'test.js$')",
-    "lint": "eslint $(git ls-files | grep -E '\\.js$' | grep -E '^(bot.js|index.js|modules/bully.js|modules/featurerequest.js|modules/mastodon|modules/schedule|modules/nickserv.js|modules/test2.js|modules/qdb|modules/amazon|modules/wikipedia|modules/omen.js)')"
+    "lint": "eslint $(git ls-files | grep -E '\\.js$' | grep -E '^(bot.js|index.js|modules/bully.js|modules/featurerequest.js|modules/mastodon|modules/schedule|modules/nickserv.js|modules/test2.js|modules/qdb|modules/amazon|modules/wikipedia|modules/omen.js|modules/dumbCommandModule)')"
   },
   "repository": {
     "type": "git",
