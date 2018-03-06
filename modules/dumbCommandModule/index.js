@@ -74,13 +74,13 @@ module.exports.commands = {
       reply(`Blame ${commandDict[parts[0]].blame} for this`);
     },
     rblame(r, parts, reply) {
-      if (parts.length === 0) return reply('please specify a user to blame');
+      if (parts.length !== 0) return reply('please specify a user to blame');
       let commandArr = []
       for (let [name, command] of commandDict) {
-        if (command.blame.equals(parts[0]) commandArr.append(name);
+        if (command.blame.equals(parts[0])) commandArr.append(name);
       }
       if (commandArr > 0) reply(`commandArr.join(' | ')`);
-      else reply("User has not made any dumbCommands");
+      else reply(`${parts[0]} has not made any dumbCommands`);
     },
     remove(r, parts, reply) {
       if (parts.length !== 1) return reply('remove must have *exactly* one argument');
