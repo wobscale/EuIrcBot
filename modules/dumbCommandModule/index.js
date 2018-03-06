@@ -76,9 +76,9 @@ module.exports.commands = {
     rblame(r, parts, reply) {
       if (parts.length !== 1) return reply('please specify a user to blame');
       const commandArr = Object.entries(commandDict)
-        .filter(([, command]) => command.blame.equals(parts[0]))
+        .filter(([, command]) => command.blame === parts[0])
         .map(([name]) => name);
-      if (commandArr > 0) return reply(commandArr.join(' | '));
+      if (commandArr.length > 0) return reply(`${parts[0]} is responsible for ${commandArr.join(', ')}`);
       return reply(`${parts[0]} has not made any dumbcommands`);
     },
     remove(r, parts, reply) {
