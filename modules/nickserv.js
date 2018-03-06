@@ -5,7 +5,7 @@ let log = null;
 // Only respond to a nickserv notice once.
 let identified = false;
 
-module.exports.init = function (b) {
+module.exports.init = (b) => {
   bot = b;
   log = this.log;
 
