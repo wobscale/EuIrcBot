@@ -1,0 +1,11 @@
+{
+  "name": "sirc-wikipedia",
+  "version": "0.0.0",
+  "description": "Wikipedia module",
+  "main": "index.js",
+  "dependencies": {
+    "wikijs": "4.5.2"
+  },
+  "author": "sudonatalie",
+  "license": "MIT"
+}
