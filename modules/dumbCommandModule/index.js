@@ -53,7 +53,7 @@ module.exports.any_command = function (remainder, parts, reply, command) {
 module.exports.commands = {
   dumbcommand: {
     _default(x, y, reply) {
-      reply('Usage: dumbcommand [<add>|<remove>|<list>|<blame>] <command> [<text>]');
+      reply('Usage: dumbcommand [<add>|<remove>|<list>|<blame>|<rblame>] <command> [<text>]');
     },
     add(r, parts, reply, command, from) {
       if (parts.length !== 2) return reply('add must have *exactly* two arguments');
@@ -72,6 +72,15 @@ module.exports.commands = {
       if (parts.length === 0) return reply('please specify a command to blame');
       if (typeof commandDict[parts[0]] === 'undefined') return reply('No such command');
       reply(`Blame ${commandDict[parts[0]].blame} for this`);
+    },
+    rblame(r, parts, reply) {
+      if (parts.length !== 0) return reply('please specify a user to blame');
+      let commandArr = []
+      for (let [name, command] of commandDict) {
+        if (command.blame.equals(parts[0])) commandArr.append(name);
+      }
+      if (commandArr > 0) reply(`commandArr.join(' | ')`);
+      else reply(`${parts[0]} has not made any dumbCommands`);
     },
     remove(r, parts, reply) {
       if (parts.length !== 1) return reply('remove must have *exactly* one argument');
