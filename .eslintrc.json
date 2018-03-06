@@ -3,6 +3,7 @@
     "rules": {
         "global-require": "off",
         "import/no-dynamic-require": "off",
-        "prefer-destructuring": "off"
+        "prefer-destructuring": "off",
+        "camelcase": "off"
     }
 }
