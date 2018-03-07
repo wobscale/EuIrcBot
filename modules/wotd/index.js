@@ -14,7 +14,7 @@ module.exports.init = function (bot) {
   });
 };
 
-module.exports.run = function (remainder, parts, reply, command, from, to, text, raw) {
+module.exports.run = function (remainder, parts, reply) {
   const url = `http://api.wordnik.com/v4/words.json/wordOfTheDay?api_key=${config.wotd_key}`;
 
   http.get(url, (resp) => {
@@ -33,6 +33,7 @@ module.exports.run = function (remainder, parts, reply, command, from, to, text,
 
         reply(msg.join(' | ').substring(0, 500));
       } catch (e) {
+        this.log.error(e, 'could not get wotd');
       }
     });
   });
