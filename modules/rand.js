@@ -9,24 +9,24 @@ module.exports.run = function (r, parts, reply, command) {
     return;
   }
 
-  if (levels == 0) {
+  if (levels === 0) {
     reply(parts[Math.floor(Math.random() * parts.length)]);
     return;
   }
 
   const results = {};
-  for (let level = 0; level < levels; level++) {
+  for (let level = 0; level < levels; level += 1) {
     if (parseInt(parts[level], 10) > 9e5) {
       reply('no');
       return;
     }
 
-    for (let i = 0; i < parseInt(parts[level], 10); i++) {
+    for (let i = 0; i < parseInt(parts[level], 10); i += 1) {
       const choice = parts[Math.floor(Math.random() * (parts.length - levels)) + levels];
       if (typeof results[choice] === 'undefined') {
         results[choice] = 1;
       } else {
-        results[choice] = results[choice] + 1;
+        results[choice] += 1;
       }
     }
   }
