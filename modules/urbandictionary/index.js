@@ -32,8 +32,8 @@ function getFirst(command, term, reply) {
 }
 
 module.exports.commands = ['ud', 'urbandict', 'udexample'];
-module.exports.run = function (remainder, parts, reply, command, from, to, text, raw) {
-  if (remainder.length == 0) {
+module.exports.run = function (remainder, parts, reply, command) {
+  if (remainder.length === 0) {
     usage(command, reply);
   } else {
     getFirst(command, remainder, reply);
