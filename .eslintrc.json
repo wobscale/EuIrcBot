@@ -4,6 +4,8 @@
         "global-require": "off",
         "import/no-dynamic-require": "off",
         "prefer-destructuring": "off",
-        "camelcase": "off"
+        "camelcase": "off",
+        "no-console": "off",
+        "func-names": "off"
     }
 }
