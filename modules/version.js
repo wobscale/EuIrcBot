@@ -4,11 +4,11 @@ const ver = require('../package.json').version;
 
 let hash;
 
-module.exports.init = function (b) {
-  exec('git rev-parse HEAD', (error, stdout, stderr) => {
+module.exports.init = function () {
+  exec('git rev-parse HEAD', (error, stdout) => {
     if (error != null) {
       hash = null;
-      console.err("git's broken yo");
+      this.log.error("git's broken yo");
     }
     hash = stdout;
   });
