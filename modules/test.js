@@ -1,4 +1,4 @@
-/* eslint no-unused-vars: "ignore" */ // unused arguments to demonstrate what args are available
+/* eslint no-unused-vars: 0 */ // unused arguments to demonstrate what args are available
 
 module.exports.init = function (bot) {};
 
