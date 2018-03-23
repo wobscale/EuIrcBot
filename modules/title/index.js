@@ -1,12 +1,12 @@
-let cheerio = require('cheerio'),
-  request = require('request');
+const cheerio = require('cheerio');
+const request = require('request');
 
 module.exports.command = 'title';
 
 function getSelector(url, selector, reply) {
-  url = url.trim();
-  if (!/^https?:\/\//.test(url)) {
-    url = `http://${remainder}`;
+  let cleanedUrl = url.trim();
+  if (!/^https?:\/\//.test(cleanedUrl)) {
+    cleanedUrl = `http://${cleanedUrl}`;
   }
 
   const options = {
@@ -15,7 +15,10 @@ function getSelector(url, selector, reply) {
   };
 
   request(options, (err, resp, html) => {
-    if (err) return reply(err);
+    if (err) {
+      reply(err);
+      return;
+    }
 
     const res = cheerio(selector, html);
     console.log(res);
