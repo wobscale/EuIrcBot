@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 const assert = require('chai').assert;
 const util = require('util');
 const sinon = require('sinon');
@@ -24,7 +26,7 @@ describe('bot.getReply', () => {
       [['x\ny'], 'x\ny'], // line splitting happens a layer below, we gucci
     ];
 
-    for (let i = 0; i < tests.length; i++) {
+    for (let i = 0; i < tests.length; i += 1) {
       bot.client = mockClient();
 
       const reply = bot.getReply('#foo', false, 'jim');
@@ -44,7 +46,7 @@ describe('bot.getReply', () => {
       [['x'.repeat(2000)], `${'x'.repeat((bot.client.opt.messageSplit * 2) - 4)} ...`],
     ];
 
-    for (let i = 0; i < tests.length; i++) {
+    for (let i = 0; i < tests.length; i += 1) {
       bot.client = mockClient();
 
       const reply = bot.getReply('#foo', false, 'jim');
@@ -65,7 +67,7 @@ describe('bot.getReply', () => {
       [['x'.repeat(2000)], 'x'.repeat(2000)],
     ];
 
-    for (let i = 0; i < tests.length; i++) {
+    for (let i = 0; i < tests.length; i += 1) {
       bot.client = mockClient();
 
       const reply = bot.getReply('#foo', false, 'holden');
@@ -85,7 +87,7 @@ describe('bot.getReply', () => {
       [['x'.repeat(2000)], 'x'.repeat(2000)],
     ];
 
-    for (let i = 0; i < tests.length; i++) {
+    for (let i = 0; i < tests.length; i += 1) {
       bot.client = mockClient();
 
       const reply = bot.getReply('timmy', true, 'timmy');
@@ -161,7 +163,7 @@ describe('bot.getReply', () => {
       },
     ];
 
-    for (const test of tests) {
+    tests.forEach((test) => {
       bot.client = mockClient();
       const reply = bot.getReply('#beep', false, 'timmy');
       reply.custom(test.opts, ...test.input);
@@ -182,6 +184,6 @@ describe('bot.getReply', () => {
           `wrong args. Expected #beep ${test.output}, got ${util.inspect(s.getCall(1).args)}`,
         );
       }
-    }
+    });
   });
 });
