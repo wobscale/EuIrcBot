@@ -1,17 +1,37 @@
 const wiki = require('wikijs').default;
+const { URL } = require('url');
 
 module.exports.commands = ['wiki', 'wikipedia'];
 
-const urlRegex = /^(?:https?:\/\/)?(?:en\.)?wikipedia\.org\/wiki\/(.+)/;
+// Wiki API usage currently configured to make all queries in English language
+const wikipediaHostWhitelist = [
+  'en.wikipedia.org',
+  'www.wikipedia.org',
+  'wikipedia.org',
+];
+const wikipediaPathPrefix = '/wiki/';
 
 const errorMessage = term => `No Wikipedia page found for "${term}"`;
 
+function isWikipediaUrl(url) {
+  return wikipediaHostWhitelist.includes(url.hostname)
+    && url.pathname.startsWith(wikipediaPathPrefix);
+}
+
 function shortSummary(page, withUrl) {
   return page.summary()
+    // Limit to 250 chars
+    .then(str => str.substr(0, 250))
     // Get the first "sentence" (hopefully)
-    .then(str => str.substr(0, str.indexOf('.') + 1))
-    // Truncate with an ellipsis if length exceeds 250 chars
-    .then(str => (str.length > 250 ? `${str.substr(0, 250)}...` : str))
+    .then((str) => {
+      const i = str.lastIndexOf('.');
+      // If summary contains period
+      return i !== -1 ?
+        // Truncate to last period
+        str.substr(0, i + 1) :
+        // Otherwise add an ellipsis
+        `${str}...`;
+    })
     // Append URL if requested
     .then(str => (withUrl ? `${str} <${page.raw.canonicalurl}>` : str));
 }
@@ -26,9 +46,10 @@ module.exports.run = (remainder, parts, reply) => {
 };
 
 module.exports.url = (url, reply) => {
-  if (urlRegex.test(url)) {
-    const [, match] = urlRegex.exec(url);
-    const title = decodeURIComponent(match);
+  const parsedUrl = new URL(url);
+  if (isWikipediaUrl(parsedUrl)) {
+    const urlTitle = parsedUrl.pathname.slice(wikipediaPathPrefix.length);
+    const title = decodeURIComponent(urlTitle);
 
     wiki().page(title)
       .then(shortSummary)
