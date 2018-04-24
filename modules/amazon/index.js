@@ -11,6 +11,7 @@ const amazonHostWhitelist = [].concat(...[
   'amzn.asia',
   'amzn.to',
   'a.co',
+  'smile.amazon.com',
 ].map(hostname => [hostname, `www.${hostname}`]));
 const productQuery = {
   productName: '#productTitle',
