@@ -9,13 +9,13 @@ function getCommentText(url, reply) {
     if (error) {
       reply(`Could not get comment: ${error}`);
     }
-    const data = '';
     try {
       const json = JSON.parse(body);
       const comment = json[1].data.children[0].data.body.replace(/\n+/g, ' | ');
 
       reply(comment.substring(0, 500));
     } catch (e) {
+      this.log.error(e, 'we broke it reddit');
     }
   });
 }

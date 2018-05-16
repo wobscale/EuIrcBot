@@ -1,6 +1,6 @@
 const Roll = require('roll');
 
-const regex = /^(\d*)d(\d+|\%)(([\+\-\/\*b])(\d+))?$/;
+const regex = /^(\d*)d(\d+|%)(([+\-/*b])(\d+))?$/;
 
 module.exports.command = 'roll';
 
@@ -10,7 +10,7 @@ function rollDice(str, cb) {
   }
   let dumbRoll = false;
   const m = regex.exec(str);
-  if (m[2] == '1') {
+  if (m[2] === '1') {
     dumbRoll = true;
   }
   let res;
@@ -29,10 +29,10 @@ function rollDice(str, cb) {
   cb(s);
 }
 
-module.exports.run = function (remainder, parts, reply, command, from, to, text, raw) {
+module.exports.run = function (remainder, parts, reply) {
   rollDice(remainder, reply);
 };
 
-module.exports.msg = function (text, from, reply, raw) {
+module.exports.msg = function (text, from, reply) {
   rollDice(text, reply);
 };

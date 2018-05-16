@@ -1,6 +1,5 @@
 const goog = require('googleapis');
 
-const OAuth2 = goog.auth.OAuth2;
 const yt = goog.youtube({ version: 'v3' });
 const moment = require('moment');
 
@@ -14,7 +13,7 @@ module.exports.init = function (b) {
   });
 };
 
-const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i;
+const ytRegex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/ ]{11})/i;
 
 function formatPt50(pt50) {
   const duration = moment.duration(pt50);
@@ -39,7 +38,7 @@ function likePercent(vid) {
       }
       return '100%';
     }
-    return `${(like / (like + hate) * 100).toString().substr(0, 4)}%`;
+    return `${((like / (like + hate)) * 100).toString().substr(0, 4)}%`;
   } catch (ex) {
     console.log('Ty google for giving me this video which is screwed', vid);
     return '?%';
@@ -62,20 +61,23 @@ function sayIdInfo(id, cb, sayUrl) {
 
 module.exports.url = function (url, reply) {
   if (apiKey === '') return;
-  let m;
-  if ((m = ytRegex.exec(url))) {
+  const m = ytRegex.exec(url);
+  if (m) {
     const id = m[1];
     sayIdInfo(id, reply, false);
   }
 };
 
 module.exports.commands = ['yt', 'youtube'];
-module.exports.run = function (remainder, parts, reply, command, from, to, text, raw) {
+module.exports.run = function (remainder, parts, reply) {
   if (apiKey === '') return;
   yt.search.list({
     auth: apiKey, part: 'id', type: 'video', q: remainder, maxResults: 1,
   }, (err, res) => {
-    if (err || res.items.length < 1) return reply('No results');
+    if (err || res.items.length < 1) {
+      reply('No results');
+      return;
+    }
     const vidId = res.items[0].id.videoId;
     sayIdInfo(vidId, reply, true);
   });

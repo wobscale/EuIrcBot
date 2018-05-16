@@ -3,7 +3,7 @@ const vimeo = require('vimeo')();
 const vimeoRegex = /vimeo\.com\/(\d+)/;
 
 function formatSecs(secs) {
-  sec_numb = secs;
+  const sec_numb = secs;
   let hours = Math.floor(sec_numb / 3600);
   let minutes = Math.floor((sec_numb - (hours * 3600)) / 60);
   let seconds = sec_numb - (hours * 3600) - (minutes * 60);
@@ -15,16 +15,19 @@ function formatSecs(secs) {
 }
 
 module.exports.url = function (url, reply) {
-  let m;
-  if ((m = vimeoRegex.exec(url))) {
+  const m = vimeoRegex.exec(url);
+  if (m) {
     const id = m[1];
     vimeo.video(id, (err, res) => {
-      if (err) return console.log(err);
+      if (err) {
+        this.log.error(err, 'unable to get vimeo video info');
+        return;
+      }
 
       if (res.length < 1) return;
-      res = res[0];
+      const firstVid = res[0];
 
-      reply(`${res.title} - ${formatSecs(res.duration)} - ${res.stats_number_of_plays} plays`);
+      reply(`${firstVid.title} - ${formatSecs(firstVid.duration)} - ${firstVid.stats_number_of_plays} plays`);
     });
   }
 };

@@ -22,29 +22,39 @@ module.exports.run = function (r, parts, reply, command, from, to) {
     quoModules.push(qdb);
   }
 
-  if (!scrollbackModule) return console.log("No scrollback, can't quo");
+  if (!scrollbackModule) {
+    this.log.error("No scrollback, can't quo");
+    return;
+  }
 
   if (quoModules.length === 0) {
-    return console.log('no quo modules working, skipping quo');
+    this.log.warn('no quo modules working, skipping quo');
+    return;
   }
 
   scrollbackModule.getFormattedScrollbackLinesFromRanges(to, r, (err, res) => {
-    if (err) return reply(err);
-    if (res.match(/(pls|#)noquo/)) return reply("don't be a deck, betch");
+    if (err) {
+      reply(err);
+      return;
+    }
+    if (res.match(/(pls|#)noquo/)) {
+      reply("don't be a deck, betch");
+      return;
+    }
 
 
-    const replyPromises = quoModules.map(el => new Promise(((resolve, reject) => {
-      el.post(res, to, (err, info) => {
-        if (err) {
-          resolve(err);
+    const replyPromises = quoModules.map(el => new Promise(((resolve) => {
+      el.post(res, to, (err2, info) => {
+        if (err2) {
+          resolve(err2);
         } else {
           resolve(info);
         }
       });
     })));
 
-    Promise.all(replyPromises).then(vals => reply(vals.join(' | ')), (err) => {
-      console.log('promise rejection should not happen: ', err);
+    Promise.all(replyPromises).then(vals => reply(vals.join(' | ')), (err2) => {
+      this.log.error('promise rejection should not happen: ', err2);
     });
   });
 };

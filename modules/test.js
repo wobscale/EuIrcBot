@@ -1,3 +1,5 @@
+/* eslint no-unused-vars: 0 */ // unused arguments to demonstrate what args are available
+
 module.exports.init = function (bot) {};
 
 module.exports.name = 'sirc-test';

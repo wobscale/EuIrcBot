@@ -7,14 +7,17 @@ let t = null;
 let tConf = null;
 let bot = null;
 
-const twitRegex = /^(https?\:\/\/)?(dashboard\.|www\.)?twitter\.com\/([a-zA-Z0-9_]+)(\/status(es)?\/(\d+))?/;
+const twitRegex = /^(https?:\/\/)?(dashboard\.|www\.)?twitter\.com\/([a-zA-Z0-9_]+)(\/status(es)?\/(\d+))?/;
 const nonUsers = ['search'];
 module.exports.init = function (b) {
   bot = b;
   log = bot.log;
   bot.getConfig('twitter.json', (err, conf) => {
     tConf = conf;
-    if (err) return log.error(`Unable to load twitter module: ${err}`);
+    if (err) {
+      log.error(`Unable to load twitter module: ${err}`);
+      return;
+    }
     try {
       t = new Twit(conf);
     } catch (ex) {
@@ -24,10 +27,13 @@ module.exports.init = function (b) {
 };
 
 module.exports.url = function (url, reply) {
-  if (t === null) return log.error('Unable to handle twitter url; lib not loaded');
+  if (t === null) {
+    log.error('Unable to handle twitter url; lib not loaded');
+    return;
+  }
 
-  let m;
-  if ((m = twitRegex.exec(url))) {
+  const m = twitRegex.exec(url);
+  if (m) {
     if (m[3] && !m[6]) {
       if (nonUsers.indexOf(m[3]) !== -1) {
         return;
@@ -43,7 +49,6 @@ module.exports.url = function (url, reply) {
         }
       });
     } else {
-      const uname = m[3];
       const id = m[6];
       t.get('/statuses/show/:id', { id, tweet_mode: 'extended' }, (err, res) => {
         if (err) reply('Error getting tweet');
@@ -63,7 +68,10 @@ module.exports.commands = ['quoth'];
 
 module.exports.post = function (data, channel, callback) {
   t.post('statuses/update', { status: data }, (err, res) => {
-    if (err) return callback(err);
+    if (err) {
+      callback(err);
+      return;
+    }
     callback(false, `${tConf.baseUrl}status/${res.id_str}`);
   });
 };
@@ -72,18 +80,27 @@ const me = module.exports;
 
 
 module.exports.run = function (r, parts, reply, command, from, to) {
-  if (to[0] != '#' && to[0] != '&') return;
+  if (to[0] !== '#' && to[0] !== '&') return;
 
   const scrollbackModule = bot.modules['sirc-scrollback'];
 
-  if (!scrollbackModule) return console.log("No scrollback, can't tweet");
+  if (!scrollbackModule) {
+    this.log.warning("No scrollback, can't tweet");
+    return;
+  }
 
   scrollbackModule.getFormattedScrollbackLinesFromRanges(to, r, (err, res) => {
-    if (err) return reply(err);
-    if (res.match(/(pls|#)noquo/)) return reply("don't be a deck, betch");
+    if (err) {
+      reply(err);
+      return;
+    }
+    if (res.match(/(pls|#)noquo/)) {
+      reply("don't be a deck, betch");
+      return;
+    }
 
-    me.post(res, (err, resp) => {
-      if (err) reply(err);
+    me.post(res, (postErr, resp) => {
+      if (postErr) reply(postErr);
       else reply(resp);
     });
   });
