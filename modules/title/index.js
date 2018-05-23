@@ -21,8 +21,7 @@ function getSelector(url, selector, reply) {
     }
 
     const res = cheerio(selector, html);
-    console.log(res);
-    reply(res.text().trim());
+    reply(res.first().text().trim());
   });
 }
 
