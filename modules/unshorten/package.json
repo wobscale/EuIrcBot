@@ -1,0 +1,11 @@
+{
+  "name": "unshorten",
+  "version": "0.0.0",
+  "description": "unshorten shortend urls",
+  "main": "index.js",
+  "author": "Abdiramen",
+  "license": "MIT",
+  "dependencies": {
+    "request": "^2.87.0"
+  }
+}
