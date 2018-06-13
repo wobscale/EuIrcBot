@@ -49,6 +49,8 @@ module.exports.run = function (remainder, parts, reply) {
       return;
     }
 
+    const interp = subpodValue(res[0].subpods[0]);
+
     const r = function (...args) {
       reply.custom({ lines: 5, pmExtra: true, replaceNewlines: true }, ...args);
     };
@@ -56,7 +58,7 @@ module.exports.run = function (remainder, parts, reply) {
     const primary_pods = res.filter(x => x.primary);
     if (primary_pods.length === 0) {
       try {
-        r(`${res[0].subpods[0].text}: ${res[1].subpods[0].text}`);
+        r(`${interp}: ${res[1].subpods[0].text}`);
         return;
       } catch (ex) {
         r(`No primary pod, try http://www.wolframalpha.com/input/?i=${encodeURIComponent(remainder)}`);
@@ -70,11 +72,16 @@ module.exports.run = function (remainder, parts, reply) {
       r('Not sure how to handle primary pod, someone should pull request this');
       return;
     }
-    let title = '';
-    if (ppod.title !== 'Result') {
-      title = ppod.title;
+    const titleParts = [];
+    if (interp !== remainder) {
+      titleParts.push(interp);
+    }
+    if (ppod.title !== 'Result' && ppod.title !== 'Response') {
+      titleParts.push(ppod.title);
     }
     const subval = subpodValue(ppod.subpods[0]);
+
+    const title = titleParts.join(': ');
 
     if (title && subval) {
       r(`${title}: ${subval}`);
