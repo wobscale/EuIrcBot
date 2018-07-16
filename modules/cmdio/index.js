@@ -56,17 +56,34 @@ module.exports.run = function (r, parts, reply, cmd, from, to) {
     data = `${cmd} ${data}`;
   }
 
-  request.post({
+  let response = '';
+  let aborted = false;
+  let req = request.post({
     url: apiUrl + cmdEnv,
     auth: { username: token, password: '' },
+    encoding: 'utf8',
     body: data,
-  }, (err, resp, body) => {
-    if (err) {
-      log.error(err);
-      return reply('error: ', err);
+  })
+  .on('error', (err) => {
+    log.error(err);
+    reply('error: ', err);
+    return;
+  })
+  .on('data', (chunk) => {
+    if (response.length + chunk.length > (10 * 1024)) {
+      reply('over 10kb output; aborted');
+      req.abort();
+      aborted = true;
+      return;
     }
-    if (body) {
-      reply.custom({ lines: 5, replaceNewlines: true, pmExtra: true }, body);
+    response += chunk;
+  })
+  .on('end', () => {
+    if (aborted) {
+      return;
+    }
+    if (response.length > 0) {
+      reply.custom({ lines: 5, replaceNewlines: true, pmExtra: true }, response);
     } else {
       reply('no output but it ran I guess');
     }
