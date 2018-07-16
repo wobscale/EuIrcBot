@@ -1,5 +1,5 @@
-let url = require('url'),
-  XRegExp = require('xregexp');
+const { URL } = require('url');
+const XRegExp = require('xregexp');
 
 let tokenSplitRegex = XRegExp('(?![-_])[\\p{Pc}\\p{Pd}\\pZ]+'),
   tokenTrimBase = '(?![/])\\pP+',
@@ -18,7 +18,7 @@ module.exports.msg = function (text, from, reply, raw) {
   text.split(tokenSplitRegex)
     .map((token) => {
       try {
-        return url.parse(token.replace(tokenTrimStart, '').replace(tokenTrimEnd, ''));
+        return new URL(token.replace(tokenTrimStart, '').replace(tokenTrimEnd, ''));
       } catch (_) {}
     })
     .filter(u => u && u.protocol && u.host)
