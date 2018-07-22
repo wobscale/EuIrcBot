@@ -485,7 +485,7 @@ bot.fsStoreData = function botFsStoreData(namespace, filePath, data, flag, cb) {
 
   bot.createPathIfNeeded(finalPath, (err) => {
     if (err) return writeCb(err);
-    return fs.writeFile(finalPath, data, { writeFlag }, writeCb);
+    return fs.writeFile(finalPath, data, { flag: writeFlag }, writeCb);
   });
 };
 
