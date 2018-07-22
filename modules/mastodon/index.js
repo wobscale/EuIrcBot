@@ -32,7 +32,7 @@ const execSync = require('child_process').execSync;
 const htmlToTextMod = require('html-to-text');
 const robotsParser = require('robots-parser');
 const util = require('util');
-const urlMod = require('url');
+const { URL } = require('url');
 
 const robotsTxtCache = new Cacheman();
 
@@ -45,7 +45,7 @@ let request = null;
 function robotRequest(options, fn) {
   const url = options.url;
   const userAgent = moduleConfig != null ? moduleConfig.userAgent : 'EuIrcBot';
-  const robotsTxtUrl = urlMod.resolve(url, '/robots.txt');
+  const robotsTxtUrl = new URL('/robots.txt', url);
 
   function handle(robotsTxt) {
     const robots = robotsParser(robotsTxtUrl, robotsTxt);
@@ -261,7 +261,7 @@ function handleUrl(url, reply, verbose = false) {
    */
 
   robotRequest(
-    { url: urlMod.resolve(url, '/api/v1/timelines/public') },
+    { url: new URL('/api/v1/timelines/public', url) },
     (error, response, bodyRaw) => {
       let body;
 
@@ -275,9 +275,9 @@ function handleUrl(url, reply, verbose = false) {
 
       [...new Set(body.map((item) => {
         try {
-          return urlMod.parse(item.url).host;
+          return new URL(item.url).host;
         } catch (ex) {
-          log.warn(`url.parse threw: ${ex}`);
+          log.warn(`URL threw: ${ex}`);
           return '';
         }
       }))].forEach((hostname) => {
@@ -300,9 +300,9 @@ function handleUrl(url, reply, verbose = false) {
 module.exports.run = (remainder, parts, reply) => {
   let url;
   try {
-    url = urlMod.parse(remainder);
+    url = new URL(remainder);
   } catch (ex) {
-    log.warn(`url.parse threw: ${ex}`);
+    log.warn(`URL threw: ${ex}`);
     return;
   }
   if (!checkHostname(url.host)) {
@@ -319,9 +319,9 @@ module.exports.run = (remainder, parts, reply) => {
 module.exports.url = (urlStr, reply) => {
   let url;
   try {
-    url = urlMod.parse(urlStr);
+    url = new URL(urlStr);
   } catch (ex) {
-    log.warn(`url.parse threw: ${ex}`);
+    log.warn(`URL threw: ${ex}`);
     return;
   }
   if (checkHostname(url.host)) {
