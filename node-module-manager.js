@@ -50,7 +50,7 @@ me.loadModuleFolder = function (folder, cb) {
     // Exclude hidden files and folders
     mPaths = mPaths.filter(i => i[0] !== '.');
     // Exclude files ending in .test.js
-    mPaths = mPaths.filter(i => i.toLowerCase().endsWith(".test.js"));
+    mPaths = mPaths.filter(i => !i.toLowerCase().endsWith(".test.js"));
     for (let i = 0; i < mPaths.length; i++) {
       /* ./ required because of how require works. go figure. */
       const fullPath = `./${path.join('.', folder, mPaths[i])}`;
