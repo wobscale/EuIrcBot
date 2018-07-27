@@ -46,13 +46,23 @@ function likePercent(vid) {
 }
 
 function sayInfo(vid, cb, sayUrl) {
-  const url = `http://youtu.be/${vid.id}`;
-  cb((sayUrl ? (`${url} `) : '') + vid.snippet.title, '-', formatPt50(vid.contentDetails.duration), `${vid.statistics.viewCount ? `- ${vid.statistics.viewCount} views` : ''}(${likePercent(vid)}) - ${vid.snippet.channelTitle}`);
+  const url = `https://youtu.be/${vid.id}`;
+
+  let videoTitle;
+  // for non-english videos, use the english title and include the original in
+  // ().
+  if (vid.localizations && vid.localizations.en && vid.snippet.defaultLanguage !== 'en') {
+    videoTitle = `${vid.localizations.en.title} (${vid.snippet.defaultLanguage}: ${vid.snippet.title})`;
+  } else {
+    videoTitle = vid.snippet.title;
+  }
+
+  cb((sayUrl ? (`${url} `) : '') + videoTitle, '-', formatPt50(vid.contentDetails.duration), `${vid.statistics.viewCount ? `- ${vid.statistics.viewCount} views` : ''}(${likePercent(vid)}) - ${vid.snippet.channelTitle}`);
 }
 
 
 function sayIdInfo(id, cb, sayUrl) {
-  yt.videos.list({ auth: apiKey, id, part: 'snippet,statistics,contentDetails' }, (err, results) => {
+  yt.videos.list({ auth: apiKey, id, part: 'snippet,statistics,contentDetails,localizations' }, (err, results) => {
     if (results.items.length > 0) {
       sayInfo(results.items[0], cb, sayUrl);
     }
