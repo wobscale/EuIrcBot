@@ -12,8 +12,8 @@ commander@>=0.3.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/graceful-readlink/-/graceful-readlink-1.0.1.tgz#4cafad76bc62f02fa039b2f94e9a3dd3a391a725"
 
-urban@latest:
+"urban@git+https://github.com/euank/urban.git":
   version "0.3.1"
-  resolved "https://registry.yarnpkg.com/urban/-/urban-0.3.1.tgz#993e46e8b30d73ad2d809248dc8ec44eb4ccad8a"
+  resolved "git+https://github.com/euank/urban.git#432456284092ab14c8a2d34b7602b751a3eb7f2e"
   dependencies:
     commander ">=0.3.0"
