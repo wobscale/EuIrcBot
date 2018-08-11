@@ -43,9 +43,9 @@ let moduleConfig = null;
 let request = null;
 
 function robotRequest(options, fn) {
-  const url = options.url;
+  const url = options.url.toString();
   const userAgent = moduleConfig != null ? moduleConfig.userAgent : 'EuIrcBot';
-  const robotsTxtUrl = new URL('/robots.txt', url);
+  const robotsTxtUrl = new URL('/robots.txt', url).toString();
 
   function handle(robotsTxt) {
     const robots = robotsParser(robotsTxtUrl, robotsTxt);
@@ -94,7 +94,7 @@ function defaultConfig() {
 
 function writeConfig() {
   bot.writeDataFile('config.json', JSON.stringify(moduleConfig), (err) => {
-    if (err) { log.error(`error writing mastodon module data: ${err}`); }
+    if (err) { log.error(err, 'error writing mastodon module data'); }
   });
 }
 
@@ -219,7 +219,7 @@ module.exports.init = (b) => {
     const ver = require('../../package.json').version;
     userAgent += `/${ver}`;
   } catch (ex) {
-    log.error(`error getting package version: ${ex}`);
+    log.error(ex, 'error getting package version');
   }
 
   let userAgentUrl = (moduleConfig !== null ? moduleConfig.userAgentUrl
@@ -229,7 +229,7 @@ module.exports.init = (b) => {
     try {
       commitish = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim();
     } catch (ex) {
-      log.error(`error determining deployed commit: ${ex}`);
+      log.error(ex, 'error determining deployed commit');
     }
     userAgentUrl = userAgentUrl.replace(/{commitish}/g, commitish);
   }
@@ -243,7 +243,7 @@ module.exports.init = (b) => {
 function handleUrl(url, reply, verbose = false) {
   fetchResource(url, (error, record) => {
     if (error) {
-      log.info({ error, mastodonUrl: url });
+      log.info(error, { mastodonUrl: url });
       if (verbose) { reply(`error: ${error.message}`); }
     } else {
       formatRecord(record, s => reply.custom({ replaceNewlines: true }, s));
