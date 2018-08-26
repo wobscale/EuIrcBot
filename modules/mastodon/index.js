@@ -154,8 +154,8 @@ function fetchResource(url, fn) {
     } else {
       try {
         const record = JSON.parse(body);
-        if (!['Note', 'Person'].includes(record.type)) {
-          fn(new Error('record is not a Note or Person'));
+        if (!['Note', 'Application', 'Group', 'Organization', 'Person', 'Service'].includes(record.type)) {
+          fn(new Error('record is not of a known type'));
         } else {
           fn(null, record);
         }
@@ -189,7 +189,7 @@ function formatRecord(record, fn) {
       }
       fn(str);
     });
-  } else if (record.type === 'Person') {
+  } else {
     fn(`${record.name} (@${record.preferredUsername}): ${htmlToText(record.summary)}`);
   }
 }
