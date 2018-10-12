@@ -28,7 +28,7 @@ module.exports.init = function (b) {
   };
 
 module.exports.commands = {
-  topic(_, parts, _, _, user, channel) {
+  topic(a, parts, b, c, user, channel) {
     let msg;
     chan = bot.client.chanData(channel);
     switch(parts[0]) {
