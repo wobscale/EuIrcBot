@@ -1,7 +1,6 @@
 let bot;
 let chunks = null;
 let numChunksAllowed = 16;
-let fs = require('fs');
 const chunkFileName = 'chunks.json';
 
 module.exports.init = function (b) {
@@ -20,14 +19,6 @@ module.exports.init = function (b) {
     }
   });
 }
-/*
-    store chunks somewhere upon removal from topic
-    if possible, store who wrote what chunks
-    allow number of chunks displayed in topic to be adjustable
-    prevent someone from spamming chunks
-    allow chunks to be edited
-    allow chunks to be removed
-  */
 
   let store = (chunk, user) => {
     chunks.chunk = user;
@@ -69,7 +60,12 @@ module.exports.commands = {
         break;
 
       case 'whodunit':
-        bot.client.say("Coming Soon^TM");
+        userdunit = chunks[parts.slice(1).join(" ")];
+        if (userdunit) {
+          bot.client.say(userdunit)
+        } else {
+          bot.client.say("This chunk is not known to me.");
+        }
         return;
         break;
 
