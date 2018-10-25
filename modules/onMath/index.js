@@ -38,7 +38,7 @@ const mathSymbols = '.,*+-/()%=';
 const onlySymbols = new RC(`^[\\s${REEscape(mathSymbols)}]*$`);
 const onlyNumbers = new RC(/^[\.\s\d]*$/);
 const onlyKeys = new RC(`^((${mathKeys.join(')|(')}))+$`);
-const onlyTime = new RC(/^(:?[0-9]+:?)+$/);
+const onlyTime = new RC(/^[0-9:]+$/);
 const onlyQuote = new RC(/^".+"$/);
 const funnyFractions = new RC(/^(([0-9][0]?|11)\s*\/\s*(10|5|100))$/);
 const plusN = new RC(/^\++\d+$/);
