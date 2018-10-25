@@ -44,6 +44,7 @@ describe('onMath', () => {
       '10/10',
       '11/10',
       '10/100',
+      '4:20',
       '(1)',
       '.2 bytes / second',
       '3 #comment',
