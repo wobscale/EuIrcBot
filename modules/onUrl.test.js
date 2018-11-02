@@ -1,6 +1,8 @@
-let assert = require('chai').assert,
-  sinon = require('sinon'),
-  onUrl = require('./onUrl.js');
+/* eslint-env mocha */
+
+const assert = require('chai').assert;
+const sinon = require('sinon');
+const onUrl = require('./onUrl.js');
 
 function MockBot() {
   return {
@@ -24,8 +26,16 @@ describe('onUrl.msg', () => {
       ['file://thank-gosh-our-security-is-good.and-this-is-fine/', ['file://thank-gosh-our-security-is-good.and-this-is-fine/']],
       ['file:///thank-gosh-our-security-is-good.and-this-is-fine/', []],
       ['http://名がドメイン.com', ['http://xn--v8jxj3d1dzdz08w.com/']],
-      ['broken auth http://%@foo.bar/baz pfff', ["http://%@foo.bar/baz"]],
+      ['broken auth http://%@foo.bar/baz pfff', ['http://%@foo.bar/baz']],
       ['!g matthew 5:29', []],
+      ['matching parens https://wikipedia.wiki/article_(open_close_parens)', ['https://wikipedia.wiki/article_(open_close_parens)']],
+      ['matching parens 2 (https://wikipedia.wiki/article_(open_close_parens))', ['https://wikipedia.wiki/article_(open_close_parens)']],
+      ['matching parens 3 (foo https://wikipedia.wiki/article_(open_close_parens))', ['https://wikipedia.wiki/article_(open_close_parens)']],
+      ['trailing period http://example.yikes.', ['http://example.yikes/']],
+      ['trailing ? http://example.yikes?', ['http://example.yikes/']],
+      ['Interesting https://en.wikipedia.org/wiki/Galileo_(satellite_navigation)', ['https://en.wikipedia.org/wiki/Galileo_(satellite_navigation)']],
+      ['quotes {http://1.com}, [http://2.com], «http://3.com», 「http://4.com」, 『http://5.com』, ', [1, 2, 3, 4, 5].map(i => `http://${i}.com/`)],
+      ['quotes http://{1}.com, http://«2».com, http://「3」.com, http://『4』.com, ', ['http://{1}.com/', 'http://xn--2-qca3c.com/', 'http://xn--3-t4te.com/', 'http://xn--4-x4te.com/']],
     ];
 
     testCases.forEach((c) => {
