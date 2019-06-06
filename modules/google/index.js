@@ -1,9 +1,11 @@
-let google = require('google'),
-  googleimages = require('google-images'),
-  humanize = require('humanize');
+const googleimages = require('google-images');
+const humanize = require('humanize');
+const { google } = require('googleapis');
+
+const customsearch = google.customsearch('v1');
+let customSearchOpts;
 
 let b;
-let config;
 
 let googleimgs;
 
@@ -12,16 +14,29 @@ module.exports.init = function (bot) {
   b = bot;
   b.getConfig('google.json', (err, googConf) => {
     if (err) {
-      console.log(err);
+      b.log.warn(err, 'unable to load google.json config; google searches will not work');
       return;
     }
+    if (googConf.cseID === '') {
+      b.log.warn("cseID in google.josn not configured; required for google search");
+      return;
+    }
+    if (googConf.apiKey === '') {
+      b.log.warn("apiKey in google.josn not configured; required for google search");
+      return;
+    }
+    customSearchOpts = {
+      cx: googConf.cseID,
+      auth: googConf.apiKey,
+    };
     b.getConfig('googleimgs.json', (err, imgsConf) => {
       if (err) {
-        console.log(err);
+        b.log.log(err, 'error loading googleimgs.json');
         return;
       }
+      let cseID = imgsConf.cseID || googConf.cseID;
       if (imgsConf.cseID === '') {
-        console.log('cseID (googleimgs.json) not configured, required for google image search');
+        b.log.log('cseID (googleimgs.json) not configured, required for google image search');
         return;
       }
       googleimgs = googleimages(imgsConf.cseID, googConf.apiKey);
@@ -32,28 +47,35 @@ module.exports.init = function (bot) {
 module.exports.commands = ['g', 'google'];
 
 module.exports.run = function (remainder, parts, reply, command, from, to, text, raw) {
-  google(remainder, (err, next, links) => {
-    if (err || links.length === 0) { return reply('No results'); }
-    for (let i = 0; i < links.length; i++) {
-      if (links[i].link === null) continue;
-      else {
-        return reply(`${links[i].link.replace('(', '%28').replace(')', '%29')} -> ${links[i].title}`);
+  if (!customSearchOpts) return;
+  customsearch.cse.list(Object.assign({}, customSearchOpts, { q: remainder }))
+    .then((res) => {
+      const items = res.data.items;
+      if (items.length == 0) {
+        reply("no results");
+        return;
       }
-    }
-  });
+      reply(`${items[0].link} -> ${items[0].title}`);
+    }).catch((err) => {
+      b.log.error(err, "google custom search error");
+      reply("error performing google search");
+    });
 };
 
 module.exports.run_goognum = function (r, p, reply) {
-  google(r, (err, next, links, num) => {
-    if (err || links.length === 0) return reply('0 results');
-
-    return reply(`${humanize.numberFormat(num, 0)} results`);
-  });
+  if (!customSearchOpts) return;
+  customsearch.cse.list(Object.assign({}, customSearchOpts, { q: r }))
+    .then((res) => {
+      reply(`${res.data.searchInformation.formattedTotalResults}`);
+    }).catch((err) => {
+      b.log.error(err, "google custom search error");
+      reply("error performing google search");
+    });
 };
 
 const firstimg = function (r, p, reply) {
   if (!googleimgs) {
-    console.error('Google images not configured correctly on this bot');
+    b.log.error('Google images not configured correctly on this bot');
     return;
   }
   googleimgs.search(r)
