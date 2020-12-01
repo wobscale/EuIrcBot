@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "description": "",
   "dependencies": {
-    "google": "git+https://github.com/euank/node-google.git",
     "google-images": "^1.0.0",
+    "google-it": "^1.5.4",
     "googleapis": "^40.0.0",
     "humanize": "0.0.9"
   },

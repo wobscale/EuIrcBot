@@ -1,9 +1,6 @@
 const googleimages = require('google-images');
 const humanize = require('humanize');
-const { google } = require('googleapis');
-
-const customsearch = google.customsearch('v1');
-let customSearchOpts;
+const google = require('google-it');
 
 let b;
 
@@ -17,18 +14,10 @@ module.exports.init = function (bot) {
       b.log.warn(err, 'unable to load google.json config; google searches will not work');
       return;
     }
-    if (googConf.cseID === '') {
-      b.log.warn("cseID in google.josn not configured; required for google search");
-      return;
-    }
     if (googConf.apiKey === '') {
-      b.log.warn("apiKey in google.josn not configured; required for google search");
+      b.log.warn('apiKey in google.josn not configured; required for google search');
       return;
     }
-    customSearchOpts = {
-      cx: googConf.cseID,
-      auth: googConf.apiKey,
-    };
     b.getConfig('googleimgs.json', (err, imgsConf) => {
       if (err) {
         b.log.log(err, 'error loading googleimgs.json');
@@ -47,29 +36,20 @@ module.exports.init = function (bot) {
 module.exports.commands = ['g', 'google'];
 
 module.exports.run = function (remainder, parts, reply, command, from, to, text, raw) {
-  if (!customSearchOpts) return;
-  customsearch.cse.list(Object.assign({}, customSearchOpts, { q: remainder }))
+  google({
+    query: remainder,
+    noDisplay: true,
+    disableConsole: true,
+  })
     .then((res) => {
-      const items = res.data.items;
-      if (items.length == 0) {
-        reply("no results");
+      if (res.length === 0) {
+        reply('no results');
         return;
       }
-      reply(`${items[0].link} -> ${items[0].title}`);
+      reply(`${res[0].link} -> ${res[0].title}`);
     }).catch((err) => {
-      b.log.error(err, "google custom search error");
-      reply("error performing google search");
-    });
-};
-
-module.exports.run_goognum = function (r, p, reply) {
-  if (!customSearchOpts) return;
-  customsearch.cse.list(Object.assign({}, customSearchOpts, { q: r }))
-    .then((res) => {
-      reply(`${res.data.searchInformation.formattedTotalResults}`);
-    }).catch((err) => {
-      b.log.error(err, "google custom search error");
-      reply("error performing google search");
+      b.log.error(err, 'google search error');
+      reply('error performing google search');
     });
 };
 
