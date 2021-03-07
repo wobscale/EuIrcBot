@@ -4,7 +4,7 @@
   "description": "",
   "dependencies": {
     "google-images": "^1.0.0",
-    "google-it": "^1.5.4",
+    "google-it": "^1.6.2",
     "googleapis": "^40.0.0",
     "humanize": "0.0.9"
   },
