@@ -1,0 +1,24 @@
+name: EuIrcBot CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '8'
+        cache: 'npm'
+    - name: Install deps
+      run: sudo apt-get install -y libicu-dev
+    - run: npm install
+    # TODO: reenable
+    # - run: npm run lint
+    - run: npm run test
