@@ -18,7 +18,12 @@ function usage(command, reply) {
 }
 
 function getFirst(command, term, reply) {
-  const result = urban(term);
+  let result;
+  try {
+    result = urban(term);
+  } catch (ex) {
+    reply(`Error getting entry for ${term}`);
+  }
 
   result.first((json) => {
     if (json) {
@@ -39,4 +44,3 @@ module.exports.run = function (remainder, parts, reply, command) {
     getFirst(command, remainder, reply);
   }
 };
-
