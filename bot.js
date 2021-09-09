@@ -513,12 +513,10 @@ bot.run = function botRun() {
     moduleMan.loadModules,
     bot.joinChannels,
     function unexpectedEnd(cb) {
-      bot.dump();
       cb(null);
     },
   ], (err) => {
     if (err) {
-      bot.dump();
       log.fatal('error in init');
       log.error(err);
     }
