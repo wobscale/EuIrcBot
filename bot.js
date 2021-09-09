@@ -8,8 +8,6 @@ const changeCase = require('change-case');
 const SnailEscape = require('snailescape.js');
 const bunyan = require('bunyan');
 
-let heapdump = null;
-
 const log = bunyan.createLogger({
   name: 'euircbot',
   serializers: { err: bunyan.stdSerializers.err },
@@ -24,15 +22,6 @@ const bot = {};
 bot.util = {}; // Util functions
 
 bot.init = function botInit(cb) {
-  if (bot.config.heapdump) {
-    log.debug('enabling heap dumps');
-    heapdump = require('heapdump');
-    process.on('SIGINT', () => {
-      log.warn('dumping heap, if configured, and exiting');
-      bot.dump();
-      process.exit();
-    });
-  }
   bot.configfolder = bot.config.configfolder;
   bot.tmpfolder = bot.config.tmpfolder;
   bot.datafolder = bot.config.datafolder;
@@ -502,17 +491,6 @@ bot.fsListData = function botFsListData(namespace, listPath, cb) {
 
   fs.readdir(finalPath, cb);
 };
-
-bot.dump = function botDump() {
-  if (heapdump) {
-    heapdump.writeSnapshot((err, filename) => {
-      log.warn('heapdump written to', filename);
-    });
-  } else {
-    log.trace('dump called, but heapdump off');
-  }
-};
-
 
 bot.run = function botRun() {
   async.series([
