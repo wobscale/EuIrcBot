@@ -1,4 +1,4 @@
-const urban = require('urban');
+const ud = require('urban-dictionary');
 
 const elems = {
   ud: ['definition'],
@@ -18,21 +18,16 @@ function usage(command, reply) {
 }
 
 function getFirst(command, term, reply) {
-  let result;
-  try {
-    result = urban(term);
-  } catch (ex) {
-    reply(`Error getting entry for ${term}`);
-  }
-
-  result.first((json) => {
-    if (json) {
-      elems[command].forEach((elem) => {
-        reply.custom({ lines: 5, replaceNewlines: true, pmExtra: true }, `${elem}: ${json[elem]}`);
-      });
-    } else {
-      reply(`No entry for ${term}`);
+  ud.define(term).then((results) => {
+    if (results.length === 0) {
+      reply(`No results for ${term}`);
+      return;
     }
+    elems[command].forEach((elem) => {
+      reply.custom({ lines: 5, replaceNewlines: true, pmExtra: true }, `${elem}: ${results[0][elem]}`);
+    });
+  }).catch((error) => {
+    reply(`Error getting ${term}: ${error.message}`);
   });
 }
 
