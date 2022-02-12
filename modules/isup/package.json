@@ -9,7 +9,7 @@
   "author": "EuanK",
   "license": "ISC",
   "dependencies": {
-    "follow-redirects": "0.0.3",
+    "follow-redirects": "1.14.8",
     "request": "^2.34.0",
     "uri-js": "^1.4.2"
   }
