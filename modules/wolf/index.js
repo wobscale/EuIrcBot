@@ -34,7 +34,8 @@ module.exports.run = function (remainder, parts, reply) {
     return;
   }
 
-  wc.query(remainder, (err, res) => {
+  // TODO: Update to use Promise API instead
+  wc.queryCb(remainder, (err, res) => {
     if (err) {
       reply(`Wolfram error: ${err}`);
       return;
