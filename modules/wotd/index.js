@@ -1,4 +1,4 @@
-const http = require('http');
+const https = require('https');
 
 let config;
 
@@ -17,7 +17,7 @@ module.exports.init = function (bot) {
 module.exports.run = function (remainder, parts, reply) {
   const url = `https://api.wordnik.com/v4/words.json/wordOfTheDay?api_key=${config.wotd_key}`;
 
-  http.get(url, (resp) => {
+  https.get(url, (resp) => {
     let data = '';
     resp.on('data', (chunk) => {
       data += chunk;
