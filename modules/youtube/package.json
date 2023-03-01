@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "",
   "dependencies": {
-    "googleapis": "^2.0.2",
+    "googleapis": "^39.1.0",
     "moment": "^2.10.2"
   },
   "main": "index.js",
