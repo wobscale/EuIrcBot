@@ -15,7 +15,7 @@ module.exports.init = function (bot) {
 };
 
 module.exports.run = function (remainder, parts, reply) {
-  const url = `http://api.wordnik.com/v4/words.json/wordOfTheDay?api_key=${config.wotd_key}`;
+  const url = `https://api.wordnik.com/v4/words.json/wordOfTheDay?api_key=${config.wotd_key}`;
 
   http.get(url, (resp) => {
     let data = '';
