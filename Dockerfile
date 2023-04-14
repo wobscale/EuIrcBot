@@ -2,8 +2,8 @@ FROM node:14
 COPY . /usr/src/app/
 WORKDIR /usr/src/app
 
-RUN useradd --home-dir /usr/src/app bot
-RUN chown -R bot:bot /usr/src/app
+RUN useradd --home-dir /usr/src/app bot \
+    && chown -R bot:bot /usr/src/app
 VOLUME /usr/src/app/conf
 VOLUME /usr/src/app/data
 
